@@ -401,8 +401,11 @@ Format :
       });
 
       clearInterval(msgInterval);
-      if (!response.ok) throw new Error('Erreur API ' + response.status);
       const data = await response.json();
+      if (!response.ok) {
+        const errMsg = data?.error?.message || data?.error || JSON.stringify(data);
+        throw new Error('Erreur API ' + response.status + ' : ' + errMsg);
+      }
       const raw = data.content.map(b => b.text || '').join('');
       const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
       displayResult(result, selectedType, project);
