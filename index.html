@@ -393,7 +393,7 @@ Format :
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 1000,
           system: systemPrompt,
           messages: [{ role: 'user', content: `Type: ${selectedType}\nProjet: ${project || 'Non précisé'}\n\nTranscription:\n${transcript}` }]
