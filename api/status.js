@@ -10,6 +10,9 @@ export default async function handler(req, res) {
   const { callId } = req.query;
   if (!callId) return res.status(400).json({ error: 'Paramètre callId manquant.' });
 
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(callId)) return res.status(400).json({ error: 'callId invalide.' });
+
   if (!process.env.DATABASE_URL) {
     return res.status(500).json({ error: 'DATABASE_URL manquante dans Vercel → ajouter dans Settings > Environment Variables' });
   }
