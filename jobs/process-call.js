@@ -1,5 +1,5 @@
 import { task } from '@trigger.dev/sdk/v3';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { neon } from '@neondatabase/serverless';
 
@@ -30,7 +30,7 @@ export const processCall = task({
       const audioBuffer = await audioRes.arrayBuffer();
       const ext = new URL(audioUrl).pathname.split('.').pop() || 'm4a';
       const mimeMap = { mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg', webm: 'audio/webm', flac: 'audio/flac' };
-      const audioFile = new File([audioBuffer], `audio.${ext}`, { type: mimeMap[ext] ?? 'audio/mp4' });
+      const audioFile = await toFile(Buffer.from(audioBuffer), `audio.${ext}`, { type: mimeMap[ext] ?? 'audio/mpeg' });
 
       // ── Étape 2 : Transcription Whisper ───────────────────────────────────
       console.log(`[${callId}] Transcription Whisper...`);
