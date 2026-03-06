@@ -22,9 +22,11 @@ export const processCall = task({
     const sql = neon(process.env.DATABASE_URL);
 
     try {
-      // ── Étape 1 : Télécharger l'audio depuis Vercel Blob ──────────────────
+      // ── Étape 1 : Télécharger l'audio depuis Vercel Blob (store privé) ───────
       console.log(`[${callId}] Téléchargement audio...`);
-      const audioRes = await fetch(audioUrl);
+      const audioRes = await fetch(audioUrl, {
+        headers: { authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+      });
       if (!audioRes.ok) throw new Error(`Impossible de télécharger l'audio : ${audioRes.status}`);
 
       const audioBuffer = await audioRes.arrayBuffer();
