@@ -4,7 +4,6 @@
     "api/ingest.js":     { "maxDuration": 30, "memory": 512  }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1.js" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/((?!api|dashboard).*)", "destination": "/index.html" }
   ]
