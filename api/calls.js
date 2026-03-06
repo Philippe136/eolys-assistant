@@ -1,10 +1,10 @@
 import { neon } from '@neondatabase/serverless';
+import { cors } from '../lib/auth.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, DELETE, OPTIONS');
+  cors(req, res, 'GET, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!process.env.DATABASE_URL) return res.status(500).json({ error: 'DATABASE_URL manquante' });
 

@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { escHtml } from '../lib/auth.js';
 
 export default async function handler(req, res) {
   const { code, error, error_description } = req.query;
@@ -7,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(400).send(`
       <html><body style="font-family:sans-serif;padding:40px;text-align:center">
         <h2>❌ Erreur OAuth</h2>
-        <p>${error}: ${error_description || ''}</p>
+        <p>${escHtml(error)}: ${escHtml(error_description || '')}</p>
         <a href="/dashboard">← Retour</a>
       </body></html>`);
   }
@@ -76,6 +77,7 @@ export default async function handler(req, res) {
       </body></html>`);
 
   } catch (err) {
-    return res.status(500).send(`Erreur : ${err.message}`);
+    console.error('Erreur /api/auth-microsoft-callback:', err.message);
+    return res.status(500).send(`<html><body style="font-family:sans-serif;padding:40px;text-align:center"><h2>❌ Erreur serveur</h2><a href="/dashboard">← Retour</a></body></html>`);
   }
 }

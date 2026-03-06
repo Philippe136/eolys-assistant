@@ -3,13 +3,15 @@ import fs from 'fs';
 import { put } from '@vercel/blob';
 import { tasks } from '@trigger.dev/sdk/v3';
 import { neon } from '@neondatabase/serverless';
+import { cors, requireBearer } from '../lib/auth.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  cors(req, res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Auth bearer (iOS Shortcut doit envoyer Authorization: Bearer <INGEST_SECRET>)
+  if (!requireBearer(req, res)) return;
 
   if (!process.env.DATABASE_URL)          return res.status(500).json({ error: 'DATABASE_URL manquante dans Vercel' });
   if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN manquante dans Vercel' });

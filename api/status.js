@@ -1,9 +1,8 @@
 import { neon } from '@neondatabase/serverless';
+import { cors } from '../lib/auth.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  cors(req, res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -19,7 +18,12 @@ export default async function handler(req, res) {
 
   try {
     const sql    = neon(process.env.DATABASE_URL);
-    const [call] = await sql`SELECT * FROM calls WHERE id = ${callId} LIMIT 1`;
+    const [call] = await sql`
+      SELECT id, created_at, call_type, project_name, status,
+             titre, resume, actions, email, trello_url,
+             outlook_draft_id, outlook_draft_url, error
+      FROM calls WHERE id = ${callId} LIMIT 1
+    `;
 
     if (!call) return res.status(404).json({ error: 'Appel introuvable.' });
 
