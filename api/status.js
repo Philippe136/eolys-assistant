@@ -10,6 +10,10 @@ export default async function handler(req, res) {
   const { callId } = req.query;
   if (!callId) return res.status(400).json({ error: 'Paramètre callId manquant.' });
 
+  if (!process.env.DATABASE_URL) {
+    return res.status(500).json({ error: 'DATABASE_URL manquante dans Vercel → ajouter dans Settings > Environment Variables' });
+  }
+
   try {
     const sql    = neon(process.env.DATABASE_URL);
     const [call] = await sql`SELECT * FROM calls WHERE id = ${callId} LIMIT 1`;

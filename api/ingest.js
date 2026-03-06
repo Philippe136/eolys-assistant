@@ -11,6 +11,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  if (!process.env.DATABASE_URL)        return res.status(500).json({ error: 'DATABASE_URL manquante dans Vercel' });
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN manquante dans Vercel' });
+  if (!process.env.TRIGGER_SECRET_KEY)  return res.status(500).json({ error: 'TRIGGER_SECRET_KEY manquante dans Vercel' });
+
   try {
     // ── Parse multipart/form-data ─────────────────────────────────────────
     const form = formidable({ maxFileSize: 25 * 1024 * 1024 });
