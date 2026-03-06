@@ -323,10 +323,57 @@
 <script>
   let selectedType = null;
   let lastEmailContent = '';
+  let pollingInterval = null;
 
+  // ── Mode iOS : polling automatique si ?callId= dans l'URL ────────────────
   const urlParams = new URLSearchParams(window.location.search);
   const autoTranscript = urlParams.get('transcript');
-  if (autoTranscript) document.getElementById('transcript').value = decodeURIComponent(autoTranscript);
+  const autoCallId     = urlParams.get('callId');
+
+  if (autoTranscript) {
+    document.getElementById('transcript').value = decodeURIComponent(autoTranscript);
+  }
+
+  if (autoCallId) {
+    setStep(2);
+    showScreen('loading');
+    document.getElementById('loading-msg').textContent = 'Traitement de l\'enregistrement…';
+    startPolling(autoCallId);
+  }
+
+  function startPolling(callId) {
+    let attempts = 0;
+    const MAX_ATTEMPTS = 90; // 3 minutes max (90 × 2s)
+    pollingInterval = setInterval(async () => {
+      attempts++;
+      if (attempts > MAX_ATTEMPTS) {
+        clearInterval(pollingInterval);
+        document.getElementById('error-msg').textContent = '❌ Délai dépassé. Réessaie dans quelques instants.';
+        setStep(1); showScreen('error');
+        return;
+      }
+      try {
+        const res  = await fetch(`/api/status?callId=${callId}`);
+        const data = await res.json();
+        if (data.status === 'done') {
+          clearInterval(pollingInterval);
+          const result = {
+            titre:   data.titre,
+            resume:  data.resume,
+            actions: data.actions ?? [],
+            email:   data.email,
+          };
+          displayResult(result, data.call_type ?? 'client', data.project_name ?? '');
+        } else if (data.status === 'error') {
+          clearInterval(pollingInterval);
+          document.getElementById('error-msg').textContent = '❌ ' + (data.error ?? 'Erreur inconnue');
+          setStep(1); showScreen('error');
+        }
+      } catch (e) {
+        console.warn('Polling error:', e);
+      }
+    }, 2000);
+  }
 
   function selectType(type) {
     selectedType = type;
