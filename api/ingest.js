@@ -31,8 +31,8 @@ export default async function handler(req, res) {
     // ── Upload vers Vercel Blob ───────────────────────────────────────────
     const fileBuffer  = fs.readFileSync(audioFile.filepath);
     const filename    = `calls/${Date.now()}-${audioFile.originalFilename ?? 'audio.m4a'}`;
-    // Store privé Vercel Blob → pas de paramètre access
     const blob        = await put(filename, fileBuffer, {
+      access:      'public',
       contentType: audioFile.mimetype ?? 'audio/mp4',
     });
 
