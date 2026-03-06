@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     const fileBuffer  = fs.readFileSync(audioFile.filepath);
     const filename    = `calls/${Date.now()}-${audioFile.originalFilename ?? 'audio.m4a'}`;
     const blob        = await put(filename, fileBuffer, {
-      access:      'public',
+      access:      'private',
       contentType: audioFile.mimetype ?? 'audio/mp4',
     });
 
