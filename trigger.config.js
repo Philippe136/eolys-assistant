@@ -1,7 +1,7 @@
 import { defineConfig } from '@trigger.dev/sdk/v3';
 
 export default defineConfig({
-  project: process.env.TRIGGER_PROJECT_ID ?? 'YOUR_PROJECT_ID',
+  project: 'eolys-assistant-edOi',
   runtime: 'node',
   logLevel: 'log',
   maxDuration: 300,
