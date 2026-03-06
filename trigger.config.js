@@ -4,5 +4,6 @@ export default defineConfig({
   project: process.env.TRIGGER_PROJECT_ID ?? 'YOUR_PROJECT_ID',
   runtime: 'node',
   logLevel: 'log',
+  maxDuration: 300,
   dirs: ['./jobs'],
 });
