@@ -106,7 +106,7 @@
   main {
     max-width: 900px;
     margin: 0 auto;
-    padding: 32px 24px 64px;
+    padding: 32px 24px 96px;
   }
 
   .page-title {
@@ -168,7 +168,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 20px 24px;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     cursor: pointer;
   }
 
@@ -179,12 +179,34 @@
 
   .call-card.expanded { cursor: default; }
 
+  .call-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
   .card-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 10px;
+  }
+
+  /* ── Checkbox ── */
+  .card-checkbox-wrap {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    padding: 2px 6px 2px 0;
+  }
+
+  .card-checkbox-wrap input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    flex-shrink: 0;
   }
 
   .card-title {
@@ -197,6 +219,7 @@
 
   .card-badges {
     display: flex;
+    align-items: center;
     gap: 6px;
     flex-shrink: 0;
     flex-wrap: wrap;
@@ -217,6 +240,25 @@
   .badge-processing { background: var(--yellow-light); color: var(--yellow); }
   .badge-error   { background: var(--red-light); color: var(--red); }
   .badge-type    { background: var(--surface2); color: var(--ink-muted); }
+
+  /* ── Trash button ── */
+  .btn-trash {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .btn-trash:hover {
+    background: var(--red-light);
+    color: var(--red);
+  }
 
   .card-meta {
     display: flex;
@@ -344,6 +386,116 @@
 
   .btn-expand:hover { background: var(--border); }
 
+  /* ── Delete confirm bar ── */
+  .delete-confirm-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--red-light);
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    flex-wrap: wrap;
+  }
+
+  .delete-confirm-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--red);
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .btn-delete-confirm {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--red);
+    border: none;
+    border-radius: 7px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-delete-confirm:hover { opacity: 0.85; }
+
+  .btn-delete-cancel {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-delete-cancel:hover { background: var(--surface2); }
+
+  /* ── Bulk action bar ── */
+  .bulk-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+    transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .bulk-bar.visible {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .bulk-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.75);
+  }
+
+  .btn-bulk-delete {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--red);
+    border: none;
+    border-radius: 8px;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-bulk-delete:hover { opacity: 0.85; }
+
+  .btn-bulk-cancel {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .btn-bulk-cancel:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
   /* ── Empty / loading state ── */
   .state-empty, .state-loading, .state-error {
     text-align: center;
@@ -385,12 +537,14 @@
 
   /* ── Responsive ── */
   @media (max-width: 640px) {
-    main { padding: 20px 16px 48px; }
+    main { padding: 20px 16px 96px; }
     .card-header { flex-direction: column-reverse; }
     .card-badges { justify-content: flex-start; }
     .stats { gap: 8px; }
     .stat { padding: 10px 14px; }
     .call-card { padding: 16px; }
+    .bulk-bar { left: 16px; right: 16px; transform: translateY(100px); width: auto; white-space: normal; }
+    .bulk-bar.visible { transform: translateY(0); }
   }
 </style>
 </head>
@@ -439,9 +593,17 @@
   </div>
 </main>
 
+<!-- Bulk delete action bar -->
+<div class="bulk-bar" id="bulk-bar">
+  <span class="bulk-count" id="bulk-count"></span>
+  <button class="btn-bulk-delete" onclick="deleteSelected()">Supprimer</button>
+  <button class="btn-bulk-cancel" onclick="clearSelection()">Annuler</button>
+</div>
+
 <script>
 let expandedId = null;
 let autoRefresh = null;
+let selectedIds = new Set();
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -463,6 +625,7 @@ function escapeHtml(str) {
 
 function renderCard(call) {
   const isExpanded = expandedId === call.id;
+  const isSelected = selectedIds.has(call.id);
   const actions = Array.isArray(call.actions) ? call.actions : (call.actions ? JSON.parse(call.actions) : []);
 
   const actionsHtml = actions.length
@@ -470,7 +633,7 @@ function renderCard(call) {
     : '<span style="color:var(--ink-dim);font-size:13px">Aucune action</span>';
 
   const trelloBtn = call.trello_url
-    ? `<a href="${call.trello_url}" target="_blank" class="btn-trello">
+    ? `<a href="${escapeHtml(call.trello_url)}" target="_blank" class="btn-trello">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="9" height="14" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2"/></svg>
         Voir Trello
       </a>`
@@ -478,13 +641,19 @@ function renderCard(call) {
 
   const resumeText = call.resume || call.error || '';
 
+  const trashIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
   return `
-    <div class="call-card ${isExpanded ? 'expanded' : ''}" id="card-${call.id}" onclick="toggleCard('${call.id}', event)">
+    <div class="call-card ${isExpanded ? 'expanded' : ''} ${isSelected ? 'selected' : ''}" id="card-${call.id}" onclick="toggleCard('${call.id}', event)">
       <div class="card-header">
+        <label class="card-checkbox-wrap" onclick="event.stopPropagation()">
+          <input type="checkbox" onchange="toggleSelect('${call.id}', this.checked)" ${isSelected ? 'checked' : ''}>
+        </label>
         <div class="card-title">${escapeHtml(call.titre || '(en cours de traitement…)')}</div>
         <div class="card-badges">
           ${badgeStatus(call.status)}
           <span class="badge badge-type">${escapeHtml(call.call_type || '—')}</span>
+          <button class="btn-trash" onclick="startDelete('${call.id}', event)" title="Supprimer">${trashIcon}</button>
         </div>
       </div>
       <div class="card-meta">
@@ -492,6 +661,12 @@ function renderCard(call) {
         ${call.project_name ? `<span>📁 ${escapeHtml(call.project_name)}</span>` : ''}
       </div>
       ${resumeText ? `<div class="card-resume">${escapeHtml(resumeText)}</div>` : ''}
+
+      <div class="delete-confirm-bar" id="delete-confirm-${call.id}">
+        <span class="delete-confirm-text">Supprimer ce compte rendu ?</span>
+        <button class="btn-delete-confirm" onclick="confirmDelete('${call.id}', event)">Supprimer</button>
+        <button class="btn-delete-cancel" onclick="cancelDelete('${call.id}', event)">Annuler</button>
+      </div>
 
       <div class="card-detail">
         ${actions.length ? `
@@ -518,9 +693,96 @@ function renderCard(call) {
 }
 
 function toggleCard(id, e) {
-  if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+  if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' ||
+      e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL') return;
   expandedId = expandedId === id ? null : id;
   renderList(window._calls);
+}
+
+function toggleSelect(id, checked) {
+  if (checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  // Update card class directly without full re-render
+  const card = document.getElementById(`card-${id}`);
+  if (card) card.classList.toggle('selected', checked);
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  const count = selectedIds.size;
+  if (count > 0) {
+    document.getElementById('bulk-count').textContent =
+      count === 1 ? '1 sélectionné' : `${count} sélectionnés`;
+    bar.classList.add('visible');
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  document.querySelectorAll('.card-checkbox-wrap input').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.call-card.selected').forEach(el => el.classList.remove('selected'));
+  updateBulkBar();
+}
+
+function startDelete(id, e) {
+  e.stopPropagation();
+  // Hide any other open confirm bars
+  document.querySelectorAll('.delete-confirm-bar').forEach(el => el.style.display = 'none');
+  const bar = document.getElementById(`delete-confirm-${id}`);
+  if (bar) bar.style.display = 'flex';
+}
+
+function cancelDelete(id, e) {
+  e.stopPropagation();
+  const bar = document.getElementById(`delete-confirm-${id}`);
+  if (bar) bar.style.display = 'none';
+}
+
+async function confirmDelete(id, e) {
+  e.stopPropagation();
+  const bar = document.getElementById(`delete-confirm-${id}`);
+  if (bar) {
+    bar.querySelector('.btn-delete-confirm').textContent = '…';
+    bar.querySelector('.btn-delete-confirm').disabled = true;
+  }
+  try {
+    const res = await fetch(`/api/calls?id=${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // Remove from local data and re-render
+    selectedIds.delete(id);
+    window._calls = window._calls.filter(c => c.id !== id);
+    renderList(window._calls);
+    updateBulkBar();
+  } catch (err) {
+    if (bar) {
+      bar.querySelector('.btn-delete-confirm').textContent = 'Supprimer';
+      bar.querySelector('.btn-delete-confirm').disabled = false;
+      bar.querySelector('.delete-confirm-text').textContent = `Erreur : ${err.message}`;
+    }
+  }
+}
+
+async function deleteSelected() {
+  if (!selectedIds.size) return;
+  const ids = [...selectedIds].join(',');
+  const btn = document.querySelector('.btn-bulk-delete');
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/calls?ids=${ids}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    selectedIds.clear();
+    window._calls = window._calls.filter(c => !ids.includes(c.id));
+    renderList(window._calls);
+    updateBulkBar();
+  } catch (err) {
+    btn.textContent = 'Supprimer';
+    btn.disabled = false;
+    alert(`Erreur lors de la suppression : ${err.message}`);
+  }
 }
 
 function copyEmail(id, e) {
@@ -542,6 +804,7 @@ function renderList(calls) {
 
   if (!calls.length) {
     container.innerHTML = '<div class="state-empty">Aucun appel traité pour le moment.</div>';
+    document.getElementById('stats').style.display = 'none';
     return;
   }
 
