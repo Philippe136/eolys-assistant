@@ -28,7 +28,9 @@ export const processCall = task({
       if (!audioRes.ok) throw new Error(`Impossible de télécharger l'audio : ${audioRes.status}`);
 
       const audioBuffer = await audioRes.arrayBuffer();
-      const audioFile = new File([audioBuffer], 'audio.m4a', { type: 'audio/mp4' });
+      const ext = new URL(audioUrl).pathname.split('.').pop() || 'm4a';
+      const mimeMap = { mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg', webm: 'audio/webm', flac: 'audio/flac' };
+      const audioFile = new File([audioBuffer], `audio.${ext}`, { type: mimeMap[ext] ?? 'audio/mp4' });
 
       // ── Étape 2 : Transcription Whisper ───────────────────────────────────
       console.log(`[${callId}] Transcription Whisper...`);
