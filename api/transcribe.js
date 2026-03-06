@@ -65,7 +65,7 @@ export default async function handler(req, res) {
     // 2. Analyse Claude
     const anthropic = new Anthropic({ apiKey: config.anthropic });
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022', // Version stable et puissante
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 1000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Type: ${callType}\nProjet: ${project}\n\nTranscription:\n${transcript}` }],
