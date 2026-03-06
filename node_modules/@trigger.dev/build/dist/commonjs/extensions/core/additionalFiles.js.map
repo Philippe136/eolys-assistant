@@ -1,1 +1,0 @@
-{"version":3,"file":"additionalFiles.js","sourceRoot":"","sources":["../../../../src/extensions/core/additionalFiles.ts"],"names":[],"mappings":";;AAOA,0CAOC;AAbD,0EAA8E;AAM9E,SAAgB,eAAe,CAAC,OAA+B;IAC7D,OAAO;QACL,IAAI,EAAE,iBAAiB;QACvB,KAAK,CAAC,eAAe,CAAC,OAAO,EAAE,QAAQ;YACrC,MAAM,IAAA,8CAAyB,EAAC,iBAAiB,EAAE,OAAO,EAAE,OAAO,EAAE,QAAQ,CAAC,CAAC;QACjF,CAAC;KACF,CAAC;AACJ,CAAC"}
