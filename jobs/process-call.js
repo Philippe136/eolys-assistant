@@ -64,7 +64,31 @@ export const processCall = task({
       const raw = message.content.map(b => b.text || '').join('');
       const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
 
-      // ── Étape 4 : Sauvegarde en base ──────────────────────────────────────
+      // ── Étape 4 : Créer la carte Trello (optionnel) ───────────────────────
+      let trelloUrl = null;
+      if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN && process.env.TRELLO_LIST_ID) {
+        try {
+          const cardDesc = `**Résumé :**\n${result.resume}\n\n**Actions :**\n${(result.actions ?? []).map(a => `- ${a}`).join('\n')}\n\n**Projet :** ${project}\n**Type :** ${callType}`;
+          const params = new URLSearchParams({
+            idList: process.env.TRELLO_LIST_ID,
+            key:    process.env.TRELLO_KEY,
+            token:  process.env.TRELLO_TOKEN,
+            name:   `📞 ${result.titre}`,
+            desc:   cardDesc,
+            pos:    'top',
+          });
+          const trelloRes = await fetch(`https://api.trello.com/1/cards?${params}`, { method: 'POST' });
+          if (trelloRes.ok) {
+            const card = await trelloRes.json();
+            trelloUrl = card.url;
+            console.log(`[${callId}] Trello ✅ ${trelloUrl}`);
+          }
+        } catch (trelloErr) {
+          console.warn(`[${callId}] Trello ignoré :`, trelloErr.message);
+        }
+      }
+
+      // ── Étape 5 : Sauvegarde en base ──────────────────────────────────────
       await sql`
         UPDATE calls SET
           status     = 'done',
@@ -72,12 +96,13 @@ export const processCall = task({
           titre      = ${result.titre},
           resume     = ${result.resume},
           actions    = ${JSON.stringify(result.actions ?? [])},
-          email      = ${result.email}
+          email      = ${result.email},
+          trello_url = ${trelloUrl}
         WHERE id = ${callId}
       `;
 
       console.log(`[${callId}] ✅ Traitement terminé`);
-      return { success: true, callId };
+      return { success: true, callId, trelloUrl };
 
     } catch (err) {
       console.error(`[${callId}] ❌ Erreur :`, err.message);

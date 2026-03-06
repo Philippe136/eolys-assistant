@@ -5,6 +5,7 @@
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1.js" },
-    { "source": "/((?!api).*)", "destination": "/index.html" }
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/((?!api|dashboard).*)", "destination": "/index.html" }
   ]
 }
