@@ -371,6 +371,25 @@
 
   .btn-trello:hover { opacity: 0.8; }
 
+  .btn-outlook {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0078d4;
+    background: #e8f3fc;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+
+  .btn-outlook:hover { opacity: 0.8; }
+
   .btn-expand {
     font-family: 'Syne', sans-serif;
     font-size: 12px;
@@ -639,6 +658,13 @@ function renderCard(call) {
       </a>`
     : '';
 
+  const outlookBtn = call.outlook_draft_url
+    ? `<a href="${escapeHtml(call.outlook_draft_url)}" target="_blank" class="btn-outlook">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>
+        Brouillon Outlook
+      </a>`
+    : '';
+
   const resumeText = call.resume || call.error || '';
 
   const trashIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
@@ -683,6 +709,7 @@ function renderCard(call) {
 
         <div class="card-footer">
           ${trelloBtn}
+          ${outlookBtn}
           <button class="btn-expand" onclick="copyEmail('${call.id}', event)" ${!call.email ? 'style="display:none"' : ''}>
             Copier l'e-mail
           </button>

@@ -14,7 +14,8 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const calls = await sql`
       SELECT id, created_at, call_type, project_name, status,
-             titre, resume, actions, email, trello_url, error
+             titre, resume, actions, email, trello_url,
+             outlook_draft_id, outlook_draft_url, error
       FROM calls
       ORDER BY created_at DESC
       LIMIT 100
