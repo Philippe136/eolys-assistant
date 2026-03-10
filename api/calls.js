@@ -27,21 +27,27 @@ export default async function handler(req, res) {
       LIMIT 100
     `;
 
-    // Enrichir avec les actions cochables (V2)
+    // Enrichir avec les actions cochables (V2) — dégradé si table absente
     if (calls.length) {
-      const ids = calls.map(c => c.id);
-      const actionRows = await sql`
-        SELECT id, call_id, text, done
-        FROM call_actions
-        WHERE call_id = ANY(${ids}::uuid[])
-        ORDER BY call_id, position
-      `;
-      const byCall = {};
-      for (const a of actionRows) {
-        if (!byCall[a.call_id]) byCall[a.call_id] = [];
-        byCall[a.call_id].push({ id: a.id, text: a.text, done: a.done });
+      try {
+        const ids = calls.map(c => c.id);
+        const actionRows = await sql`
+          SELECT id, call_id, text, done
+          FROM call_actions
+          WHERE call_id = ANY(${ids}::uuid[])
+          ORDER BY call_id, position
+        `;
+        const byCall = {};
+        for (const a of actionRows) {
+          if (!byCall[a.call_id]) byCall[a.call_id] = [];
+          byCall[a.call_id].push({ id: a.id, text: a.text, done: a.done });
+        }
+        for (const c of calls) c.action_items = byCall[c.id] || [];
+      } catch (e) {
+        // Table call_actions absente (migration non encore appliquée) : mode dégradé V1
+        console.warn('call_actions indisponible — migration non appliquée :', e.message);
+        for (const c of calls) c.action_items = [];
       }
-      for (const c of calls) c.action_items = byCall[c.id] || [];
     }
 
     return res.status(200).json(calls);
