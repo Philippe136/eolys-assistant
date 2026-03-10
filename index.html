@@ -343,7 +343,7 @@
 
   function startPolling(callId) {
     let attempts = 0;
-    const MAX_ATTEMPTS = 90; // 3 minutes max (90 × 2s)
+    const MAX_ATTEMPTS = 150; // 5 minutes max (150 × 2s) — aligné avec maxDuration Trigger.dev
     pollingInterval = setInterval(async () => {
       attempts++;
       if (attempts > MAX_ATTEMPTS) {
@@ -429,6 +429,8 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          callType: selectedType,
+          project:  project || 'Non précisé',
           messages: [{ role: 'user', content: `Type: ${selectedType}\nProjet: ${project || 'Non précisé'}\n\nTranscription:\n${transcript}` }]
         })
       });

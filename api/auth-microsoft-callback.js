@@ -37,10 +37,11 @@ export default async function handler(req, res) {
     const tokens = await tokenRes.json();
 
     if (!tokens.refresh_token) {
+      console.error('OAuth Microsoft : refresh_token absent. Réponse:', JSON.stringify(tokens));
       return res.status(500).send(`
         <html><body style="font-family:sans-serif;padding:40px;text-align:center">
-          <h2>❌ Pas de refresh token</h2>
-          <pre style="text-align:left;background:#f5f5f5;padding:16px;border-radius:8px">${JSON.stringify(tokens, null, 2)}</pre>
+          <h2>❌ Autorisation incomplète</h2>
+          <p style="color:#7a7268">Le refresh token est absent. Vérifiez les scopes de l'application Azure (offline_access requis).</p>
           <a href="/dashboard">← Retour</a>
         </body></html>`);
     }
@@ -66,7 +67,7 @@ export default async function handler(req, res) {
           <div style="font-size:40px;margin-bottom:16px">✅</div>
           <h2 style="margin:0 0 8px;font-size:20px">Outlook connecté !</h2>
           <p style="color:#7a7268;font-size:14px;margin:0 0 24px">
-            ${me.displayName || me.userPrincipalName || 'Compte connecté'}<br>
+            ${escHtml(me.displayName || me.userPrincipalName || 'Compte connecté')}<br>
             Les brouillons seront créés automatiquement.
           </p>
           <a href="/dashboard" style="background:#c8410a;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">

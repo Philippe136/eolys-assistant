@@ -1,4 +1,5 @@
 import { cors, requireWebOrigin } from '../lib/auth.js';
+import { sql } from '../lib/db.js';
 import { SYSTEM_PROMPT } from '../lib/prompts.js';
 
 export default async function handler(req, res) {
@@ -13,7 +14,7 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY manquante' });
 
   try {
-    const { messages } = req.body || {};
+    const { messages, callType, project } = req.body || {};
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Payload invalide : champ messages requis.' });
     }
@@ -37,6 +38,30 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+
+    // ── Persister le résultat en BDD (flux B — saisie manuelle) ──────────────
+    if (response.ok && data.content) {
+      try {
+        const raw    = data.content.map(b => b.text || '').join('');
+        const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        await sql`
+          INSERT INTO calls (call_type, project_name, status, titre, resume, actions, email)
+          VALUES (
+            ${callType || 'manuel'},
+            ${project  || 'Non précisé'},
+            'done',
+            ${result.titre  ?? null},
+            ${result.resume ?? null},
+            ${JSON.stringify(result.actions ?? [])},
+            ${result.email  ?? null}
+          )
+        `;
+      } catch (e) {
+        // Persistance échouée : non bloquant, le résultat est quand même retourné au client
+        console.warn('Flux B — persistance BDD ignorée :', e.message);
+      }
+    }
+
     return res.status(response.status).json(data);
   } catch (err) {
     console.error('Erreur /api/claude:', err.message);

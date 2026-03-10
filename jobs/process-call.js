@@ -89,18 +89,33 @@ export const processCall = task({
       if (!transcript) throw new Error('Transcription vide — audio inaudible ou trop court.');
       console.log(`[${callId}] Transcript : ${transcript.substring(0, 80)}...`);
 
-      // ── Étape 3 : Analyse Claude Haiku ────────────────────────────────────
+      // ── Étape 3 : Analyse Claude Haiku (avec retry si JSON invalide) ────────
       console.log(`[${callId}] Analyse Claude...`);
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      const message   = await anthropic.messages.create({
-        model:      'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
-        system:     SYSTEM_PROMPT,
-        messages:   [{ role: 'user', content: `Type d'appel: ${callType}\nProjet/Interlocuteur: ${project}\n\nTranscription:\n${transcript}` }],
-      });
 
-      const raw    = message.content.map(b => b.text || '').join('');
-      const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      let result;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const message = await anthropic.messages.create({
+          model:      'claude-haiku-4-5-20251001',
+          max_tokens: 1500,
+          system:     SYSTEM_PROMPT,
+          messages:   [{ role: 'user', content: `Type d'appel: ${callType}\nProjet/Interlocuteur: ${project}\n\nTranscription:\n${transcript}` }],
+        });
+
+        const raw = message.content.map(b => b.text || '').join('');
+        try {
+          const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+          // Validation minimale des champs requis
+          if (typeof parsed.titre !== 'string' || typeof parsed.resume !== 'string' || !Array.isArray(parsed.actions)) {
+            throw new Error('Champs requis manquants (titre, resume, actions)');
+          }
+          result = parsed;
+          break;
+        } catch (e) {
+          console.warn(`[${callId}] Claude JSON invalide (tentative ${attempt}/3) :`, e.message, '— raw:', raw.substring(0, 200));
+          if (attempt === 3) throw new Error(`Claude n'a pas retourné un JSON valide après 3 tentatives : ${e.message}`);
+        }
+      }
 
       // ── Étape 4 : Créer la carte Trello (optionnel) ───────────────────────
       let trelloUrl = null;

@@ -554,6 +554,50 @@
     vertical-align: middle;
   }
 
+  /* ── Recherche ── */
+  .search-bar {
+    margin-bottom: 16px;
+  }
+  .search-input {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--ink-dim); }
+
+  /* ── Pagination ── */
+  .pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-top: 20px;
+  }
+  .btn-page {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--ink); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-page:hover:not(:disabled) { background: var(--surface2); border-color: var(--accent); }
+  .btn-page:disabled { opacity: 0.4; cursor: default; }
+  .btn-page.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .page-info { font-size: 12px; color: var(--ink-muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Retry button ── */
+  .btn-retry {
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+    padding: 5px 12px; border-radius: 7px; border: 1.5px solid var(--red);
+    background: transparent; color: var(--red); cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-retry:hover { background: var(--red); color: #fff; }
+  .btn-retry:disabled { opacity: 0.5; cursor: default; }
+
   /* ── Responsive ── */
   @media (max-width: 640px) {
     main { padding: 20px 16px 96px; }
@@ -603,6 +647,12 @@
     </div>
   </div>
 
+  <div class="search-bar">
+    <input type="text" id="search-input" class="search-input"
+      placeholder="🔍 Rechercher par titre, projet, résumé…"
+      oninput="filterCalls()" />
+  </div>
+
   <div id="calls-list" class="calls-list">
     <div class="state-loading">
       <span class="state-loading-dot"></span>
@@ -610,7 +660,26 @@
       <span class="state-loading-dot"></span>
     </div>
   </div>
+
+  <div class="pagination" id="pagination"></div>
 </main>
+
+<!-- Modal login -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,23,20,0.7);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:40px 48px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="font-size:32px;margin-bottom:12px">🔐</div>
+    <h2 style="font-size:20px;margin:0 0 6px">Accès dashboard</h2>
+    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Eolys Solutions — accès restreint</p>
+    <input type="password" id="login-password"
+      style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"
+      placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()" />
+    <div id="login-error" style="color:#c8410a;font-size:13px;margin-bottom:10px;display:none"></div>
+    <button onclick="submitLogin()"
+      style="width:100%;padding:11px;background:#c8410a;color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer">
+      Connexion
+    </button>
+  </div>
+</div>
 
 <!-- Bulk delete action bar -->
 <div class="bulk-bar" id="bulk-bar">
@@ -679,6 +748,7 @@ function renderCard(call) {
         <div class="card-badges">
           ${badgeStatus(call.status)}
           <span class="badge badge-type">${escapeHtml(call.call_type || '—')}</span>
+          ${call.status === 'error' ? `<button class="btn-retry" onclick="retryCall('${call.id}', event)">↺ Réessayer</button>` : ''}
           <button class="btn-trash" onclick="startDelete('${call.id}', event)" title="Supprimer">${trashIcon}</button>
         </div>
       </div>
@@ -802,7 +872,8 @@ async function deleteSelected() {
     const res = await fetch(`/api/calls?ids=${ids}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     selectedIds.clear();
-    window._calls = window._calls.filter(c => !ids.includes(c.id));
+    const idList = ids.split(',');
+    window._calls = window._calls.filter(c => !idList.includes(c.id));
     renderList(window._calls);
     updateBulkBar();
   } catch (err) {
@@ -825,6 +896,63 @@ function copyEmail(id, e) {
   });
 }
 
+const PAGE_SIZE = 20;
+let currentPage = 1;
+let currentQuery = '';
+
+function filterCalls() {
+  currentQuery = document.getElementById('search-input').value.toLowerCase().trim();
+  currentPage  = 1;
+  renderFiltered();
+}
+
+function renderFiltered() {
+  const all      = window._calls || [];
+  const filtered = currentQuery
+    ? all.filter(c =>
+        (c.titre        || '').toLowerCase().includes(currentQuery) ||
+        (c.project_name || '').toLowerCase().includes(currentQuery) ||
+        (c.resume       || '').toLowerCase().includes(currentQuery) ||
+        (c.call_type    || '').toLowerCase().includes(currentQuery)
+      )
+    : all;
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const container = document.getElementById('calls-list');
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="state-empty">${currentQuery ? 'Aucun résultat pour cette recherche.' : 'Aucun appel traité pour le moment.'}</div>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = pageItems.map(renderCard).join('');
+  renderPagination(totalPages, filtered.length);
+}
+
+function renderPagination(totalPages, total) {
+  const pg = document.getElementById('pagination');
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end   = Math.min(currentPage * PAGE_SIZE, total);
+
+  pg.innerHTML = `
+    <button class="btn-page" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>←</button>
+    <span class="page-info">${start}–${end} / ${total}</span>
+    <button class="btn-page" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>→</button>
+  `;
+}
+
+function goPage(page) {
+  currentPage = page;
+  renderFiltered();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function renderList(calls) {
   window._calls = calls;
   const container = document.getElementById('calls-list');
@@ -832,33 +960,83 @@ function renderList(calls) {
   if (!calls.length) {
     container.innerHTML = '<div class="state-empty">Aucun appel traité pour le moment.</div>';
     document.getElementById('stats').style.display = 'none';
+    document.getElementById('pagination').innerHTML = '';
     return;
   }
 
-  // Stats
-  const total = calls.length;
-  const done  = calls.filter(c => c.status === 'done').length;
-  const processing = calls.filter(c => c.status === 'processing').length;
-  const errors = calls.filter(c => c.status === 'error').length;
-
+  // Stats calculées sur l'ensemble (pas juste la page)
   document.getElementById('stats').style.display = 'flex';
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-done').textContent = done;
-  document.getElementById('stat-processing').textContent = processing;
-  document.getElementById('stat-error').textContent = errors;
+  document.getElementById('stat-total').textContent      = calls.length;
+  document.getElementById('stat-done').textContent       = calls.filter(c => c.status === 'done').length;
+  document.getElementById('stat-processing').textContent = calls.filter(c => c.status === 'processing').length;
+  document.getElementById('stat-error').textContent      = calls.filter(c => c.status === 'error').length;
 
-  container.innerHTML = calls.map(renderCard).join('');
+  renderFiltered();
 
-  // Auto-refresh if any processing
+  // Auto-refresh si des appels sont en cours
   clearTimeout(autoRefresh);
-  if (processing > 0) {
+  if (calls.some(c => c.status === 'processing')) {
     autoRefresh = setTimeout(loadCalls, 5000);
+  }
+}
+
+async function retryCall(id, e) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch(`/api/retry?id=${id}`, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadCalls();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '↺ Réessayer';
+    alert(`Erreur lors du réessai : ${err.message}`);
+  }
+}
+
+function showLoginModal() {
+  const overlay = document.getElementById('login-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => document.getElementById('login-password')?.focus(), 50);
+}
+
+function hideLoginModal() {
+  document.getElementById('login-overlay').style.display = 'none';
+}
+
+async function submitLogin() {
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      errEl.textContent = data.error || 'Mot de passe incorrect.';
+      errEl.style.display = 'block';
+      return;
+    }
+    hideLoginModal();
+    loadCalls();
+  } catch {
+    errEl.textContent = 'Erreur réseau.';
+    errEl.style.display = 'block';
   }
 }
 
 async function loadCalls() {
   try {
     const res = await fetch('/api/calls');
+    if (res.status === 401) {
+      showLoginModal();
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const calls = await res.json();
     renderList(calls);

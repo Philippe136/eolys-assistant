@@ -2,8 +2,8 @@ import formidable from 'formidable';
 import fs from 'fs';
 import { put } from '@vercel/blob';
 import { tasks } from '@trigger.dev/sdk/v3';
-import { neon } from '@neondatabase/serverless';
 import { cors, requireBearer } from '../lib/auth.js';
+import { sql } from '../lib/db.js';
 
 export default async function handler(req, res) {
   cors(req, res, 'POST, OPTIONS');
@@ -13,7 +13,6 @@ export default async function handler(req, res) {
   // Auth bearer (iOS Shortcut doit envoyer Authorization: Bearer <INGEST_SECRET>)
   if (!requireBearer(req, res)) return;
 
-  if (!process.env.DATABASE_URL)          return res.status(500).json({ error: 'DATABASE_URL manquante dans Vercel' });
   if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN manquante dans Vercel' });
   if (!process.env.TRIGGER_SECRET_KEY)    return res.status(500).json({ error: 'TRIGGER_SECRET_KEY manquante dans Vercel' });
 
@@ -63,7 +62,6 @@ export default async function handler(req, res) {
     const blob = await put(filename, fileBuffer, { access: 'public', contentType });
 
     // ── Créer l'entrée en base ──────────────────────────────────────────────
-    const sql    = neon(process.env.DATABASE_URL);
     const [call] = await sql`
       INSERT INTO calls (call_type, project_name, audio_url, status)
       VALUES (${callType}, ${project}, ${blob.url}, 'processing')
