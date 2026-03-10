@@ -2,8 +2,10 @@
   "functions": {
     "api/ingest.js": { "maxDuration": 30, "memory": 512 }
   },
+  "redirects": [
+    { "source": "/", "destination": "/dashboard", "permanent": false }
+  ],
   "rewrites": [
-    { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/((?!api|dashboard).*)", "destination": "/index.html" }
+    { "source": "/dashboard", "destination": "/dashboard.html" }
   ]
 }

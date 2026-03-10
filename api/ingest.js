@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     await sql`UPDATE calls SET job_id = ${handle.id} WHERE id = ${call.id}`;
 
     const appUrl    = process.env.APP_URL ?? `https://${req.headers.host}`;
-    const resultUrl = `${appUrl}/?callId=${call.id}`;
+    const resultUrl = `${appUrl}/dashboard`;
 
     return res.status(202).json({ callId: call.id, jobId: handle.id, status: 'processing', resultUrl });
 
