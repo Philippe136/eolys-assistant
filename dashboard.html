@@ -598,6 +598,63 @@
   .btn-retry:hover { background: var(--red); color: #fff; }
   .btn-retry:disabled { opacity: 0.5; cursor: default; }
 
+  /* ── Action items cochables (V2) ── */
+  .action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    list-style: none;
+    padding: 3px 0;
+  }
+  .action-item::before { content: none; }
+  .action-item input[type="checkbox"] {
+    width: 15px; height: 15px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .action-text { transition: color 0.15s; }
+  .action-item.done .action-text { text-decoration: line-through; color: var(--ink-dim); }
+
+  /* ── Stats détaillées ── */
+  .stats-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+  }
+  .stats-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--ink-dim); margin-bottom: 10px;
+  }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .bar-label {
+    font-size: 12px; color: var(--ink); width: 90px; flex-shrink: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .bar-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .bar-fill  { height: 100%; background: var(--accent); border-radius: 3px; }
+  .bar-count { font-size: 11px; color: var(--ink-muted); min-width: 20px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Bouton Export CSV ── */
+  .btn-export {
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--green); background: var(--green-light); border: none;
+    border-radius: 8px; padding: 6px 12px; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    transition: opacity 0.15s;
+  }
+  .btn-export:hover { opacity: 0.8; }
+
   /* ── Responsive ── */
   @media (max-width: 640px) {
     main { padding: 20px 16px 96px; }
@@ -608,6 +665,7 @@
     .call-card { padding: 16px; }
     .bulk-bar { left: 16px; right: 16px; transform: translateY(100px); width: auto; white-space: normal; }
     .bulk-bar.visible { transform: translateY(0); }
+    .stats-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -620,6 +678,11 @@
   </div>
   <div class="header-actions">
     <span id="last-refresh" style="font-size:11px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace"></span>
+    <button class="btn-ghost" onclick="toggleStatsPanel()" title="Statistiques détaillées">📊 Analyse</button>
+    <a href="/api/export" class="btn-export" title="Télécharger tous les appels en CSV">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      CSV
+    </a>
   </div>
 </header>
 
@@ -644,6 +707,15 @@
       <div class="stat-value" id="stat-error" style="color:var(--red)">—</div>
       <div class="stat-label">Erreurs</div>
     </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-actions" style="color:var(--accent)">—</div>
+      <div class="stat-label">Actions</div>
+    </div>
+  </div>
+
+  <!-- Panel Statistiques détaillées (toggle) -->
+  <div id="stats-panel" class="stats-panel" style="display:none">
+    <div id="stats-panel-content"></div>
   </div>
 
   <div class="search-bar">
@@ -713,11 +785,30 @@ function escapeHtml(str) {
 function renderCard(call) {
   const isExpanded = expandedId === call.id;
   const isSelected = selectedIds.has(call.id);
-  const actions = Array.isArray(call.actions) ? call.actions : (call.actions ? JSON.parse(call.actions) : []);
+  const actions     = Array.isArray(call.actions) ? call.actions : (call.actions ? JSON.parse(call.actions) : []);
+  const actionItems = Array.isArray(call.action_items) ? call.action_items : [];
 
-  const actionsHtml = actions.length
-    ? `<ul class="actions-list">${actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>`
-    : '<span style="color:var(--ink-dim);font-size:13px">Aucune action</span>';
+  // V2 : items cochables si disponibles, sinon V1 liste statique
+  let actionsHtml;
+  if (actionItems.length > 0) {
+    actionsHtml = `<ul class="actions-list">
+      ${actionItems.map(a => `
+        <li class="action-item${a.done ? ' done' : ''}">
+          <input type="checkbox" ${a.done ? 'checked' : ''}
+                 onchange="toggleAction('${a.id}', this.checked, event)">
+          <span class="action-text">${escapeHtml(a.text)}</span>
+        </li>`).join('')}
+    </ul>`;
+  } else if (actions.length > 0) {
+    actionsHtml = `<ul class="actions-list">${actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>`;
+  } else {
+    actionsHtml = '<span style="color:var(--ink-dim);font-size:13px">Aucune action</span>';
+  }
+
+  // Compteur actions pour card-meta
+  const actionsMeta = actionItems.length
+    ? `<span title="Actions faites">☑ ${actionItems.filter(a => a.done).length}/${actionItems.length}</span>`
+    : '';
 
   const trelloBtn = call.trello_url
     ? `<a href="${escapeHtml(call.trello_url)}" target="_blank" class="btn-trello">
@@ -754,6 +845,7 @@ function renderCard(call) {
       <div class="card-meta">
         <span>📅 ${formatDate(call.created_at)}</span>
         ${call.project_name ? `<span>📁 ${escapeHtml(call.project_name)}</span>` : ''}
+        ${actionsMeta}
       </div>
       ${resumeText ? `<div class="card-resume">${escapeHtml(resumeText)}</div>` : ''}
 
@@ -970,6 +1062,18 @@ function renderList(calls) {
   document.getElementById('stat-processing').textContent = calls.filter(c => c.status === 'processing').length;
   document.getElementById('stat-error').textContent      = calls.filter(c => c.status === 'error').length;
 
+  // Actions globales (V2)
+  const allActionItems = calls.flatMap(c => Array.isArray(c.action_items) ? c.action_items : []);
+  const statActEl = document.getElementById('stat-actions');
+  if (statActEl) {
+    statActEl.textContent = allActionItems.length
+      ? `${allActionItems.filter(a => a.done).length}/${allActionItems.length}`
+      : '—';
+  }
+
+  // Rafraîchir le panel stats s'il est ouvert
+  if (statsPanelVisible) renderStatsPanel(calls);
+
   renderFiltered();
 
   // Auto-refresh si des appels sont en cours
@@ -993,6 +1097,124 @@ async function retryCall(id, e) {
     btn.textContent = '↺ Réessayer';
     alert(`Erreur lors du réessai : ${err.message}`);
   }
+}
+
+// ── Actions cochables (V2) ────────────────────────────────────────────────────
+async function toggleAction(actionId, done, e) {
+  e.stopPropagation();
+  try {
+    const res = await fetch(`/api/actions?id=${actionId}`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ done }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Mise à jour de l'état local sans re-render complet
+    for (const call of (window._calls || [])) {
+      const action = (call.action_items || []).find(a => a.id === actionId);
+      if (action) {
+        action.done = done;
+        // Style de la ligne directement
+        const li = e.target.closest('.action-item');
+        if (li) li.classList.toggle('done', done);
+        // Mettre à jour compteur card-meta (ex: "2/3")
+        const card = e.target.closest('.call-card');
+        if (card) {
+          const meta = card.querySelector('.card-meta');
+          if (meta) {
+            const items = call.action_items;
+            const span = [...meta.querySelectorAll('span')].find(s => s.title === 'Actions faites');
+            if (span) span.textContent = `☑ ${items.filter(a => a.done).length}/${items.length}`;
+          }
+        }
+        // Mettre à jour stat global
+        const allItems = (window._calls || []).flatMap(c => c.action_items || []);
+        const el = document.getElementById('stat-actions');
+        if (el && allItems.length) el.textContent = `${allItems.filter(a => a.done).length}/${allItems.length}`;
+        break;
+      }
+    }
+  } catch (err) {
+    // Annuler le changement visuel si erreur
+    e.target.checked = !done;
+    console.error('Erreur toggleAction:', err);
+  }
+}
+
+// ── Statistiques détaillées ───────────────────────────────────────────────────
+let statsPanelVisible = false;
+
+function toggleStatsPanel() {
+  const panel = document.getElementById('stats-panel');
+  statsPanelVisible = !statsPanelVisible;
+  panel.style.display = statsPanelVisible ? 'block' : 'none';
+  if (statsPanelVisible) renderStatsPanel(window._calls || []);
+}
+
+function renderStatsPanel(calls) {
+  const done = calls.filter(c => c.status === 'done');
+
+  // 1. Répartition par type
+  const typeCounts = {};
+  for (const c of done) { const t = c.call_type || 'autre'; typeCounts[t] = (typeCounts[t] || 0) + 1; }
+  const typeEntries = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
+  const typeMax     = typeEntries[0]?.[1] || 1;
+  const typeBars    = typeEntries.map(([label, count]) => `
+    <div class="bar-row">
+      <span class="bar-label">${escapeHtml(label)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/typeMax*100)}%"></div></div>
+      <span class="bar-count">${count}</span>
+    </div>`).join('') || '<span style="font-size:12px;color:var(--ink-dim)">Aucun appel traité</span>';
+
+  // 2. Top 5 projets
+  const projCounts = {};
+  for (const c of done) { const p = c.project_name || 'Non précisé'; projCounts[p] = (projCounts[p] || 0) + 1; }
+  const projEntries = Object.entries(projCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const projMax     = projEntries[0]?.[1] || 1;
+  const projBars    = projEntries.map(([label, count]) => `
+    <div class="bar-row">
+      <span class="bar-label">${escapeHtml(label)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/projMax*100)}%"></div></div>
+      <span class="bar-count">${count}</span>
+    </div>`).join('') || '<span style="font-size:12px;color:var(--ink-dim)">Aucun projet</span>';
+
+  // 3. Volume hebdomadaire (5 dernières semaines)
+  function isoWeek(dateStr) {
+    const d = new Date(dateStr);
+    const day = d.getDay() || 7;
+    d.setDate(d.getDate() + 4 - day);
+    const y = d.getFullYear();
+    const jan1 = new Date(y, 0, 1);
+    const wk = Math.ceil(((d - jan1) / 86400000 + 1) / 7);
+    return `${y}-S${String(wk).padStart(2, '0')}`;
+  }
+  const weekCounts = {};
+  for (const c of calls) { const wk = isoWeek(c.created_at); weekCounts[wk] = (weekCounts[wk] || 0) + 1; }
+  const weekEntries = Object.entries(weekCounts).sort((a, b) => a[0].localeCompare(b[0])).slice(-5);
+  const weekMax     = Math.max(...weekEntries.map(e => e[1]), 1);
+  const weekBars    = weekEntries.map(([label, count]) => `
+    <div class="bar-row">
+      <span class="bar-label">${escapeHtml(label)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/weekMax*100)}%"></div></div>
+      <span class="bar-count">${count}</span>
+    </div>`).join('') || '<span style="font-size:12px;color:var(--ink-dim)">Aucun appel</span>';
+
+  document.getElementById('stats-panel-content').innerHTML = `
+    <div class="stats-grid">
+      <div>
+        <div class="stats-section-title">Par type d'appel</div>
+        ${typeBars}
+      </div>
+      <div>
+        <div class="stats-section-title">Top projets</div>
+        ${projBars}
+      </div>
+      <div>
+        <div class="stats-section-title">Volume / semaine</div>
+        ${weekBars}
+      </div>
+    </div>`;
 }
 
 function showLoginModal() {

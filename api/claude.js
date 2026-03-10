@@ -44,7 +44,7 @@ export default async function handler(req, res) {
       try {
         const raw    = data.content.map(b => b.text || '').join('');
         const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
-        await sql`
+        const [row]  = await sql`
           INSERT INTO calls (call_type, project_name, status, titre, resume, actions, email)
           VALUES (
             ${callType || 'manuel'},
@@ -55,7 +55,17 @@ export default async function handler(req, res) {
             ${JSON.stringify(result.actions ?? [])},
             ${result.email  ?? null}
           )
+          RETURNING id
         `;
+        // Actions cochables (V2)
+        if (row && Array.isArray(result.actions) && result.actions.length > 0) {
+          for (let i = 0; i < result.actions.length; i++) {
+            await sql`
+              INSERT INTO call_actions (call_id, text, position)
+              VALUES (${row.id}, ${result.actions[i]}, ${i})
+            `;
+          }
+        }
       } catch (e) {
         // Persistance échouée : non bloquant, le résultat est quand même retourné au client
         console.warn('Flux B — persistance BDD ignorée :', e.message);

@@ -37,3 +37,14 @@ CREATE TABLE IF NOT EXISTS config (
 ALTER TABLE calls ADD COLUMN IF NOT EXISTS trello_url        TEXT;
 ALTER TABLE calls ADD COLUMN IF NOT EXISTS outlook_draft_id  TEXT;
 ALTER TABLE calls ADD COLUMN IF NOT EXISTS outlook_draft_url TEXT;
+
+-- V2.0 : Actions cochables (une ligne par action extraite)
+CREATE TABLE IF NOT EXISTS call_actions (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  call_id    UUID NOT NULL REFERENCES calls(id) ON DELETE CASCADE,
+  text       TEXT NOT NULL,
+  done       BOOLEAN NOT NULL DEFAULT false,
+  position   INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS call_actions_call_id_idx ON call_actions(call_id);

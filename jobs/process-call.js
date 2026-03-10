@@ -166,6 +166,19 @@ export const processCall = task({
         WHERE id = ${callId}
       `;
 
+      // ── Étape 7 : Actions cochables (V2) ─────────────────────────────────
+      if (result.actions && result.actions.length > 0) {
+        // Supprimer les anciennes (retry) puis réinsérer
+        await sql`DELETE FROM call_actions WHERE call_id = ${callId}`;
+        for (let i = 0; i < result.actions.length; i++) {
+          await sql`
+            INSERT INTO call_actions (call_id, text, position)
+            VALUES (${callId}, ${result.actions[i]}, ${i})
+          `;
+        }
+        console.log(`[${callId}] ✅ ${result.actions.length} action(s) insérée(s)`);
+      }
+
       console.log(`[${callId}] ✅ Traitement terminé`);
       return { success: true, callId, trelloUrl, outlookDraftId };
 
