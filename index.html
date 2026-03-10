@@ -424,25 +424,11 @@
       document.getElementById('loading-msg').textContent = loadingMessages[msgIdx];
     }, 1800);
 
-    const systemPrompt = `Tu es l'assistant interne d'Eolys Solutions, entreprise GTB basée à La Ciotat. Spécialiste Distech Controls, projets 100k-500k€ sur la Côte d'Azur. Dirigeant : David Cohen.
-Tu reçois la transcription d'un appel téléphonique professionnel. Produis un compte rendu structuré en JSON.
-Réponds UNIQUEMENT avec un objet JSON valide, sans markdown ni backticks.
-Format :
-{
-  "titre": "Titre court de l'appel",
-  "resume": "Résumé factuel en 3-5 phrases",
-  "actions": ["Action 1", "Action 2", "Action 3"],
-  "email": "Objet: ...\\n\\nBonjour [Prénom],\\n\\n[Corps du mail]\\n\\nCordialement,\\nDavid Cohen\\nEolys Solutions"
-}`;
-
     try {
       const response = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1000,
-          system: systemPrompt,
           messages: [{ role: 'user', content: `Type: ${selectedType}\nProjet: ${project || 'Non précisé'}\n\nTranscription:\n${transcript}` }]
         })
       });

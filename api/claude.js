@@ -1,4 +1,5 @@
 import { cors, requireWebOrigin } from '../lib/auth.js';
+import { SYSTEM_PROMPT } from '../lib/prompts.js';
 
 export default async function handler(req, res) {
   cors(req, res, 'POST, OPTIONS');
@@ -12,17 +13,17 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY manquante' });
 
   try {
-    const { messages, system } = req.body || {};
+    const { messages } = req.body || {};
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Payload invalide : champ messages requis.' });
     }
 
-    // Modèle et max_tokens forcés côté serveur — non modifiables par le client
+    // Modèle, max_tokens et prompt système forcés côté serveur — non modifiables par le client
     const payload = {
       model:      'claude-haiku-4-5-20251001',
       max_tokens: 1500,
+      system:     SYSTEM_PROMPT,
       messages,
-      ...(system ? { system } : {}),
     };
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {

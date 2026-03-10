@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
 import { escHtml } from '../lib/auth.js';
+import { sql } from '../lib/db.js';
 
 export default async function handler(req, res) {
   const { code, error, error_description } = req.query;
@@ -46,7 +46,6 @@ export default async function handler(req, res) {
     }
 
     // Sauvegarder les tokens en base
-    const sql = neon(process.env.DATABASE_URL);
     await sql`
       INSERT INTO config (key, value, updated_at)
       VALUES ('microsoft_refresh_token', ${tokens.refresh_token}, NOW())
