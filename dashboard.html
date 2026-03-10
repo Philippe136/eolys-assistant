@@ -655,6 +655,41 @@
   }
   .btn-export:hover { opacity: 0.8; }
 
+  /* ── Filtres (type + projet) ── */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-select {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7268' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  .filter-select:focus { border-color: var(--accent); }
+  .btn-filter-reset {
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 7px 12px; border: 1.5px solid var(--border); border-radius: 9px;
+    background: var(--surface); color: var(--ink-muted); cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-filter-reset:hover { background: var(--surface2); color: var(--ink); }
+
   /* ── Responsive ── */
   @media (max-width: 640px) {
     main { padding: 20px 16px 96px; }
@@ -678,6 +713,8 @@
   </div>
   <div class="header-actions">
     <span id="last-refresh" style="font-size:11px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace"></span>
+    <a href="/actions"  class="btn-ghost">Actions</a>
+    <a href="/projects" class="btn-ghost">Projets</a>
     <button class="btn-ghost" onclick="toggleStatsPanel()" title="Statistiques détaillées">📊 Analyse</button>
     <a href="/api/export" class="btn-export" title="Télécharger tous les appels en CSV">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -716,6 +753,27 @@
   <!-- Panel Statistiques détaillées (toggle) -->
   <div id="stats-panel" class="stats-panel" style="display:none">
     <div id="stats-panel-content"></div>
+  </div>
+
+  <!-- Filtres structurés -->
+  <div class="filter-row" id="filter-row" style="display:none">
+    <select id="filter-type"    class="filter-select" onchange="filterCalls()">
+      <option value="">Tous les types</option>
+      <option value="client">Client</option>
+      <option value="prospect">Prospect</option>
+      <option value="fournisseur">Fournisseur</option>
+      <option value="interne">Interne</option>
+    </select>
+    <select id="filter-project" class="filter-select" onchange="filterCalls()">
+      <option value="">Tous les projets</option>
+    </select>
+    <select id="filter-status"  class="filter-select" onchange="filterCalls()">
+      <option value="">Tous les statuts</option>
+      <option value="done">Traité</option>
+      <option value="processing">En cours</option>
+      <option value="error">Erreur</option>
+    </select>
+    <button class="btn-filter-reset" onclick="resetFilters()">✕ Réinitialiser</button>
   </div>
 
   <div class="search-bar">
@@ -997,16 +1055,34 @@ function filterCalls() {
   renderFiltered();
 }
 
+function resetFilters() {
+  document.getElementById('filter-type').value    = '';
+  document.getElementById('filter-project').value = '';
+  document.getElementById('filter-status').value  = '';
+  document.getElementById('search-input').value   = '';
+  currentQuery = '';
+  currentPage  = 1;
+  renderFiltered();
+}
+
 function renderFiltered() {
-  const all      = window._calls || [];
-  const filtered = currentQuery
-    ? all.filter(c =>
-        (c.titre        || '').toLowerCase().includes(currentQuery) ||
-        (c.project_name || '').toLowerCase().includes(currentQuery) ||
-        (c.resume       || '').toLowerCase().includes(currentQuery) ||
-        (c.call_type    || '').toLowerCase().includes(currentQuery)
-      )
-    : all;
+  const all          = window._calls || [];
+  const typeFilter   = document.getElementById('filter-type')?.value    || '';
+  const projectFilter = document.getElementById('filter-project')?.value || '';
+  const statusFilter = document.getElementById('filter-status')?.value  || '';
+
+  const filtered = all.filter(c => {
+    if (typeFilter    && c.call_type    !== typeFilter)    return false;
+    if (projectFilter && c.project_name !== projectFilter) return false;
+    if (statusFilter  && c.status       !== statusFilter)  return false;
+    if (currentQuery) {
+      return (c.titre        || '').toLowerCase().includes(currentQuery) ||
+             (c.project_name || '').toLowerCase().includes(currentQuery) ||
+             (c.resume       || '').toLowerCase().includes(currentQuery) ||
+             (c.call_type    || '').toLowerCase().includes(currentQuery);
+    }
+    return true;
+  });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   if (currentPage > totalPages) currentPage = totalPages;
@@ -1061,6 +1137,14 @@ function renderList(calls) {
   document.getElementById('stat-done').textContent       = calls.filter(c => c.status === 'done').length;
   document.getElementById('stat-processing').textContent = calls.filter(c => c.status === 'processing').length;
   document.getElementById('stat-error').textContent      = calls.filter(c => c.status === 'error').length;
+
+  // Afficher la filter-row et peupler le dropdown projets
+  document.getElementById('filter-row').style.display = 'flex';
+  const projectSel = document.getElementById('filter-project');
+  const currentProj = projectSel.value;
+  const projects = [...new Set(calls.map(c => c.project_name).filter(Boolean))].sort();
+  projectSel.innerHTML = '<option value="">Tous les projets</option>' +
+    projects.map(p => `<option value="${escapeHtml(p)}" ${p === currentProj ? 'selected' : ''}>${escapeHtml(p)}</option>`).join('');
 
   // Actions globales (V2)
   const allActionItems = calls.flatMap(c => Array.isArray(c.action_items) ? c.action_items : []);

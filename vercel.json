@@ -6,6 +6,8 @@
     { "source": "/", "destination": "/dashboard", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/dashboard", "destination": "/dashboard.html" }
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/actions",   "destination": "/actions.html"   },
+    { "source": "/projects",  "destination": "/projects.html"  }
   ]
 }

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eolys — Actions</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface2: #f0ece5;
+    --border: #e0d9cf;
+    --ink: #1a1714;
+    --ink-muted: #7a7268;
+    --ink-dim: #b5afa6;
+    --accent: #c8410a;
+    --accent-light: #f5ede8;
+    --green: #1a6b3c;
+    --green-light: #e8f3ec;
+    --red: #b91c1c;
+    --red-light: #fef2f2;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+
+  .btn-ghost {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
+  .btn-ghost.active { color: var(--ink); background: var(--surface2); }
+
+  /* ── Main ── */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .page-subtitle { font-size: 14px; color: var(--ink-muted); margin-bottom: 28px; }
+
+  /* ── Stats bar ── */
+  .stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+  }
+  .stat-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Filtre ── */
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+  }
+  .btn-filter {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 7px;
+    border: none;
+    background: none;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-filter:hover { color: var(--ink); }
+  .btn-filter.active { background: var(--accent); color: #fff; }
+
+  /* ── Groups ── */
+  .project-group {
+    margin-bottom: 20px;
+  }
+
+  .project-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 0 4px;
+  }
+
+  .project-name {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ink-muted);
+  }
+
+  .project-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  .project-badge.all-done {
+    background: var(--green-light);
+    color: var(--green);
+  }
+
+  /* ── Action rows ── */
+  .actions-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .action-row {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .action-row:last-child { border-bottom: none; }
+  .action-row:hover { background: var(--surface2); }
+  .action-row.done { opacity: 0.55; }
+
+  .action-row-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .action-row-inner input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .action-row-body { flex: 1; min-width: 0; }
+
+  .action-row-text {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    transition: text-decoration 0.15s, color 0.15s;
+  }
+  .action-row.done .action-row-text {
+    text-decoration: line-through;
+    color: var(--ink-dim);
+    font-weight: 500;
+  }
+
+  .action-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    flex-wrap: wrap;
+  }
+
+  .meta-sep { color: var(--border); }
+
+  /* ── Fade out animation ── */
+  @keyframes fadeOut {
+    from { opacity: 1; max-height: 80px; }
+    to   { opacity: 0; max-height: 0; padding: 0; overflow: hidden; }
+  }
+
+  /* ── Empty / loading ── */
+  .state-empty, .state-loading, .state-error {
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--ink-muted);
+  }
+  .state-empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .state-empty-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+
+  .state-loading-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--ink-dim);
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+    margin: 0 2px;
+  }
+  .state-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .state-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50%       { opacity: 1;   transform: scale(1); }
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 20px 16px 64px; }
+    .action-row-inner { padding: 12px 14px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Eolys Assistant
+  </div>
+  <div class="header-actions">
+    <a href="/dashboard" class="btn-ghost">Tableau de bord</a>
+    <a href="/projects" class="btn-ghost">Projets</a>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">Actions à mener</div>
+  <p class="page-subtitle">Toutes les actions extraites des appels — Eolys Solutions</p>
+
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat">
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-todo" style="color:var(--accent)">—</div>
+      <div class="stat-label">À faire</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="stat-done" style="color:var(--green)">—</div>
+      <div class="stat-label">Faites</div>
+    </div>
+  </div>
+
+  <div class="filter-bar" id="filter-bar" style="display:none">
+    <button class="btn-filter active" id="btn-todo" onclick="setFilter('todo')">À faire</button>
+    <button class="btn-filter" id="btn-all"  onclick="setFilter('all')">Tout</button>
+  </div>
+
+  <div id="actions-container">
+    <div class="state-loading">
+      <span class="state-loading-dot"></span>
+      <span class="state-loading-dot"></span>
+      <span class="state-loading-dot"></span>
+    </div>
+  </div>
+</main>
+
+<!-- Modal login -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,23,20,0.7);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:40px 48px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="font-size:32px;margin-bottom:12px">🔐</div>
+    <h2 style="font-size:20px;margin:0 0 6px">Accès dashboard</h2>
+    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Eolys Solutions — accès restreint</p>
+    <input type="password" id="login-password"
+      style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"
+      placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()" />
+    <div id="login-error" style="color:#c8410a;font-size:13px;margin-bottom:10px;display:none"></div>
+    <button onclick="submitLogin()"
+      style="width:100%;padding:11px;background:#c8410a;color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer">
+      Connexion
+    </button>
+  </div>
+</div>
+
+<script>
+let allActions  = [];
+let currentFilter = 'todo';
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.getElementById('btn-todo').classList.toggle('active', f === 'todo');
+  document.getElementById('btn-all').classList.toggle('active',  f === 'all');
+  renderAll();
+}
+
+function renderAll() {
+  const total    = allActions.length;
+  const doneCount = allActions.filter(a => a.done).length;
+  const todoCount = total - doneCount;
+
+  document.getElementById('stats').style.display     = total ? 'flex'  : 'none';
+  document.getElementById('filter-bar').style.display = total ? 'flex'  : 'none';
+  document.getElementById('stat-total').textContent  = total;
+  document.getElementById('stat-todo').textContent   = todoCount;
+  document.getElementById('stat-done').textContent   = doneCount;
+
+  const filtered = currentFilter === 'todo'
+    ? allActions.filter(a => !a.done)
+    : allActions;
+
+  if (!filtered.length) {
+    document.getElementById('actions-container').innerHTML = `
+      <div class="state-empty">
+        <div class="state-empty-icon">${currentFilter === 'todo' ? '✅' : '📭'}</div>
+        <div class="state-empty-title">${currentFilter === 'todo' ? 'Toutes les actions sont faites !' : 'Aucune action.'}</div>
+      </div>`;
+    return;
+  }
+
+  // Grouper par projet, trier par nb d'actions non faites desc
+  const groups = {};
+  for (const a of filtered) {
+    const p = a.project_name || 'Sans projet';
+    if (!groups[p]) groups[p] = [];
+    groups[p].push(a);
+  }
+
+  const sorted = Object.entries(groups).sort((a, b) => {
+    const pa = a[1].filter(x => !x.done).length;
+    const pb = b[1].filter(x => !x.done).length;
+    return pb - pa;
+  });
+
+  const html = sorted.map(([project, items]) => {
+    const pending  = items.filter(a => !a.done).length;
+    const allDone  = pending === 0;
+    const badgeClass = allDone ? 'project-badge all-done' : 'project-badge';
+    const badgeText  = allDone ? '✓ tout fait' : `${pending} à faire`;
+    return `
+      <div class="project-group">
+        <div class="project-header">
+          <span class="project-name">📁 ${escapeHtml(project)}</span>
+          <span class="${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="actions-group">
+          ${items.map(renderActionRow).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('actions-container').innerHTML = html;
+}
+
+function renderActionRow(a) {
+  const callTitle = escapeHtml(a.call_titre || '(appel sans titre)');
+  const callType  = escapeHtml(a.call_type  || '—');
+  const callDate  = formatDate(a.call_date);
+  return `
+    <div class="action-row${a.done ? ' done' : ''}" id="arow-${a.id}">
+      <label class="action-row-inner">
+        <input type="checkbox" ${a.done ? 'checked' : ''}
+               onchange="toggleAction('${a.id}', this.checked, event)">
+        <div class="action-row-body">
+          <span class="action-row-text">${escapeHtml(a.text)}</span>
+          <span class="action-row-meta">
+            ${callTitle}
+            <span class="meta-sep">·</span>
+            ${callType}
+            <span class="meta-sep">·</span>
+            ${callDate}
+          </span>
+        </div>
+      </label>
+    </div>`;
+}
+
+async function toggleAction(actionId, done, e) {
+  try {
+    const res = await fetch(`/api/actions?id=${actionId}`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ done }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Mettre à jour l'état local
+    const action = allActions.find(a => a.id === actionId);
+    if (action) {
+      action.done = done;
+      // Style immédiat
+      const row = document.getElementById(`arow-${actionId}`);
+      if (row) row.classList.toggle('done', done);
+      // Si filtre "À faire" et cochée : fade-out puis re-render
+      if (done && currentFilter === 'todo') {
+        if (row) {
+          row.style.animation = 'fadeOut 0.35s forwards';
+          setTimeout(() => renderAll(), 380);
+        }
+      }
+      // Mise à jour stats
+      const doneCount = allActions.filter(a => a.done).length;
+      document.getElementById('stat-done').textContent = doneCount;
+      document.getElementById('stat-todo').textContent = allActions.length - doneCount;
+      // Mise à jour badge projet
+      refreshProjectBadge(action.project_name);
+    }
+  } catch (err) {
+    if (e) e.target.checked = !done;
+    console.error('Erreur toggleAction:', err);
+  }
+}
+
+function refreshProjectBadge(projectName) {
+  const p = projectName || 'Sans projet';
+  const pending = allActions.filter(a => !a.done && (a.project_name || 'Sans projet') === p).length;
+  document.querySelectorAll('.project-group').forEach(g => {
+    const nameEl = g.querySelector('.project-name');
+    if (nameEl && nameEl.textContent.trim() === `📁 ${p}`) {
+      const badge = g.querySelector('.project-badge');
+      if (badge) {
+        badge.textContent = pending > 0 ? `${pending} à faire` : '✓ tout fait';
+        badge.className = pending > 0 ? 'project-badge' : 'project-badge all-done';
+      }
+    }
+  });
+}
+
+function showLoginModal() {
+  const overlay = document.getElementById('login-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => document.getElementById('login-password')?.focus(), 50);
+}
+
+function hideLoginModal() { document.getElementById('login-overlay').style.display = 'none'; }
+
+async function submitLogin() {
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      errEl.textContent = data.error || 'Mot de passe incorrect.';
+      errEl.style.display = 'block';
+      return;
+    }
+    hideLoginModal();
+    loadActions();
+  } catch {
+    errEl.textContent = 'Erreur réseau.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function loadActions() {
+  try {
+    const res = await fetch('/api/action-items');
+    if (res.status === 401) { showLoginModal(); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    allActions = await res.json();
+    renderAll();
+  } catch (err) {
+    document.getElementById('actions-container').innerHTML =
+      `<div class="state-error">
+         <div>Impossible de charger les actions.</div>
+         <div style="color:#b91c1c;font-size:13px;margin-top:6px">${err.message}</div>
+       </div>`;
+  }
+}
+
+loadActions();
+</script>
+</body>
+</html>
