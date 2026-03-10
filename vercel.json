@@ -1,7 +1,6 @@
 {
   "functions": {
-    "api/transcribe.js": { "maxDuration": 60, "memory": 1024 },
-    "api/ingest.js":     { "maxDuration": 30, "memory": 512  }
+    "api/ingest.js": { "maxDuration": 30, "memory": 512 }
   },
   "rewrites": [
     { "source": "/dashboard", "destination": "/dashboard.html" },
