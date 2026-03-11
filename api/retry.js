@@ -13,23 +13,21 @@ export default async function handler(req, res) {
   if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
 
   try {
-    const [call] = await sql`
-      SELECT id, audio_url, call_type, project_name, status FROM calls WHERE id = ${id}
+    const [entry] = await sql`
+      SELECT id, audio_url, status FROM entries WHERE id = ${id}
     `;
-    if (!call) return res.status(404).json({ error: 'Appel introuvable.' });
-    if (!call.audio_url) return res.status(400).json({ error: 'Pas d\'audio associé à cet appel (flux B).' });
+    if (!entry) return res.status(404).json({ error: 'Entrée introuvable.' });
+    if (!entry.audio_url) return res.status(400).json({ error: 'Pas d\'audio associé à cette entrée.' });
 
     // Remettre en processing + déclencher le job
-    await sql`UPDATE calls SET status = 'processing', error = NULL WHERE id = ${id}`;
+    await sql`UPDATE entries SET status = 'processing', error = NULL WHERE id = ${id}`;
 
     const handle = await tasks.trigger('process-call', {
-      callId:    call.id,
-      audioUrl:  call.audio_url,
-      callType:  call.call_type  || 'inconnu',
-      project:   call.project_name || 'Non précisé',
+      callId:   entry.id,
+      audioUrl: entry.audio_url,
     });
 
-    await sql`UPDATE calls SET job_id = ${handle.id} WHERE id = ${id}`;
+    await sql`UPDATE entries SET job_id = ${handle.id} WHERE id = ${id}`;
 
     return res.status(200).json({ success: true, jobId: handle.id });
   } catch (err) {

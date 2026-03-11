@@ -16,41 +16,36 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!requireSession(req, res)) return;
 
-  // ── GET : liste des appels ────────────────────────────────────────────────
+  // ── GET : liste des entrées ───────────────────────────────────────────────
   if (req.method === 'GET') {
-    const calls = await sql`
-      SELECT id, created_at, call_type, project_name, status,
-             titre, resume, actions, email, trello_url,
-             outlook_draft_id, outlook_draft_url, error
-      FROM calls
+    const entries = await sql`
+      SELECT id, created_at, source, status,
+             category, title, summary, tags, email_draft,
+             error, pinned, archived
+      FROM entries
+      WHERE archived = false
       ORDER BY created_at DESC
       LIMIT 100
     `;
 
-    // Enrichir avec les actions cochables (V2) — dégradé si table absente
-    if (calls.length) {
-      try {
-        const ids = calls.map(c => c.id);
-        const actionRows = await sql`
-          SELECT id, call_id, text, done
-          FROM call_actions
-          WHERE call_id = ANY(${ids}::uuid[])
-          ORDER BY call_id, position
-        `;
-        const byCall = {};
-        for (const a of actionRows) {
-          if (!byCall[a.call_id]) byCall[a.call_id] = [];
-          byCall[a.call_id].push({ id: a.id, text: a.text, done: a.done });
-        }
-        for (const c of calls) c.action_items = byCall[c.id] || [];
-      } catch (e) {
-        // Table call_actions absente (migration non encore appliquée) : mode dégradé V1
-        console.warn('call_actions indisponible — migration non appliquée :', e.message);
-        for (const c of calls) c.action_items = [];
+    // Enrichir avec les items
+    if (entries.length) {
+      const ids = entries.map(e => e.id);
+      const itemRows = await sql`
+        SELECT id, entry_id, type, text, done, due_date
+        FROM items
+        WHERE entry_id = ANY(${ids}::uuid[])
+        ORDER BY entry_id, position
+      `;
+      const byEntry = {};
+      for (const i of itemRows) {
+        if (!byEntry[i.entry_id]) byEntry[i.entry_id] = [];
+        byEntry[i.entry_id].push({ id: i.id, type: i.type, text: i.text, done: i.done, due_date: i.due_date });
       }
+      for (const e of entries) e.action_items = byEntry[e.id] || [];
     }
 
-    return res.status(200).json(calls);
+    return res.status(200).json(entries);
   }
 
   // ── DELETE : suppression simple ou multiple ───────────────────────────────
@@ -61,8 +56,8 @@ export default async function handler(req, res) {
     if (ids) {
       const list = ids.split(',').map(s => s.trim()).filter(s => UUID.test(s));
       if (!list.length) return res.status(400).json({ error: 'Aucun ID valide fourni.' });
-      const rows = await sql`SELECT audio_url FROM calls WHERE id = ANY(${list}::uuid[])`;
-      await sql`DELETE FROM calls WHERE id = ANY(${list}::uuid[])`;
+      const rows = await sql`SELECT audio_url FROM entries WHERE id = ANY(${list}::uuid[])`;
+      await sql`DELETE FROM entries WHERE id = ANY(${list}::uuid[])`;
       await deleteBlobs(rows.map(r => r.audio_url));
       return res.status(200).json({ deleted: list.length });
     }
@@ -70,8 +65,8 @@ export default async function handler(req, res) {
     // Suppression simple : DELETE /api/calls?id=uuid
     if (id) {
       if (!UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
-      const rows = await sql`SELECT audio_url FROM calls WHERE id = ${id}`;
-      await sql`DELETE FROM calls WHERE id = ${id}`;
+      const rows = await sql`SELECT audio_url FROM entries WHERE id = ${id}`;
+      await sql`DELETE FROM entries WHERE id = ${id}`;
       await deleteBlobs(rows.map(r => r.audio_url));
       return res.status(200).json({ deleted: 1 });
     }

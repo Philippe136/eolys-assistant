@@ -9,23 +9,24 @@ export default async function handler(req, res) {
 
   const rows = await sql`
     SELECT
-      ca.id,
-      ca.text,
-      ca.done,
-      ca.position,
-      c.id         AS call_id,
-      c.titre      AS call_titre,
-      c.call_type,
-      c.project_name,
-      c.created_at AS call_date
-    FROM call_actions ca
-    JOIN calls c ON c.id = ca.call_id
-    WHERE c.status = 'done'
+      i.id,
+      i.type,
+      i.text,
+      i.done,
+      i.due_date,
+      i.position,
+      e.id         AS entry_id,
+      e.title      AS entry_title,
+      e.category,
+      e.tags,
+      e.created_at AS entry_date
+    FROM items i
+    JOIN entries e ON e.id = i.entry_id
+    WHERE e.status = 'done' AND e.archived = false
     ORDER BY
-      c.project_name NULLS LAST,
-      ca.done ASC,
-      c.created_at DESC,
-      ca.position
+      i.done ASC,
+      e.created_at DESC,
+      i.position
   `;
 
   return res.status(200).json(rows);

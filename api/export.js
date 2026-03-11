@@ -17,65 +17,55 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   if (!requireSession(req, res)) return;
 
-  const calls = await sql`
-    SELECT c.id, c.created_at, c.call_type, c.project_name, c.status,
-           c.titre, c.resume, c.actions, c.email,
-           c.trello_url, c.outlook_draft_url
-    FROM calls c
-    ORDER BY c.created_at DESC
+  const entries = await sql`
+    SELECT e.id, e.created_at, e.source, e.category, e.status,
+           e.title, e.summary, e.tags, e.email_draft
+    FROM entries e
+    WHERE e.archived = false
+    ORDER BY e.created_at DESC
     LIMIT 1000
   `;
 
-  // Récupérer les actions cochables
-  if (calls.length) {
-    const ids = calls.map(c => c.id);
-    const actionRows = await sql`
-      SELECT call_id, text, done, position
-      FROM call_actions
-      WHERE call_id = ANY(${ids}::uuid[])
-      ORDER BY call_id, position
+  // Récupérer les items
+  if (entries.length) {
+    const ids = entries.map(e => e.id);
+    const itemRows = await sql`
+      SELECT entry_id, type, text, done, position
+      FROM items
+      WHERE entry_id = ANY(${ids}::uuid[])
+      ORDER BY entry_id, position
     `;
-    const byCall = {};
-    for (const a of actionRows) {
-      if (!byCall[a.call_id]) byCall[a.call_id] = [];
-      byCall[a.call_id].push(`[${a.done ? 'x' : ' '}] ${a.text}`);
+    const byEntry = {};
+    for (const i of itemRows) {
+      if (!byEntry[i.entry_id]) byEntry[i.entry_id] = [];
+      byEntry[i.entry_id].push(`[${i.done ? 'x' : ' '}][${i.type}] ${i.text}`);
     }
-    for (const c of calls) {
-      if (!c._actionItems) c._actionItems = byCall[c.id] || null;
-    }
+    for (const e of entries) e._items = byEntry[e.id] || null;
   }
 
   const headers = [
-    'Date', 'Type', 'Projet', 'Statut', 'Titre', 'Résumé',
-    'Actions', 'Email', 'Trello', 'Outlook',
+    'Date', 'Catégorie', 'Source', 'Statut', 'Titre', 'Résumé',
+    'Tags', 'Items', 'Email draft',
   ];
 
-  const rows = calls.map(c => {
-    // Préférer les actions cochables (V2) ; sinon JSONB legacy (V1)
-    let actionsStr = '';
-    if (c._actionItems && c._actionItems.length) {
-      actionsStr = c._actionItems.join(' | ');
-    } else if (Array.isArray(c.actions)) {
-      actionsStr = c.actions.join(' | ');
-    }
-
+  const rows = entries.map(e => {
+    const itemsStr = (e._items || []).join(' | ');
     return [
-      new Date(c.created_at).toLocaleDateString('fr-FR'),
-      c.call_type || '',
-      c.project_name || '',
-      c.status || '',
-      c.titre || '',
-      c.resume || '',
-      actionsStr,
-      c.email || '',
-      c.trello_url || '',
-      c.outlook_draft_url || '',
+      new Date(e.created_at).toLocaleDateString('fr-FR'),
+      e.category || '',
+      e.source || '',
+      e.status || '',
+      e.title || '',
+      e.summary || '',
+      (e.tags || []).join(', '),
+      itemsStr,
+      e.email_draft ? e.email_draft.substring(0, 200) : '',
     ].map(csvEsc).join(',');
   });
 
   const csv    = [headers.join(','), ...rows].join('\r\n');
   const today  = new Date().toISOString().slice(0, 10);
-  const fname  = `eolys-appels-${today}.csv`;
+  const fname  = `vox-export-${today}.csv`;
 
   // BOM UTF-8 pour ouverture correcte dans Excel
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');

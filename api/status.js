@@ -13,16 +13,15 @@ export default async function handler(req, res) {
   if (!uuidRegex.test(callId)) return res.status(400).json({ error: 'callId invalide.' });
 
   try {
-    const [call] = await sql`
-      SELECT id, created_at, call_type, project_name, status,
-             titre, resume, actions, email, trello_url,
-             outlook_draft_id, outlook_draft_url, error
-      FROM calls WHERE id = ${callId} LIMIT 1
+    const [entry] = await sql`
+      SELECT id, created_at, source, status,
+             category, title, summary, tags, email_draft, error
+      FROM entries WHERE id = ${callId} LIMIT 1
     `;
 
-    if (!call) return res.status(404).json({ error: 'Appel introuvable.' });
+    if (!entry) return res.status(404).json({ error: 'Entrée introuvable.' });
 
-    return res.status(200).json(call);
+    return res.status(200).json(entry);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

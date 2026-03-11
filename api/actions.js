@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const rows = await sql`
-    UPDATE call_actions SET done = ${done}
+    UPDATE items SET done = ${done}
     WHERE id = ${id}
     RETURNING id, done
   `;

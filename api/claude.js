@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY manquante' });
 
   try {
-    const { messages, callType, project } = req.body || {};
+    const { messages } = req.body || {};
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Payload invalide : champ messages requis.' });
     }
@@ -39,36 +39,38 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // ── Persister le résultat en BDD (flux B — saisie manuelle) ──────────────
+    // ── Persister le résultat en BDD (flux manuel) ────────────────────────────
     if (response.ok && data.content) {
       try {
         const raw    = data.content.map(b => b.text || '').join('');
         const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        const tags   = Array.isArray(result.tags) ? result.tags : [];
         const [row]  = await sql`
-          INSERT INTO calls (call_type, project_name, status, titre, resume, actions, email)
+          INSERT INTO entries (source, status, category, title, summary, tags, email_draft)
           VALUES (
-            ${callType || 'manuel'},
-            ${project  || 'Non précisé'},
+            'manual',
             'done',
-            ${result.titre  ?? null},
-            ${result.resume ?? null},
-            ${JSON.stringify(result.actions ?? [])},
-            ${result.email  ?? null}
+            ${result.category ?? 'inbox'},
+            ${result.title    ?? null},
+            ${result.summary  ?? null},
+            ${tags},
+            ${result.email_draft ?? null}
           )
           RETURNING id
         `;
-        // Actions cochables (V2)
-        if (row && Array.isArray(result.actions) && result.actions.length > 0) {
-          for (let i = 0; i < result.actions.length; i++) {
+        if (row && Array.isArray(result.items) && result.items.length > 0) {
+          const validTypes = ['task', 'idea', 'decision', 'reminder'];
+          for (let i = 0; i < result.items.length; i++) {
+            const item = result.items[i];
+            const type = validTypes.includes(item.type) ? item.type : 'task';
             await sql`
-              INSERT INTO call_actions (call_id, text, position)
-              VALUES (${row.id}, ${result.actions[i]}, ${i})
+              INSERT INTO items (entry_id, type, text, due_date, position)
+              VALUES (${row.id}, ${type}, ${item.text}, ${item.due ?? null}, ${i})
             `;
           }
         }
       } catch (e) {
-        // Persistance échouée : non bloquant, le résultat est quand même retourné au client
-        console.warn('Flux B — persistance BDD ignorée :', e.message);
+        console.warn('Flux manuel — persistance BDD ignorée :', e.message);
       }
     }
 

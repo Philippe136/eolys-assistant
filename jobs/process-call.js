@@ -25,7 +25,6 @@ async function getMicrosoftAccessToken(sql) {
   if (!res.ok) return null;
   const data = await res.json();
 
-  // Rotation du refresh token si Microsoft en fournit un nouveau
   if (data.refresh_token) {
     await sql`
       INSERT INTO config (key, value, updated_at) VALUES ('microsoft_refresh_token', ${data.refresh_token}, NOW())
@@ -37,10 +36,10 @@ async function getMicrosoftAccessToken(sql) {
 }
 
 // ── Créer un brouillon Outlook via Graph API ───────────────────────────────
-async function createOutlookDraft(accessToken, emailText, titre) {
+async function createOutlookDraft(accessToken, emailText, title) {
   const lines     = emailText.split('\n');
   const subjLine  = lines.find(l => l.toLowerCase().startsWith('objet:'));
-  const subject   = subjLine ? subjLine.replace(/^objet\s*:\s*/i, '').trim() : titre;
+  const subject   = subjLine ? subjLine.replace(/^objet\s*:\s*/i, '').trim() : title;
   const bodyStart = emailText.indexOf('\n\n');
   const body      = bodyStart > -1 ? emailText.substring(bodyStart + 2) : emailText;
 
@@ -59,14 +58,14 @@ async function createOutlookDraft(accessToken, emailText, titre) {
     throw new Error(`Graph API ${res.status}: ${err}`);
   }
 
-  return await res.json(); // { id, webLink, ... }
+  return await res.json();
 }
 
 export const processCall = task({
   id: 'process-call',
   maxDuration: 300,
 
-  run: async ({ callId, audioUrl, callType, project }) => {
+  run: async ({ callId, audioUrl }) => {
     try {
       // ── Étape 1 : Télécharger l'audio ─────────────────────────────────────
       console.log(`[${callId}] Téléchargement audio...`);
@@ -99,15 +98,14 @@ export const processCall = task({
           model:      'claude-haiku-4-5-20251001',
           max_tokens: 1500,
           system:     SYSTEM_PROMPT,
-          messages:   [{ role: 'user', content: `Type d'appel: ${callType}\nProjet/Interlocuteur: ${project}\n\nTranscription:\n${transcript}` }],
+          messages:   [{ role: 'user', content: `Transcription :\n${transcript}` }],
         });
 
         const raw = message.content.map(b => b.text || '').join('');
         try {
           const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
-          // Validation minimale des champs requis
-          if (typeof parsed.titre !== 'string' || typeof parsed.resume !== 'string' || !Array.isArray(parsed.actions)) {
-            throw new Error('Champs requis manquants (titre, resume, actions)');
+          if (typeof parsed.title !== 'string' || typeof parsed.summary !== 'string' || !Array.isArray(parsed.items)) {
+            throw new Error('Champs requis manquants (title, summary, items)');
           }
           result = parsed;
           break;
@@ -117,74 +115,60 @@ export const processCall = task({
         }
       }
 
-      // ── Étape 4 : Créer la carte Trello (optionnel) ───────────────────────
-      let trelloUrl = null;
-      if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN && process.env.TRELLO_LIST_ID) {
-        try {
-          const cardDesc = `**Résumé :**\n${result.resume}\n\n**Actions :**\n${(result.actions ?? []).map(a => `- ${a}`).join('\n')}\n\n**Projet :** ${project}\n**Type :** ${callType}`;
-          const params   = new URLSearchParams({
-            idList: process.env.TRELLO_LIST_ID, key: process.env.TRELLO_KEY, token: process.env.TRELLO_TOKEN,
-            name: `📞 ${result.titre}`, desc: cardDesc, pos: 'top',
-          });
-          const trelloRes = await fetch(`https://api.trello.com/1/cards?${params}`, { method: 'POST' });
-          if (trelloRes.ok) { const card = await trelloRes.json(); trelloUrl = card.url; }
-          console.log(`[${callId}] Trello ✅ ${trelloUrl}`);
-        } catch (e) { console.warn(`[${callId}] Trello ignoré :`, e.message); }
-      }
-
-      // ── Étape 5 : Brouillon Outlook (si Claude juge pertinent) ────────────
+      // ── Étape 4 : Brouillon Outlook (si email_draft présent) ──────────────
       let outlookDraftId  = null;
       let outlookDraftUrl = null;
 
-      if (result.createDraft && result.email && process.env.MICROSOFT_CLIENT_ID) {
+      if (result.email_draft && process.env.MICROSOFT_CLIENT_ID) {
         try {
           console.log(`[${callId}] Création brouillon Outlook...`);
           const accessToken = await getMicrosoftAccessToken(sql);
           if (accessToken) {
-            const draft       = await createOutlookDraft(accessToken, result.email, result.titre);
-            outlookDraftId    = draft.id;
-            outlookDraftUrl   = draft.webLink;
+            const draft     = await createOutlookDraft(accessToken, result.email_draft, result.title);
+            outlookDraftId  = draft.id;
+            outlookDraftUrl = draft.webLink;
             console.log(`[${callId}] Outlook ✅ brouillon créé`);
           } else {
-            console.warn(`[${callId}] Outlook ignoré : pas de token (visiter /api/auth-microsoft)`);
+            console.warn(`[${callId}] Outlook ignoré : pas de token`);
           }
         } catch (e) { console.warn(`[${callId}] Outlook ignoré :`, e.message); }
       }
 
-      // ── Étape 6 : Sauvegarde en base ──────────────────────────────────────
+      // ── Étape 5 : Sauvegarde en base ──────────────────────────────────────
+      const tags = Array.isArray(result.tags) ? result.tags : [];
       await sql`
-        UPDATE calls SET
-          status           = 'done',
-          transcript       = ${transcript},
-          titre            = ${result.titre},
-          resume           = ${result.resume},
-          actions          = ${JSON.stringify(result.actions ?? [])},
-          email            = ${result.email ?? null},
-          trello_url       = ${trelloUrl},
-          outlook_draft_id = ${outlookDraftId},
-          outlook_draft_url = ${outlookDraftUrl}
+        UPDATE entries SET
+          status      = 'done',
+          transcript  = ${transcript},
+          category    = ${result.category ?? 'inbox'},
+          title       = ${result.title ?? null},
+          summary     = ${result.summary ?? null},
+          tags        = ${tags},
+          email_draft = ${result.email_draft ?? null}
         WHERE id = ${callId}
       `;
 
-      // ── Étape 7 : Actions cochables (V2) ─────────────────────────────────
-      if (result.actions && result.actions.length > 0) {
-        // Supprimer les anciennes (retry) puis réinsérer
-        await sql`DELETE FROM call_actions WHERE call_id = ${callId}`;
-        for (let i = 0; i < result.actions.length; i++) {
+      // ── Étape 6 : Items extraits ───────────────────────────────────────────
+      if (result.items && result.items.length > 0) {
+        await sql`DELETE FROM items WHERE entry_id = ${callId}`;
+        for (let i = 0; i < result.items.length; i++) {
+          const item = result.items[i];
+          const validTypes = ['task', 'idea', 'decision', 'reminder'];
+          const type = validTypes.includes(item.type) ? item.type : 'task';
           await sql`
-            INSERT INTO call_actions (call_id, text, position)
-            VALUES (${callId}, ${result.actions[i]}, ${i})
+            INSERT INTO items (entry_id, type, text, due_date, position)
+            VALUES (${callId}, ${type}, ${item.text}, ${item.due ?? null}, ${i})
           `;
         }
-        console.log(`[${callId}] ✅ ${result.actions.length} action(s) insérée(s)`);
+        console.log(`[${callId}] ✅ ${result.items.length} item(s) inséré(s)`);
       }
 
       console.log(`[${callId}] ✅ Traitement terminé`);
-      return { success: true, callId, trelloUrl, outlookDraftId };
+      return { success: true, callId, outlookDraftId };
 
     } catch (err) {
       console.error(`[${callId}] ❌ Erreur :`, err.message);
-      await sql`UPDATE calls SET status = 'error', error = ${err.message} WHERE id = ${callId}`;
+      await sql`UPDATE entries SET status = 'error', error = ${err.message} WHERE id = ${callId}`;
       throw err;
     }
   },
