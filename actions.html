@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eolys — Actions</title>
+<title>Vox — Items</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -269,17 +269,18 @@
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    Eolys Assistant
+    Vox
   </div>
   <div class="header-actions">
+    <a href="/record"    class="btn-ghost" style="color:var(--accent);font-weight:700">🎙 Enregistrer</a>
     <a href="/dashboard" class="btn-ghost">Tableau de bord</a>
-    <a href="/projects" class="btn-ghost">Projets</a>
+    <a href="/projects"  class="btn-ghost">Tags</a>
   </div>
 </header>
 
 <main>
-  <div class="page-title">Actions à mener</div>
-  <p class="page-subtitle">Toutes les actions extraites des appels — Eolys Solutions</p>
+  <div class="page-title">Items extraits</div>
+  <p class="page-subtitle">Tâches, idées, décisions et rappels issus de vos enregistrements</p>
 
   <div class="stats" id="stats" style="display:none">
     <div class="stat">
@@ -292,7 +293,7 @@
     </div>
     <div class="stat">
       <div class="stat-value" id="stat-done" style="color:var(--green)">—</div>
-      <div class="stat-label">Faites</div>
+      <div class="stat-label">Faits</div>
     </div>
   </div>
 
@@ -315,7 +316,7 @@
   <div style="background:#fff;border-radius:16px;padding:40px 48px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
     <div style="font-size:32px;margin-bottom:12px">🔐</div>
     <h2 style="font-size:20px;margin:0 0 6px">Accès dashboard</h2>
-    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Eolys Solutions — accès restreint</p>
+    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Accès restreint</p>
     <input type="password" id="login-password"
       style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"
       placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()" />
@@ -348,16 +349,24 @@ function setFilter(f) {
   renderAll();
 }
 
+const ITEM_ICON  = { task: '☐', idea: '💡', decision: '✓', reminder: '🔔' };
+const ITEM_LABEL = { task: 'Tâche', idea: 'Idée', decision: 'Décision', reminder: 'Rappel' };
+const CAT_LABEL  = { work: 'Travail', personal: 'Perso', idea: 'Idée', meeting: 'Réunion', inbox: 'Inbox' };
+
+function groupKey(a) {
+  return (a.tags && a.tags.length) ? a.tags[0] : (CAT_LABEL[a.category] || a.category || 'inbox');
+}
+
 function renderAll() {
   const total    = allActions.length;
   const doneCount = allActions.filter(a => a.done).length;
   const todoCount = total - doneCount;
 
-  document.getElementById('stats').style.display     = total ? 'flex'  : 'none';
-  document.getElementById('filter-bar').style.display = total ? 'flex'  : 'none';
-  document.getElementById('stat-total').textContent  = total;
-  document.getElementById('stat-todo').textContent   = todoCount;
-  document.getElementById('stat-done').textContent   = doneCount;
+  document.getElementById('stats').style.display      = total ? 'flex' : 'none';
+  document.getElementById('filter-bar').style.display  = total ? 'flex' : 'none';
+  document.getElementById('stat-total').textContent   = total;
+  document.getElementById('stat-todo').textContent    = todoCount;
+  document.getElementById('stat-done').textContent    = doneCount;
 
   const filtered = currentFilter === 'todo'
     ? allActions.filter(a => !a.done)
@@ -367,34 +376,32 @@ function renderAll() {
     document.getElementById('actions-container').innerHTML = `
       <div class="state-empty">
         <div class="state-empty-icon">${currentFilter === 'todo' ? '✅' : '📭'}</div>
-        <div class="state-empty-title">${currentFilter === 'todo' ? 'Toutes les actions sont faites !' : 'Aucune action.'}</div>
+        <div class="state-empty-title">${currentFilter === 'todo' ? 'Tous les items sont faits !' : 'Aucun item.'}</div>
       </div>`;
     return;
   }
 
-  // Grouper par projet, trier par nb d'actions non faites desc
+  // Grouper par premier tag (ou catégorie), trier par nb non faits desc
   const groups = {};
   for (const a of filtered) {
-    const p = a.project_name || 'Sans projet';
+    const p = groupKey(a);
     if (!groups[p]) groups[p] = [];
     groups[p].push(a);
   }
 
   const sorted = Object.entries(groups).sort((a, b) => {
-    const pa = a[1].filter(x => !x.done).length;
-    const pb = b[1].filter(x => !x.done).length;
-    return pb - pa;
+    return b[1].filter(x => !x.done).length - a[1].filter(x => !x.done).length;
   });
 
-  const html = sorted.map(([project, items]) => {
-    const pending  = items.filter(a => !a.done).length;
-    const allDone  = pending === 0;
+  const html = sorted.map(([group, items]) => {
+    const pending    = items.filter(a => !a.done).length;
+    const allDone    = pending === 0;
     const badgeClass = allDone ? 'project-badge all-done' : 'project-badge';
     const badgeText  = allDone ? '✓ tout fait' : `${pending} à faire`;
     return `
       <div class="project-group">
         <div class="project-header">
-          <span class="project-name">📁 ${escapeHtml(project)}</span>
+          <span class="project-name">🏷 ${escapeHtml(group)}</span>
           <span class="${badgeClass}">${badgeText}</span>
         </div>
         <div class="actions-group">
@@ -407,9 +414,9 @@ function renderAll() {
 }
 
 function renderActionRow(a) {
-  const callTitle = escapeHtml(a.call_titre || '(appel sans titre)');
-  const callType  = escapeHtml(a.call_type  || '—');
-  const callDate  = formatDate(a.call_date);
+  const entryTitle = escapeHtml(a.entry_title || '(sans titre)');
+  const typeStr    = `${ITEM_ICON[a.type] || '☐'} ${ITEM_LABEL[a.type] || a.type || 'item'}`;
+  const entryDate  = formatDate(a.entry_date);
   return `
     <div class="action-row${a.done ? ' done' : ''}" id="arow-${a.id}">
       <label class="action-row-inner">
@@ -418,11 +425,11 @@ function renderActionRow(a) {
         <div class="action-row-body">
           <span class="action-row-text">${escapeHtml(a.text)}</span>
           <span class="action-row-meta">
-            ${callTitle}
+            ${entryTitle}
             <span class="meta-sep">·</span>
-            ${callType}
+            ${typeStr}
             <span class="meta-sep">·</span>
-            ${callDate}
+            ${entryDate}
           </span>
         </div>
       </label>
@@ -442,22 +449,15 @@ async function toggleAction(actionId, done, e) {
     const action = allActions.find(a => a.id === actionId);
     if (action) {
       action.done = done;
-      // Style immédiat
       const row = document.getElementById(`arow-${actionId}`);
       if (row) row.classList.toggle('done', done);
-      // Si filtre "À faire" et cochée : fade-out puis re-render
       if (done && currentFilter === 'todo') {
-        if (row) {
-          row.style.animation = 'fadeOut 0.35s forwards';
-          setTimeout(() => renderAll(), 380);
-        }
+        if (row) { row.style.animation = 'fadeOut 0.35s forwards'; setTimeout(() => renderAll(), 380); }
       }
-      // Mise à jour stats
       const doneCount = allActions.filter(a => a.done).length;
       document.getElementById('stat-done').textContent = doneCount;
       document.getElementById('stat-todo').textContent = allActions.length - doneCount;
-      // Mise à jour badge projet
-      refreshProjectBadge(action.project_name);
+      refreshProjectBadge(groupKey(action));
     }
   } catch (err) {
     if (e) e.target.checked = !done;
@@ -465,16 +465,15 @@ async function toggleAction(actionId, done, e) {
   }
 }
 
-function refreshProjectBadge(projectName) {
-  const p = projectName || 'Sans projet';
-  const pending = allActions.filter(a => !a.done && (a.project_name || 'Sans projet') === p).length;
+function refreshProjectBadge(key) {
+  const pending = allActions.filter(a => !a.done && groupKey(a) === key).length;
   document.querySelectorAll('.project-group').forEach(g => {
     const nameEl = g.querySelector('.project-name');
-    if (nameEl && nameEl.textContent.trim() === `📁 ${p}`) {
+    if (nameEl && nameEl.textContent.trim() === `🏷 ${key}`) {
       const badge = g.querySelector('.project-badge');
       if (badge) {
         badge.textContent = pending > 0 ? `${pending} à faire` : '✓ tout fait';
-        badge.className = pending > 0 ? 'project-badge' : 'project-badge all-done';
+        badge.className   = pending > 0 ? 'project-badge' : 'project-badge all-done';
       }
     }
   });

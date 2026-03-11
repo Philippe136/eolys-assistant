@@ -1,0 +1,22 @@
+{
+  "name": "Vox",
+  "short_name": "Vox",
+  "description": "Enregistrez et analysez vos idées en un tap",
+  "start_url": "/record",
+  "display": "standalone",
+  "background_color": "#f5f2ed",
+  "theme_color": "#c8410a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23c8410a'/><text x='96' y='130' font-size='100' text-anchor='middle' font-family='serif' fill='white'>V</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%23c8410a'/><text x='256' y='360' font-size='280' text-anchor='middle' font-family='serif' fill='white'>V</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

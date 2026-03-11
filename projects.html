@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eolys — Projets</title>
+<title>Vox — Tags</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -187,34 +187,35 @@
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    Eolys Assistant
+    Vox
   </div>
   <div class="header-actions">
+    <a href="/record"    class="btn-ghost" style="color:var(--accent);font-weight:700">🎙 Enregistrer</a>
     <a href="/dashboard" class="btn-ghost">Tableau de bord</a>
-    <a href="/actions"   class="btn-ghost">Actions</a>
+    <a href="/actions"   class="btn-ghost">Items</a>
   </div>
 </header>
 
 <main>
-  <div class="page-title">Projets</div>
-  <p class="page-subtitle">Vue synthèse par projet — Eolys Solutions</p>
+  <div class="page-title">Tags</div>
+  <p class="page-subtitle">Vue synthèse par tag</p>
 
   <div class="stats" id="stats" style="display:none">
     <div class="stat">
       <div class="stat-value" id="stat-projects">—</div>
-      <div class="stat-label">Projets</div>
+      <div class="stat-label">Tags</div>
     </div>
     <div class="stat">
       <div class="stat-value" id="stat-calls">—</div>
-      <div class="stat-label">Appels</div>
+      <div class="stat-label">Entrées</div>
     </div>
     <div class="stat">
       <div class="stat-value" id="stat-actions-todo" style="color:var(--accent)">—</div>
-      <div class="stat-label">Actions restantes</div>
+      <div class="stat-label">Items à faire</div>
     </div>
     <div class="stat">
       <div class="stat-value" id="stat-actions-done" style="color:var(--green)">—</div>
-      <div class="stat-label">Actions faites</div>
+      <div class="stat-label">Items faits</div>
     </div>
   </div>
 
@@ -237,7 +238,7 @@
   <div style="background:#fff;border-radius:16px;padding:40px 48px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
     <div style="font-size:32px;margin-bottom:12px">🔐</div>
     <h2 style="font-size:20px;margin:0 0 6px">Accès dashboard</h2>
-    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Eolys Solutions — accès restreint</p>
+    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Vox — accès restreint</p>
     <input type="password" id="login-password"
       style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"
       placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()" />
@@ -271,17 +272,17 @@ function setFilter(f) {
 }
 
 function renderProjects() {
-  // Filtrer: "active" = dernier appel < 60 jours
+  // Filtrer: "active" = dernière entrée < 60 jours
   const now = Date.now();
   const filtered = currentFilter === 'active'
-    ? allProjects.filter(p => (now - new Date(p.last_call_at)) < 60 * 24 * 3600 * 1000)
+    ? allProjects.filter(p => (now - new Date(p.last_entry_at)) < 60 * 24 * 3600 * 1000)
     : allProjects;
 
   const grid = document.getElementById('projects-grid');
 
   if (!filtered.length) {
     grid.innerHTML = `<div class="state-empty" style="grid-column:1/-1">
-      ${currentFilter === 'active' ? 'Aucun projet actif ces 60 derniers jours.' : 'Aucun projet.'}
+      ${currentFilter === 'active' ? 'Aucun tag actif ces 60 derniers jours.' : 'Aucun tag.'}
     </div>`;
     return;
   }
@@ -290,16 +291,16 @@ function renderProjects() {
 }
 
 function renderProjectCard(p) {
-  const total       = p.total_actions  || 0;
-  const done        = p.done_actions   || 0;
-  const todo        = total - done;
-  const pct         = total > 0 ? Math.round(done / total * 100) : 0;
-  const allDone     = total > 0 && todo === 0;
+  const total   = p.total_items || 0;
+  const done    = p.done_items  || 0;
+  const todo    = total - done;
+  const pct     = total > 0 ? Math.round(done / total * 100) : 0;
+  const allDone = total > 0 && todo === 0;
 
   const progressBar = total > 0 ? `
     <div class="progress-wrap">
       <div class="progress-label">
-        <span>Actions</span>
+        <span>Items</span>
         <span>${done}/${total}</span>
       </div>
       <div class="progress-bar">
@@ -308,24 +309,26 @@ function renderProjectCard(p) {
     </div>` : '';
 
   const statusBadges = [
-    p.done_calls       ? `<span class="badge-mini badge-mini-green">${p.done_calls} traités</span>` : '',
-    p.processing_calls ? `<span class="badge-mini badge-mini-yellow">${p.processing_calls} en cours</span>` : '',
-    p.error_calls      ? `<span class="badge-mini badge-mini-red">${p.error_calls} erreurs</span>` : '',
+    p.done_entries       ? `<span class="badge-mini badge-mini-green">${p.done_entries} traités</span>` : '',
+    p.processing_entries ? `<span class="badge-mini badge-mini-yellow">${p.processing_entries} en cours</span>` : '',
+    p.error_entries      ? `<span class="badge-mini badge-mini-red">${p.error_entries} erreurs</span>` : '',
   ].filter(Boolean).join('');
+
+  const count = p.entry_count || 0;
 
   return `
     <div class="project-card">
       <div class="project-card-name">
-        <span class="icon">📁</span>
-        <span>${escapeHtml(p.project_name || 'Sans nom')}</span>
+        <span class="icon">🏷</span>
+        <span>${escapeHtml(p.tag || 'Sans tag')}</span>
       </div>
       ${progressBar}
       <div class="card-stats">
-        <span class="card-stat">📞 <span>${p.call_count}</span> appel${p.call_count > 1 ? 's' : ''}</span>
+        <span class="card-stat">🎙 <span>${count}</span> entrée${count > 1 ? 's' : ''}</span>
         ${todo > 0 ? `<span class="card-stat" style="color:var(--accent)">☐ <span style="color:var(--accent)">${todo}</span> à faire</span>` : ''}
         ${statusBadges}
       </div>
-      <div class="last-activity">Dernier appel : ${formatDate(p.last_call_at)}</div>
+      <div class="last-activity">Dernière entrée : ${formatDate(p.last_entry_at)}</div>
     </div>`;
 }
 
@@ -365,9 +368,9 @@ async function loadProjects() {
 
     // Stats globales
     const totalProjects = allProjects.length;
-    const totalCalls    = allProjects.reduce((s, p) => s + p.call_count, 0);
-    const totalActTodo  = allProjects.reduce((s, p) => s + Math.max(0, (p.total_actions||0) - (p.done_actions||0)), 0);
-    const totalActDone  = allProjects.reduce((s, p) => s + (p.done_actions||0), 0);
+    const totalCalls    = allProjects.reduce((s, p) => s + (p.entry_count||0), 0);
+    const totalActTodo  = allProjects.reduce((s, p) => s + Math.max(0, (p.total_items||0) - (p.done_items||0)), 0);
+    const totalActDone  = allProjects.reduce((s, p) => s + (p.done_items||0), 0);
 
     document.getElementById('stats').style.display = allProjects.length ? 'flex' : 'none';
     document.getElementById('filter-bar').style.display = allProjects.length ? 'flex' : 'none';
@@ -380,7 +383,7 @@ async function loadProjects() {
   } catch (err) {
     document.getElementById('projects-grid').innerHTML =
       `<div class="state-error" style="grid-column:1/-1">
-         <div>Impossible de charger les projets.</div>
+         <div>Impossible de charger les tags.</div>
          <div style="color:#b91c1c;font-size:13px;margin-top:6px">${err.message}</div>
        </div>`;
   }

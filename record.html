@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<meta name="theme-color" content="#c8410a">
+<link rel="manifest" href="/manifest.json">
+<title>Vox — Enregistrer</title>
+<style>
+  :root {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface2: #f0ece5;
+    --border: #e0d9cf;
+    --ink: #1a1714;
+    --ink-muted: #7a7268;
+    --ink-dim: #b5afa6;
+    --accent: #c8410a;
+    --accent-light: #f5ede8;
+    --green: #1a6b3c;
+    --green-light: #e8f3ec;
+    --red: #b91c1c;
+    --red-light: #fef2f2;
+    --radius: 16px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior: none; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, 'Syne', sans-serif;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .btn-ghost {
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-muted); background: none; border: none; cursor: pointer;
+    padding: 6px 10px; border-radius: 8px; text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
+
+  /* ── Main ── */
+  main {
+    flex: 1;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 20px calc(28px + var(--safe-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ── Screens ── */
+  .screen { display: none; flex-direction: column; gap: 20px; }
+  .screen.active { display: flex; }
+
+  /* ── Section card ── */
+  .card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--ink-muted); margin-bottom: 12px;
+  }
+
+  /* ── Type buttons ── */
+  .type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .btn-type {
+    padding: 12px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface2);
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .btn-type .type-icon { font-size: 20px; }
+  .btn-type.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  /* ── Project input ── */
+  .input-wrap { position: relative; }
+  input[type="text"] {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    color: var(--ink);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--ink-dim); }
+
+  /* ── Combos récentes ── */
+  .combos-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .combo-pill {
+    font-size: 12px; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .combo-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  /* ── Record button ── */
+  .record-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+  }
+  .btn-record {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(200,65,10,0.3);
+    flex-shrink: 0;
+  }
+  .btn-record:hover { transform: scale(1.06); box-shadow: 0 6px 28px rgba(200,65,10,0.4); }
+  .btn-record:active { transform: scale(0.95); }
+  .btn-record.recording {
+    background: var(--red);
+    border-color: var(--red);
+    animation: pulse-rec 1.2s infinite;
+    box-shadow: 0 4px 20px rgba(185,28,28,0.35);
+  }
+  @keyframes pulse-rec {
+    0%,100% { box-shadow: 0 4px 20px rgba(185,28,28,0.35); }
+    50%      { box-shadow: 0 4px 30px rgba(185,28,28,0.6); }
+  }
+  .record-label { font-size: 13px; font-weight: 600; color: var(--ink-muted); }
+  .record-timer { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+
+  /* ── Separator ── */
+  .separator {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--ink-dim); font-size: 12px; font-weight: 600;
+  }
+  .separator::before, .separator::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── Import file button ── */
+  .btn-import {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    background: none;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-import:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  /* ── Preview screen ── */
+  audio {
+    width: 100%;
+    border-radius: 10px;
+    outline: none;
+    margin-bottom: 4px;
+  }
+  .filename-badge {
+    font-size: 12px; color: var(--ink-muted);
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+    margin-top: 6px;
+  }
+
+  /* ── Action buttons ── */
+  .btn-row { display: flex; gap: 10px; }
+  .btn-primary {
+    flex: 1;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary {
+    padding: 14px 20px;
+    background: var(--surface2);
+    color: var(--ink-muted);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: var(--border); }
+
+  /* ── Processing screen ── */
+  .steps-list { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px; font-weight: 600;
+    color: var(--ink-dim);
+    transition: color 0.3s;
+  }
+  .step:last-child { border-bottom: none; }
+  .step.active { color: var(--ink); }
+  .step.done { color: var(--green); }
+  .step-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    background: var(--surface2);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .step.active .step-icon { background: var(--accent-light); }
+  .step.done  .step-icon { background: var(--green-light); }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { animation: spin 1s linear infinite; display: inline-block; }
+
+  /* ── Done screen ── */
+  .done-hero {
+    text-align: center;
+    padding: 16px 0 8px;
+  }
+  .done-check {
+    font-size: 48px; margin-bottom: 12px;
+  }
+  .done-title {
+    font-size: 20px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 6px;
+  }
+  .done-subtitle {
+    font-size: 14px; color: var(--ink-muted);
+  }
+  .done-entry-title {
+    font-size: 16px; font-weight: 600; color: var(--ink);
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 4px;
+  }
+
+  /* ── Login modal ── */
+  #login-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,23,20,0.7);
+    z-index: 999;
+    align-items: center; justify-content: center;
+  }
+  .login-box {
+    background: #fff; border-radius: 16px; padding: 40px 32px;
+    text-align: center; max-width: 340px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .login-box h2 { font-size: 20px; margin: 0 0 6px; }
+  .login-box p { color: var(--ink-muted); font-size: 13px; margin: 0 0 20px; }
+  .login-input {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 14px; outline: none; margin-bottom: 10px;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%; padding: 11px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  #login-error { color: var(--accent); font-size: 13px; margin-bottom: 8px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Vox
+  </div>
+  <a href="/dashboard" class="btn-ghost">Tableau de bord</a>
+</header>
+
+<main>
+  <!-- ══ ÉCRAN 1 : INPUT ══ -->
+  <div class="screen active" id="screen-input">
+
+    <div class="card">
+      <div class="card-label">Type</div>
+      <div class="type-grid">
+        <button class="btn-type selected" data-type="work"     onclick="selectType(this)">
+          <span class="type-icon">💼</span>Work
+        </button>
+        <button class="btn-type" data-type="personal"  onclick="selectType(this)">
+          <span class="type-icon">👤</span>Personnel
+        </button>
+        <button class="btn-type" data-type="idea"      onclick="selectType(this)">
+          <span class="type-icon">💡</span>Idée
+        </button>
+        <button class="btn-type" data-type="meeting"   onclick="selectType(this)">
+          <span class="type-icon">🤝</span>Réunion
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Tag / Projet (optionnel)</div>
+      <div class="input-wrap">
+        <input type="text" id="tag-input" placeholder="ex : client-dupont, perso, startup…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="combos-wrap" id="combos-wrap"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Enregistrement</div>
+      <div class="record-zone">
+        <button class="btn-record" id="btn-record" onclick="toggleRecord()">🎙</button>
+        <div class="record-timer" id="record-timer" style="display:none">00:00</div>
+        <div class="record-label" id="record-label">Appuyer pour enregistrer</div>
+      </div>
+      <div class="separator">ou</div>
+      <button class="btn-import" onclick="document.getElementById('file-input').click()">
+        📁 Importer un fichier audio
+      </button>
+      <input type="file" id="file-input" accept="audio/*,video/mp4" style="display:none" onchange="handleFileImport(event)">
+    </div>
+
+  </div>
+
+  <!-- ══ ÉCRAN 2 : PREVIEW ══ -->
+  <div class="screen" id="screen-preview">
+    <div class="card">
+      <div class="card-label">Aperçu</div>
+      <audio id="audio-preview" controls></audio>
+      <div class="filename-badge" id="preview-filename"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goBack()">↩ Recommencer</button>
+      <button class="btn-primary" id="btn-send" onclick="uploadAndProcess()">Envoyer →</button>
+    </div>
+  </div>
+
+  <!-- ══ ÉCRAN 3 : PROCESSING ══ -->
+  <div class="screen" id="screen-processing">
+    <div class="card">
+      <div class="card-label">Traitement en cours…</div>
+      <div class="steps-list">
+        <div class="step" id="step-upload">
+          <div class="step-icon">📤</div>
+          <span>Upload audio</span>
+        </div>
+        <div class="step" id="step-transcription">
+          <div class="step-icon">📝</div>
+          <span>Transcription</span>
+        </div>
+        <div class="step" id="step-analyse">
+          <div class="step-icon">🧠</div>
+          <span>Analyse IA</span>
+        </div>
+        <div class="step" id="step-done">
+          <div class="step-icon">✅</div>
+          <span>Terminé</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ÉCRAN 4 : DONE ══ -->
+  <div class="screen" id="screen-done">
+    <div class="card done-hero">
+      <div class="done-check">✅</div>
+      <div class="done-title">Enregistrement traité !</div>
+      <div class="done-subtitle" id="done-subtitle">Votre enregistrement a été analysé.</div>
+    </div>
+    <div class="card" id="done-entry-card" style="display:none">
+      <div class="card-label">Titre détecté</div>
+      <div class="done-entry-title" id="done-entry-title"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="startOver()">🎙 Enregistrer un autre</button>
+      <a href="/dashboard" class="btn-primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none">
+        Dashboard →
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<!-- Login modal -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div style="font-size:32px;margin-bottom:12px">🔐</div>
+    <h2>Accès Vox</h2>
+    <p>Mot de passe requis</p>
+    <input type="password" class="login-input" id="login-password"
+      placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()">
+    <div id="login-error"></div>
+    <button class="login-btn" onclick="submitLogin()">Connexion</button>
+  </div>
+</div>
+
+<script>
+// ── État global ──────────────────────────────────────────────────────────────
+let selectedType   = 'work';
+let mediaRecorder  = null;
+let audioChunks    = [];
+let audioBlob      = null;
+let audioFilename  = 'recording.mp4';
+let recordInterval = null;
+let recordSeconds  = 0;
+let pendingCallId  = null;
+
+// ── Combos récentes ──────────────────────────────────────────────────────────
+const COMBOS_KEY = 'vox_combos_v1';
+
+function loadCombos() {
+  try { return JSON.parse(localStorage.getItem(COMBOS_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveCombos(type, tag) {
+  const combos = loadCombos().filter(c => !(c.type === type && c.tag === tag));
+  combos.unshift({ type, tag });
+  localStorage.setItem(COMBOS_KEY, JSON.stringify(combos.slice(0, 5)));
+}
+
+function renderCombos() {
+  const wrap   = document.getElementById('combos-wrap');
+  const combos = loadCombos();
+  if (!combos.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = combos.map(c => `
+    <button class="combo-pill" onclick="applyCombo(${JSON.stringify(c)})">
+      ${typeIcon(c.type)} ${c.tag || c.type}
+    </button>
+  `).join('');
+}
+
+function applyCombo(c) {
+  selectTypeByValue(c.type);
+  document.getElementById('tag-input').value = c.tag || '';
+}
+
+function typeIcon(t) {
+  return { work:'💼', personal:'👤', idea:'💡', meeting:'🤝' }[t] || '🎙';
+}
+
+// ── Type selector ──────────────────────────────────────────────────────────
+function selectType(btn) {
+  document.querySelectorAll('.btn-type').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedType = btn.dataset.type;
+}
+
+function selectTypeByValue(val) {
+  const btn = document.querySelector(`.btn-type[data-type="${val}"]`);
+  if (btn) selectType(btn);
+}
+
+// ── Timer ────────────────────────────────────────────────────────────────────
+function startTimer() {
+  recordSeconds = 0;
+  updateTimer();
+  recordInterval = setInterval(() => { recordSeconds++; updateTimer(); }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(recordInterval);
+  recordInterval = null;
+}
+
+function updateTimer() {
+  const m = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+  const s = String(recordSeconds % 60).padStart(2, '0');
+  document.getElementById('record-timer').textContent = `${m}:${s}`;
+}
+
+// ── MediaRecorder ────────────────────────────────────────────────────────────
+async function toggleRecord() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = MediaRecorder.isTypeSupported('audio/mp4')
+      ? 'audio/mp4'
+      : MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : '';
+    audioFilename  = mimeType.includes('mp4') ? 'recording.mp4' : 'recording.webm';
+
+    mediaRecorder  = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    audioChunks    = [];
+
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      audioBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+      showPreview(audioBlob, audioFilename);
+    };
+
+    mediaRecorder.start(250);
+    startTimer();
+
+    const btn = document.getElementById('btn-record');
+    btn.textContent = '⏹';
+    btn.classList.add('recording');
+    document.getElementById('record-timer').style.display = '';
+    document.getElementById('record-label').textContent = 'En cours… appuyer pour arrêter';
+  } catch (err) {
+    alert('Microphone inaccessible : ' + err.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  stopTimer();
+  const btn = document.getElementById('btn-record');
+  btn.textContent = '🎙';
+  btn.classList.remove('recording');
+  document.getElementById('record-timer').style.display = 'none';
+  document.getElementById('record-label').textContent = 'Appuyer pour enregistrer';
+}
+
+// ── Import fichier ───────────────────────────────────────────────────────────
+function handleFileImport(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  audioBlob     = file;
+  audioFilename = file.name;
+  showPreview(file, file.name);
+  e.target.value = '';
+}
+
+// ── Preview ──────────────────────────────────────────────────────────────────
+function showPreview(blob, filename) {
+  const url     = URL.createObjectURL(blob);
+  const preview = document.getElementById('audio-preview');
+  preview.src   = url;
+  document.getElementById('preview-filename').textContent = filename;
+  showScreen('preview');
+}
+
+function goBack() {
+  audioBlob = null;
+  const preview = document.getElementById('audio-preview');
+  if (preview.src) { URL.revokeObjectURL(preview.src); preview.src = ''; }
+  showScreen('input');
+}
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+async function uploadAndProcess() {
+  if (!audioBlob) return;
+
+  const tag  = document.getElementById('tag-input').value.trim();
+  saveCombos(selectedType, tag);
+
+  const formData = new FormData();
+  formData.append('audio', audioBlob, audioFilename);
+  formData.append('source', selectedType);
+  if (tag) formData.append('tag', tag);
+
+  showScreen('processing');
+  setStep('upload', 'active');
+
+  let callId = null;
+
+  try {
+    const res = await fetch('/api/ingest', { method: 'POST', body: formData });
+    if (res.status === 401) { showLoginModal(); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    callId = data.callId || data.id;
+    setStep('upload', 'done');
+  } catch (err) {
+    setStep('upload', 'error');
+    setTimeout(() => {
+      showScreen('input');
+      alert('Erreur upload : ' + err.message);
+    }, 1500);
+    return;
+  }
+
+  // Polling
+  pendingCallId = callId;
+  pollStatus(callId);
+}
+
+// ── Polling ──────────────────────────────────────────────────────────────────
+let pollCount = 0;
+const MAX_POLL = 120; // 2 min
+
+async function pollStatus(callId) {
+  if (!callId) return;
+  pollCount = 0;
+
+  // Animate transcription step after ~3s
+  setTimeout(() => setStep('transcription', 'active'), 3000);
+  // Animate analyse step after ~8s
+  setTimeout(() => setStep('analyse', 'active'), 8000);
+
+  const interval = setInterval(async () => {
+    pollCount++;
+    if (pollCount > MAX_POLL) {
+      clearInterval(interval);
+      setStep('analyse', 'error');
+      setTimeout(() => showScreen('input'), 2000);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/status?callId=${callId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (data.status === 'done') {
+        clearInterval(interval);
+        setStep('transcription', 'done');
+        setStep('analyse', 'done');
+        setStep('done', 'done');
+        setTimeout(() => showDone(data), 600);
+      } else if (data.status === 'error') {
+        clearInterval(interval);
+        setStep('analyse', 'error');
+        setTimeout(() => {
+          showScreen('input');
+          alert('Erreur traitement : ' + (data.error || 'inconnue'));
+        }, 1500);
+      }
+    } catch { /* ignorer les erreurs réseau temporaires */ }
+  }, 3000);
+}
+
+function setStep(name, state) {
+  const el = document.getElementById(`step-${name}`);
+  if (!el) return;
+  el.classList.remove('active', 'done');
+  if (state === 'active') el.classList.add('active');
+  if (state === 'done')   el.classList.add('done');
+  const icon = el.querySelector('.step-icon');
+  const icons = { upload: '📤', transcription: '📝', analyse: '🧠', done: '✅' };
+  if (state === 'active') icon.innerHTML = `<span class="spinning">⏳</span>`;
+  else if (state === 'done')  icon.textContent = '✓';
+  else if (state === 'error') icon.textContent = '✗';
+  else icon.textContent = icons[name] || '•';
+}
+
+// ── Done ─────────────────────────────────────────────────────────────────────
+function showDone(data) {
+  if (data.title) {
+    document.getElementById('done-entry-title').textContent = data.title;
+    document.getElementById('done-entry-card').style.display = '';
+    document.getElementById('done-subtitle').textContent = 'Analysé et enregistré avec succès.';
+  }
+  showScreen('done');
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+}
+
+function startOver() {
+  audioBlob     = null;
+  pendingCallId = null;
+  pollCount     = 0;
+  document.getElementById('audio-preview').src = '';
+  document.getElementById('done-entry-card').style.display = 'none';
+  // Reset steps
+  ['upload','transcription','analyse','done'].forEach(n => setStep(n, 'idle'));
+  renderCombos();
+  showScreen('input');
+}
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+function showLoginModal() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('login-password')?.focus(), 50);
+}
+
+async function submitLogin() {
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const d = await res.json();
+      errEl.textContent = d.error || 'Mot de passe incorrect.';
+      errEl.style.display = 'block'; return;
+    }
+    document.getElementById('login-overlay').style.display = 'none';
+    // Relancer l'upload si on avait un audio en attente
+    if (audioBlob) uploadAndProcess();
+  } catch {
+    errEl.textContent = 'Erreur réseau.'; errEl.style.display = 'block';
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderCombos();
+
+// Pré-remplir avec le dernier combo
+const lastCombo = loadCombos()[0];
+if (lastCombo) applyCombo(lastCombo);
+</script>
+</body>
+</html>

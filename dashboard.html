@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eolys — Tableau de bord</title>
+<title>Vox — Tableau de bord</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -709,14 +709,15 @@
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    Eolys Assistant
+    Vox
   </div>
   <div class="header-actions">
     <span id="last-refresh" style="font-size:11px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace"></span>
-    <a href="/actions"  class="btn-ghost">Actions</a>
-    <a href="/projects" class="btn-ghost">Projets</a>
+    <a href="/record"   class="btn-primary">🎙 Enregistrer</a>
+    <a href="/actions"  class="btn-ghost">Items</a>
+    <a href="/projects" class="btn-ghost">Tags</a>
     <button class="btn-ghost" onclick="toggleStatsPanel()" title="Statistiques détaillées">📊 Analyse</button>
-    <a href="/api/export" class="btn-export" title="Télécharger tous les appels en CSV">
+    <a href="/api/export" class="btn-export" title="Exporter en CSV">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       CSV
     </a>
@@ -725,7 +726,7 @@
 
 <main>
   <div class="page-title">Tableau de bord</div>
-  <p class="page-subtitle">Comptes rendus d'appels — Eolys Solutions</p>
+  <p class="page-subtitle">Vos enregistrements audio analysés</p>
 
   <div class="stats" id="stats" style="display:none">
     <div class="stat">
@@ -758,14 +759,15 @@
   <!-- Filtres structurés -->
   <div class="filter-row" id="filter-row" style="display:none">
     <select id="filter-type"    class="filter-select" onchange="filterCalls()">
-      <option value="">Tous les types</option>
-      <option value="client">Client</option>
-      <option value="prospect">Prospect</option>
-      <option value="fournisseur">Fournisseur</option>
-      <option value="interne">Interne</option>
+      <option value="">Toutes les catégories</option>
+      <option value="work">Travail</option>
+      <option value="personal">Perso</option>
+      <option value="idea">Idée</option>
+      <option value="meeting">Réunion</option>
+      <option value="inbox">Inbox</option>
     </select>
     <select id="filter-project" class="filter-select" onchange="filterCalls()">
-      <option value="">Tous les projets</option>
+      <option value="">Tous les tags</option>
     </select>
     <select id="filter-status"  class="filter-select" onchange="filterCalls()">
       <option value="">Tous les statuts</option>
@@ -778,7 +780,7 @@
 
   <div class="search-bar">
     <input type="text" id="search-input" class="search-input"
-      placeholder="🔍 Rechercher par titre, projet, résumé…"
+      placeholder="🔍 Rechercher par titre, tag, résumé…"
       oninput="filterCalls()" />
   </div>
 
@@ -798,7 +800,7 @@
   <div style="background:#fff;border-radius:16px;padding:40px 48px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
     <div style="font-size:32px;margin-bottom:12px">🔐</div>
     <h2 style="font-size:20px;margin:0 0 6px">Accès dashboard</h2>
-    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Eolys Solutions — accès restreint</p>
+    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Accès restreint</p>
     <input type="password" id="login-password"
       style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"
       placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()" />
@@ -840,99 +842,82 @@ function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function renderCard(call) {
-  const isExpanded = expandedId === call.id;
-  const isSelected = selectedIds.has(call.id);
-  const actions     = Array.isArray(call.actions) ? call.actions : (call.actions ? JSON.parse(call.actions) : []);
-  const actionItems = Array.isArray(call.action_items) ? call.action_items : [];
+const CATEGORY_LABEL = { work: 'Travail', personal: 'Perso', idea: 'Idée', meeting: 'Réunion', inbox: 'Inbox' };
+const ITEM_ICON      = { task: '☐', idea: '💡', decision: '✓', reminder: '🔔' };
+const ITEM_LABEL     = { task: 'Tâche', idea: 'Idée', decision: 'Décision', reminder: 'Rappel' };
 
-  // V2 : items cochables si disponibles, sinon V1 liste statique
-  let actionsHtml;
-  if (actionItems.length > 0) {
-    actionsHtml = `<ul class="actions-list">
-      ${actionItems.map(a => `
-        <li class="action-item${a.done ? ' done' : ''}">
-          <input type="checkbox" ${a.done ? 'checked' : ''}
-                 onchange="toggleAction('${a.id}', this.checked, event)">
-          <span class="action-text">${escapeHtml(a.text)}</span>
-        </li>`).join('')}
-    </ul>`;
-  } else if (actions.length > 0) {
-    actionsHtml = `<ul class="actions-list">${actions.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>`;
-  } else {
-    actionsHtml = '<span style="color:var(--ink-dim);font-size:13px">Aucune action</span>';
-  }
+function renderCard(entry) {
+  const isExpanded  = expandedId === entry.id;
+  const isSelected  = selectedIds.has(entry.id);
+  const actionItems = Array.isArray(entry.action_items) ? entry.action_items : [];
 
-  // Compteur actions pour card-meta
+  const itemsHtml = actionItems.length > 0
+    ? `<ul class="actions-list">
+        ${actionItems.map(a => `
+          <li class="action-item${a.done ? ' done' : ''}">
+            <input type="checkbox" ${a.done ? 'checked' : ''}
+                   onchange="toggleAction('${a.id}', this.checked, event)">
+            <span class="action-text">${escapeHtml(a.text)}</span>
+            <span style="font-size:10px;color:var(--ink-dim);flex-shrink:0;margin-left:4px">${ITEM_LABEL[a.type] || a.type || ''}</span>
+          </li>`).join('')}
+       </ul>`
+    : '<span style="color:var(--ink-dim);font-size:13px">Aucun item extrait</span>';
+
   const actionsMeta = actionItems.length
-    ? `<span title="Actions faites">☑ ${actionItems.filter(a => a.done).length}/${actionItems.length}</span>`
+    ? `<span title="Items faits">☑ ${actionItems.filter(a => a.done).length}/${actionItems.length}</span>`
     : '';
 
-  const trelloBtn = call.trello_url
-    ? `<a href="${escapeHtml(call.trello_url)}" target="_blank" class="btn-trello">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="9" height="14" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2"/></svg>
-        Voir Trello
-      </a>`
-    : '';
-
-  const outlookBtn = call.outlook_draft_url
-    ? `<a href="${escapeHtml(call.outlook_draft_url)}" target="_blank" class="btn-outlook">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>
-        Brouillon Outlook
-      </a>`
-    : '';
-
-  const resumeText = call.resume || call.error || '';
+  const tagsPills = (entry.tags || []).map(t =>
+    `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--ink-muted);white-space:nowrap">${escapeHtml(t)}</span>`
+  ).join('');
 
   const trashIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
 
   return `
-    <div class="call-card ${isExpanded ? 'expanded' : ''} ${isSelected ? 'selected' : ''}" id="card-${call.id}" onclick="toggleCard('${call.id}', event)">
+    <div class="call-card ${isExpanded ? 'expanded' : ''} ${isSelected ? 'selected' : ''}" id="card-${entry.id}" onclick="toggleCard('${entry.id}', event)">
       <div class="card-header">
         <label class="card-checkbox-wrap" onclick="event.stopPropagation()">
-          <input type="checkbox" onchange="toggleSelect('${call.id}', this.checked)" ${isSelected ? 'checked' : ''}>
+          <input type="checkbox" onchange="toggleSelect('${entry.id}', this.checked)" ${isSelected ? 'checked' : ''}>
         </label>
-        <div class="card-title">${escapeHtml(call.titre || '(en cours de traitement…)')}</div>
+        <div class="card-title">${escapeHtml(entry.title || '(analyse en cours…)')}</div>
         <div class="card-badges">
-          ${badgeStatus(call.status)}
-          <span class="badge badge-type">${escapeHtml(call.call_type || '—')}</span>
-          ${call.status === 'error' ? `<button class="btn-retry" onclick="retryCall('${call.id}', event)">↺ Réessayer</button>` : ''}
-          <button class="btn-trash" onclick="startDelete('${call.id}', event)" title="Supprimer">${trashIcon}</button>
+          ${badgeStatus(entry.status)}
+          <span class="badge badge-type">${escapeHtml(CATEGORY_LABEL[entry.category] || entry.category || '—')}</span>
+          ${entry.status === 'error' ? `<button class="btn-retry" onclick="retryCall('${entry.id}', event)">↺ Réessayer</button>` : ''}
+          <button class="btn-trash" onclick="startDelete('${entry.id}', event)" title="Supprimer">${trashIcon}</button>
         </div>
       </div>
       <div class="card-meta">
-        <span>📅 ${formatDate(call.created_at)}</span>
-        ${call.project_name ? `<span>📁 ${escapeHtml(call.project_name)}</span>` : ''}
+        <span>📅 ${formatDate(entry.created_at)}</span>
+        ${tagsPills ? `<span style="display:flex;gap:4px;flex-wrap:wrap">${tagsPills}</span>` : ''}
         ${actionsMeta}
       </div>
-      ${resumeText ? `<div class="card-resume">${escapeHtml(resumeText)}</div>` : ''}
+      ${entry.summary ? `<div class="card-resume">${escapeHtml(entry.summary)}</div>` : ''}
+      ${entry.error   ? `<div class="card-resume" style="color:var(--red)">${escapeHtml(entry.error)}</div>` : ''}
 
-      <div class="delete-confirm-bar" id="delete-confirm-${call.id}">
-        <span class="delete-confirm-text">Supprimer ce compte rendu ?</span>
-        <button class="btn-delete-confirm" onclick="confirmDelete('${call.id}', event)">Supprimer</button>
-        <button class="btn-delete-cancel" onclick="cancelDelete('${call.id}', event)">Annuler</button>
+      <div class="delete-confirm-bar" id="delete-confirm-${entry.id}">
+        <span class="delete-confirm-text">Supprimer cet enregistrement ?</span>
+        <button class="btn-delete-confirm" onclick="confirmDelete('${entry.id}', event)">Supprimer</button>
+        <button class="btn-delete-cancel" onclick="cancelDelete('${entry.id}', event)">Annuler</button>
       </div>
 
       <div class="card-detail">
-        ${actions.length ? `
+        ${actionItems.length ? `
         <div class="detail-section">
-          <div class="detail-label">Actions à mener</div>
-          <div class="detail-content">${actionsHtml}</div>
+          <div class="detail-label">Items extraits</div>
+          <div class="detail-content">${itemsHtml}</div>
         </div>` : ''}
 
-        ${call.email ? `
+        ${entry.email_draft ? `
         <div class="detail-section">
           <div class="detail-label">Brouillon d'e-mail</div>
-          <div class="email-block">${escapeHtml(call.email)}</div>
+          <div class="email-block">${escapeHtml(entry.email_draft)}</div>
         </div>` : ''}
 
         <div class="card-footer">
-          ${trelloBtn}
-          ${outlookBtn}
-          <button class="btn-expand" onclick="copyEmail('${call.id}', event)" ${!call.email ? 'style="display:none"' : ''}>
-            Copier l'e-mail
-          </button>
-          <span id="copy-confirm-${call.id}" style="font-size:12px;color:var(--green);display:none">✓ Copié !</span>
+          ${entry.email_draft ? `
+          <button class="btn-expand" onclick="copyEmail('${entry.id}', event)">Copier l'e-mail</button>
+          <span id="copy-confirm-${entry.id}" style="font-size:12px;color:var(--green);display:none">✓ Copié !</span>` : ''}
         </div>
       </div>
     </div>`;
@@ -943,6 +928,16 @@ function toggleCard(id, e) {
       e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL') return;
   expandedId = expandedId === id ? null : id;
   renderList(window._calls);
+}
+
+function copyEmail(id, e) {
+  e.stopPropagation();
+  const entry = window._calls.find(c => c.id === id);
+  if (!entry?.email_draft) return;
+  navigator.clipboard.writeText(entry.email_draft).then(() => {
+    const el = document.getElementById(`copy-confirm-${id}`);
+    if (el) { el.style.display = 'inline'; setTimeout(() => { if (el) el.style.display = 'none'; }, 2000); }
+  });
 }
 
 function toggleSelect(id, checked) {
@@ -1032,18 +1027,6 @@ async function deleteSelected() {
   }
 }
 
-function copyEmail(id, e) {
-  e.stopPropagation();
-  const call = window._calls.find(c => c.id === id);
-  if (!call?.email) return;
-  navigator.clipboard.writeText(call.email).then(() => {
-    document.getElementById(`copy-confirm-${id}`).style.display = 'inline';
-    setTimeout(() => {
-      const el = document.getElementById(`copy-confirm-${id}`);
-      if (el) el.style.display = 'none';
-    }, 2000);
-  });
-}
 
 const PAGE_SIZE = 20;
 let currentPage = 1;
@@ -1072,14 +1055,14 @@ function renderFiltered() {
   const statusFilter = document.getElementById('filter-status')?.value  || '';
 
   const filtered = all.filter(c => {
-    if (typeFilter    && c.call_type    !== typeFilter)    return false;
-    if (projectFilter && c.project_name !== projectFilter) return false;
-    if (statusFilter  && c.status       !== statusFilter)  return false;
+    if (typeFilter    && c.category !== typeFilter)                          return false;
+    if (projectFilter && !(c.tags || []).includes(projectFilter))            return false;
+    if (statusFilter  && c.status   !== statusFilter)                        return false;
     if (currentQuery) {
-      return (c.titre        || '').toLowerCase().includes(currentQuery) ||
-             (c.project_name || '').toLowerCase().includes(currentQuery) ||
-             (c.resume       || '').toLowerCase().includes(currentQuery) ||
-             (c.call_type    || '').toLowerCase().includes(currentQuery);
+      return (c.title    || '').toLowerCase().includes(currentQuery) ||
+             (c.summary  || '').toLowerCase().includes(currentQuery) ||
+             (c.category || '').toLowerCase().includes(currentQuery) ||
+             (c.tags     || []).some(t => t.toLowerCase().includes(currentQuery));
     }
     return true;
   });
@@ -1091,7 +1074,7 @@ function renderFiltered() {
   const container = document.getElementById('calls-list');
 
   if (!filtered.length) {
-    container.innerHTML = `<div class="state-empty">${currentQuery ? 'Aucun résultat pour cette recherche.' : 'Aucun appel traité pour le moment.'}</div>`;
+    container.innerHTML = `<div class="state-empty">${currentQuery ? 'Aucun résultat pour cette recherche.' : 'Aucun enregistrement pour le moment.'}</div>`;
     document.getElementById('pagination').innerHTML = '';
     return;
   }
@@ -1125,7 +1108,7 @@ function renderList(calls) {
   const container = document.getElementById('calls-list');
 
   if (!calls.length) {
-    container.innerHTML = '<div class="state-empty">Aucun appel traité pour le moment.</div>';
+    container.innerHTML = '<div class="state-empty">Aucun enregistrement pour le moment.</div>';
     document.getElementById('stats').style.display = 'none';
     document.getElementById('pagination').innerHTML = '';
     return;
@@ -1138,13 +1121,13 @@ function renderList(calls) {
   document.getElementById('stat-processing').textContent = calls.filter(c => c.status === 'processing').length;
   document.getElementById('stat-error').textContent      = calls.filter(c => c.status === 'error').length;
 
-  // Afficher la filter-row et peupler le dropdown projets
+  // Afficher la filter-row et peupler le dropdown tags
   document.getElementById('filter-row').style.display = 'flex';
   const projectSel = document.getElementById('filter-project');
   const currentProj = projectSel.value;
-  const projects = [...new Set(calls.map(c => c.project_name).filter(Boolean))].sort();
-  projectSel.innerHTML = '<option value="">Tous les projets</option>' +
-    projects.map(p => `<option value="${escapeHtml(p)}" ${p === currentProj ? 'selected' : ''}>${escapeHtml(p)}</option>`).join('');
+  const allTags = [...new Set(calls.flatMap(c => c.tags || []))].sort();
+  projectSel.innerHTML = '<option value="">Tous les tags</option>' +
+    allTags.map(t => `<option value="${escapeHtml(t)}" ${t === currentProj ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('');
 
   // Actions globales (V2)
   const allActionItems = calls.flatMap(c => Array.isArray(c.action_items) ? c.action_items : []);
@@ -1239,9 +1222,9 @@ function toggleStatsPanel() {
 function renderStatsPanel(calls) {
   const done = calls.filter(c => c.status === 'done');
 
-  // 1. Répartition par type
+  // 1. Répartition par catégorie
   const typeCounts = {};
-  for (const c of done) { const t = c.call_type || 'autre'; typeCounts[t] = (typeCounts[t] || 0) + 1; }
+  for (const c of done) { const t = CATEGORY_LABEL[c.category] || c.category || 'autre'; typeCounts[t] = (typeCounts[t] || 0) + 1; }
   const typeEntries = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
   const typeMax     = typeEntries[0]?.[1] || 1;
   const typeBars    = typeEntries.map(([label, count]) => `
@@ -1249,11 +1232,11 @@ function renderStatsPanel(calls) {
       <span class="bar-label">${escapeHtml(label)}</span>
       <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/typeMax*100)}%"></div></div>
       <span class="bar-count">${count}</span>
-    </div>`).join('') || '<span style="font-size:12px;color:var(--ink-dim)">Aucun appel traité</span>';
+    </div>`).join('') || '<span style="font-size:12px;color:var(--ink-dim)">Aucun enregistrement traité</span>';
 
-  // 2. Top 5 projets
+  // 2. Top 5 tags
   const projCounts = {};
-  for (const c of done) { const p = c.project_name || 'Non précisé'; projCounts[p] = (projCounts[p] || 0) + 1; }
+  for (const c of done) { for (const t of (c.tags || [])) projCounts[t] = (projCounts[t] || 0) + 1; }
   const projEntries = Object.entries(projCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const projMax     = projEntries[0]?.[1] || 1;
   const projBars    = projEntries.map(([label, count]) => `
@@ -1261,7 +1244,7 @@ function renderStatsPanel(calls) {
       <span class="bar-label">${escapeHtml(label)}</span>
       <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/projMax*100)}%"></div></div>
       <span class="bar-count">${count}</span>
-    </div>`).join('') || '<span style="font-size:12px;color:var(--ink-dim)">Aucun projet</span>';
+    </div>`).join('') || '<span style="font-size:12px;color:var(--ink-dim)">Aucun tag</span>';
 
   // 3. Volume hebdomadaire (5 dernières semaines)
   function isoWeek(dateStr) {
@@ -1287,11 +1270,11 @@ function renderStatsPanel(calls) {
   document.getElementById('stats-panel-content').innerHTML = `
     <div class="stats-grid">
       <div>
-        <div class="stats-section-title">Par type d'appel</div>
+        <div class="stats-section-title">Par catégorie</div>
         ${typeBars}
       </div>
       <div>
-        <div class="stats-section-title">Top projets</div>
+        <div class="stats-section-title">Top tags</div>
         ${projBars}
       </div>
       <div>
@@ -1338,10 +1321,7 @@ async function submitLogin() {
 async function loadCalls() {
   try {
     const res = await fetch('/api/calls');
-    if (res.status === 401) {
-      showLoginModal();
-      return;
-    }
+    if (res.status === 401) { showLoginModal(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const calls = await res.json();
     renderList(calls);
@@ -1350,7 +1330,7 @@ async function loadCalls() {
   } catch (err) {
     document.getElementById('calls-list').innerHTML =
       `<div class="state-error">
-        <div>Impossible de charger les appels.</div>
+        <div>Impossible de charger les enregistrements.</div>
         <div class="error-text">${err.message}</div>
        </div>`;
   }

@@ -8,6 +8,7 @@
   "rewrites": [
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/actions",   "destination": "/actions.html"   },
-    { "source": "/projects",  "destination": "/projects.html"  }
+    { "source": "/projects",  "destination": "/projects.html"  },
+    { "source": "/record",    "destination": "/record.html"    }
   ]
 }
