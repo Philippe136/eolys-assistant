@@ -65,7 +65,7 @@ export const processCall = task({
   id: 'process-call',
   maxDuration: 300,
 
-  run: async ({ callId, audioUrl }) => {
+  run: async ({ callId, audioUrl, initialTags = [] }) => {
     try {
       // ── Étape 1 : Télécharger l'audio ─────────────────────────────────────
       console.log(`[${callId}] Téléchargement audio...`);
@@ -135,7 +135,11 @@ export const processCall = task({
       }
 
       // ── Étape 5 : Sauvegarde en base ──────────────────────────────────────
-      const tags = Array.isArray(result.tags) ? result.tags : [];
+      // Merger les tags IA + tags pré-remplis par l'utilisateur (dédupliqués)
+      const aiTags   = Array.isArray(result.tags) ? result.tags : [];
+      const userTags = Array.isArray(initialTags) ? initialTags : [];
+      const tags     = [...new Set([...userTags, ...aiTags])];
+
       await sql`
         UPDATE entries SET
           status      = 'done',

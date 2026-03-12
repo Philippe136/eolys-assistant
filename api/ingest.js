@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   if (!process.env.TRIGGER_SECRET_KEY)    return res.status(500).json({ error: 'TRIGGER_SECRET_KEY manquante dans Vercel' });
 
   try {
-    let fileBuffer, contentType, filename, source;
+    let fileBuffer, contentType, filename, source, category, initialTag;
 
     const ct = req.headers['content-type'] || '';
 
@@ -37,7 +37,9 @@ export default async function handler(req, res) {
       fileBuffer  = fs.readFileSync(audioFile.filepath);
       contentType = audioFile.mimetype ?? 'audio/mp4';
       filename    = `entries/${Date.now()}-${audioFile.originalFilename ?? 'audio.m4a'}`;
-      source      = fields.source?.[0] || 'upload';
+      source      = fields.source?.[0] || 'web';
+      category    = fields.category?.[0] || 'inbox';
+      initialTag  = fields.tag?.[0]?.trim() || null;
 
     } else {
       // ── Mode B : corps brut (iOS Shortcuts → Fichier) ──────────────────────
@@ -57,22 +59,27 @@ export default async function handler(req, res) {
 
       contentType = mimeClean || 'audio/mp4';
       filename    = `entries/${Date.now()}-audio.${ext}`;
-      source      = req.query.source || 'upload';
+      source      = req.query.source || 'shortcut';
+      category    = req.query.category || 'inbox';
+      initialTag  = req.query.tag?.trim() || null;
     }
+
+    // Tags initiaux : tag utilisateur pré-rempli si fourni
+    const initialTags = initialTag ? [initialTag] : [];
 
     // ── Upload vers Vercel Blob ─────────────────────────────────────────────
     const blob = await put(filename, fileBuffer, { access: 'public', contentType });
 
     // ── Créer l'entrée en base ──────────────────────────────────────────────
     const [entry] = await sql`
-      INSERT INTO entries (audio_url, source, status)
-      VALUES (${blob.url}, ${source}, 'processing')
+      INSERT INTO entries (audio_url, source, category, tags, status)
+      VALUES (${blob.url}, ${source}, ${category}, ${initialTags}, 'processing')
       RETURNING id
     `;
 
     // ── Déclencher le job background Trigger.dev ────────────────────────────
     const handle = await tasks.trigger('process-call', {
-      callId: entry.id, audioUrl: blob.url,
+      callId: entry.id, audioUrl: blob.url, initialTags,
     });
 
     await sql`UPDATE entries SET job_id = ${handle.id} WHERE id = ${entry.id}`;

@@ -616,7 +616,8 @@ async function uploadAndProcess() {
 
   const formData = new FormData();
   formData.append('audio', audioBlob, audioFilename);
-  formData.append('source', selectedType);
+  formData.append('source', 'web');
+  formData.append('category', selectedType);
   if (tag) formData.append('tag', tag);
 
   showScreen('processing');
