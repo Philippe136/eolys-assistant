@@ -883,7 +883,7 @@ function renderCard(entry) {
         <div class="card-badges">
           ${badgeStatus(entry.status)}
           <span class="badge badge-type">${escapeHtml(CATEGORY_LABEL[entry.category] || entry.category || '—')}</span>
-          ${entry.status === 'error' ? `<button class="btn-retry" onclick="retryCall('${entry.id}', event)">↺ Réessayer</button>` : ''}
+          ${(entry.status === 'error' || (entry.status === 'processing' && Date.now() - new Date(entry.created_at) > 5 * 60 * 1000)) ? `<button class="btn-retry" onclick="retryCall('${entry.id}', event)">↺ Relancer</button>` : ''}
           <button class="btn-trash" onclick="startDelete('${entry.id}', event)" title="Supprimer">${trashIcon}</button>
         </div>
       </div>

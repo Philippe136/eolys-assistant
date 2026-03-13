@@ -92,10 +92,18 @@ export const processCall = task({
       console.log(`[${callId}] Analyse Claude...`);
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+      // Modèles par ordre de préférence (du plus récent au plus sûr)
+      const CLAUDE_MODELS = [
+        'claude-haiku-4-5-20251001',
+        'claude-3-5-haiku-20241022',
+        'claude-3-haiku-20240307',
+      ];
+
       let result;
       for (let attempt = 1; attempt <= 3; attempt++) {
+        const model   = CLAUDE_MODELS[Math.min(attempt - 1, CLAUDE_MODELS.length - 1)];
         const message = await anthropic.messages.create({
-          model:      'claude-haiku-4-5-20251001',
+          model,
           max_tokens: 1500,
           system:     SYSTEM_PROMPT,
           messages:   [{ role: 'user', content: `Transcription :\n${transcript}` }],
@@ -172,7 +180,12 @@ export const processCall = task({
 
     } catch (err) {
       console.error(`[${callId}] ❌ Erreur :`, err.message);
-      await sql`UPDATE entries SET status = 'error', error = ${err.message} WHERE id = ${callId}`;
+      // Double try : si le UPDATE SQL échoue aussi, on loggue mais on ne masque pas l'erreur d'origine
+      try {
+        await sql`UPDATE entries SET status = 'error', error = ${err.message} WHERE id = ${callId}`;
+      } catch (dbErr) {
+        console.error(`[${callId}] ❌ Impossible de marquer l'erreur en base :`, dbErr.message);
+      }
       throw err;
     }
   },
