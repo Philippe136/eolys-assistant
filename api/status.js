@@ -1,13 +1,48 @@
-import { cors } from '../lib/auth.js';
+import { cors, requireSession } from '../lib/auth.js';
 import { sql } from '../lib/db.js';
+
+const MICROSOFT_VARS = [
+  'MICROSOFT_CLIENT_ID',
+  'MICROSOFT_CLIENT_SECRET',
+  'MICROSOFT_TENANT_ID',
+];
+
+const REQUIRED_VARS = [
+  'ANTHROPIC_API_KEY',
+  'OPENAI_API_KEY',
+  'DATABASE_URL',
+  'TRIGGER_SECRET_KEY',
+  'BLOB_READ_WRITE_TOKEN',
+  'INGEST_SECRET',
+  'DASHBOARD_SECRET',
+  ...MICROSOFT_VARS
+];
 
 export default async function handler(req, res) {
   cors(req, res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+  
+  // On regarde si on demande les "settings" ou un "callId"
+  const { type, callId } = req.query;
 
-  const { callId } = req.query;
-  if (!callId) return res.status(400).json({ error: 'Paramètre callId manquant.' });
+  // --- CAS A : On demande le statut des réglages (Settings) ---
+  if (type === 'settings') {
+    if (!requireSession(req, res)) return; // Sécurité
+
+    const vars = REQUIRED_VARS.map(key => ({
+      key,
+      set: Boolean(process.env[key]),
+    }));
+
+    const microsoft_configured = MICROSOFT_VARS.every(k => Boolean(process.env[k]));
+
+    return res.status(200).json({ vars, microsoft_configured });
+  }
+
+  // --- CAS B : On demande le statut d'un appel (CallId) ---
+  if (!callId) {
+      return res.status(400).json({ error: 'Paramètre callId ou type=settings manquant.' });
+  }
 
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(callId)) return res.status(400).json({ error: 'callId invalide.' });
