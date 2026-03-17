@@ -397,7 +397,7 @@ async function loadOutlookStatus() {
       `;
 
       // Vérifier si les env vars Microsoft sont présentes
-      const envRes = await fetch('/api/settings-status');
+      const envRes = await fetch('/api/status?type=settings');
       if (envRes.ok) {
         const envData = await envRes.json();
         if (!envData.microsoft_configured) {
