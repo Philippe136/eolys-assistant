@@ -65,28 +65,38 @@ export const processCall = task({
   id: 'process-call',
   maxDuration: 300,
 
-  run: async ({ callId, audioUrl, initialTags = [] }) => {
+  run: async ({ callId, audioUrl, transcript: directTranscript, initialTags = [] }) => {
     try {
-      // ── Étape 1 : Télécharger l'audio ─────────────────────────────────────
-      console.log(`[${callId}] Téléchargement audio...`);
-      const audioRes = await fetch(audioUrl);
-      if (!audioRes.ok) throw new Error(`Impossible de télécharger l'audio : ${audioRes.status}`);
+      let transcript;
 
-      const audioBuffer = await audioRes.arrayBuffer();
-      const ext         = new URL(audioUrl).pathname.split('.').pop() || 'm4a';
-      const mimeMap     = { mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg', webm: 'audio/webm', flac: 'audio/flac' };
-      const audioFile   = await toFile(Buffer.from(audioBuffer), `audio.${ext}`, { type: mimeMap[ext] ?? 'audio/mpeg' });
+      if (directTranscript) {
+        // ── Mode texte : pas de Whisper ───────────────────────────────────────
+        transcript = directTranscript.trim();
+        if (!transcript) throw new Error('Texte vide.');
+        console.log(`[${callId}] Mode texte : ${transcript.substring(0, 80)}...`);
 
-      // ── Étape 2 : Transcription Whisper ───────────────────────────────────
-      console.log(`[${callId}] Transcription Whisper...`);
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      const transcription = await openai.audio.transcriptions.create({
-        file: audioFile, model: 'whisper-1', language: 'fr',
-      });
+      } else {
+        // ── Étape 1 : Télécharger l'audio ─────────────────────────────────────
+        console.log(`[${callId}] Téléchargement audio...`);
+        const audioRes = await fetch(audioUrl);
+        if (!audioRes.ok) throw new Error(`Impossible de télécharger l'audio : ${audioRes.status}`);
 
-      const transcript = transcription.text?.trim();
-      if (!transcript) throw new Error('Transcription vide — audio inaudible ou trop court.');
-      console.log(`[${callId}] Transcript : ${transcript.substring(0, 80)}...`);
+        const audioBuffer = await audioRes.arrayBuffer();
+        const ext         = new URL(audioUrl).pathname.split('.').pop() || 'm4a';
+        const mimeMap     = { mp3: 'audio/mpeg', m4a: 'audio/mp4', mp4: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg', webm: 'audio/webm', flac: 'audio/flac' };
+        const audioFile   = await toFile(Buffer.from(audioBuffer), `audio.${ext}`, { type: mimeMap[ext] ?? 'audio/mpeg' });
+
+        // ── Étape 2 : Transcription Whisper ───────────────────────────────────
+        console.log(`[${callId}] Transcription Whisper...`);
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const transcription = await openai.audio.transcriptions.create({
+          file: audioFile, model: 'whisper-1', language: 'fr',
+        });
+
+        transcript = transcription.text?.trim();
+        if (!transcript) throw new Error('Transcription vide — audio inaudible ou trop court.');
+        console.log(`[${callId}] Transcript : ${transcript.substring(0, 80)}...`);
+      }
 
       // ── Étape 3 : Analyse Claude Haiku (avec retry si JSON invalide) ────────
       console.log(`[${callId}] Analyse Claude...`);

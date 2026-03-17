@@ -690,6 +690,49 @@
   }
   .btn-filter-reset:hover { background: var(--surface2); color: var(--ink); }
 
+  /* ── Quick Add ── */
+  .quick-add-wrap {
+    margin-bottom: 24px;
+  }
+  .quick-add-box {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .quick-add-box:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,65,10,0.08);
+  }
+  .quick-add-textarea {
+    width: 100%; border: none; outline: none; resize: none;
+    font-family: 'Syne', sans-serif; font-size: 14px; color: var(--ink);
+    background: transparent; line-height: 1.5; min-height: 40px; max-height: 160px;
+  }
+  .quick-add-textarea::placeholder { color: var(--ink-dim); }
+  .quick-add-footer {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .quick-add-select {
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border: 1.5px solid var(--border); border-radius: 7px;
+    background: var(--surface2); color: var(--ink-muted); outline: none; cursor: pointer;
+  }
+  .quick-add-select:focus { border-color: var(--accent); }
+  .quick-add-hint { font-size: 11px; color: var(--ink-dim); margin-left: auto; }
+  .btn-quick-submit {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    padding: 7px 18px; border-radius: 8px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer;
+    transition: opacity 0.15s; flex-shrink: 0;
+  }
+  .btn-quick-submit:hover { opacity: 0.88; }
+  .btn-quick-submit:disabled { opacity: 0.45; cursor: default; }
+
   /* ── Responsive ── */
   @media (max-width: 640px) {
     main { padding: 20px 16px 96px; }
@@ -727,6 +770,28 @@
 <main>
   <div class="page-title">Tableau de bord</div>
   <p class="page-subtitle">Vos enregistrements audio analysés</p>
+
+  <!-- ── Quick Add ── -->
+  <div class="quick-add-wrap">
+    <div class="quick-add-box">
+      <textarea class="quick-add-textarea" id="quick-add-text"
+        placeholder="Capture rapide — note, idée, tâche… (Cmd+Entrée pour envoyer)"
+        rows="2"
+        onkeydown="handleQuickAddKey(event)"
+        oninput="autoResizeTextarea(this)"></textarea>
+      <div class="quick-add-footer">
+        <select class="quick-add-select" id="quick-add-category">
+          <option value="inbox">📥 Inbox</option>
+          <option value="work">💼 Travail</option>
+          <option value="personal">👤 Perso</option>
+          <option value="idea">💡 Idée</option>
+          <option value="meeting">🤝 Réunion</option>
+        </select>
+        <span class="quick-add-hint" id="quick-add-hint">⌘↵ pour envoyer</span>
+        <button class="btn-quick-submit" id="quick-add-btn" onclick="submitQuickAdd()">Envoyer</button>
+      </div>
+    </div>
+  </div>
 
   <div class="stats" id="stats" style="display:none">
     <div class="stat">
@@ -1155,6 +1220,62 @@ function renderList(calls) {
   clearTimeout(autoRefresh);
   if (calls.some(c => c.status === 'processing')) {
     autoRefresh = setTimeout(loadCalls, 5000);
+  }
+}
+
+// ── Quick Add ─────────────────────────────────────────────────────────────────
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function handleQuickAddKey(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    submitQuickAdd();
+  }
+}
+
+async function submitQuickAdd() {
+  const text = document.getElementById('quick-add-text').value.trim();
+  if (!text) { document.getElementById('quick-add-text').focus(); return; }
+
+  const category = document.getElementById('quick-add-category').value;
+  const btn      = document.getElementById('quick-add-btn');
+  const hint     = document.getElementById('quick-add-hint');
+
+  btn.disabled = true;
+  btn.textContent = '…';
+  hint.textContent = 'Envoi en cours…';
+
+  try {
+    const res = await fetch('/api/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, category, source: 'text' }),
+    });
+
+    if (!res.ok) {
+      const d = await res.json();
+      throw new Error(d.error || `HTTP ${res.status}`);
+    }
+
+    // Reset
+    const textarea = document.getElementById('quick-add-text');
+    textarea.value = '';
+    textarea.style.height = 'auto';
+    hint.textContent = '✓ Envoyé !';
+    setTimeout(() => { hint.textContent = '⌘↵ pour envoyer'; }, 2000);
+
+    // Refresh list after short delay (job takes time)
+    setTimeout(loadCalls, 800);
+
+  } catch (err) {
+    hint.textContent = `Erreur : ${err.message}`;
+    setTimeout(() => { hint.textContent = '⌘↵ pour envoyer'; }, 3000);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer';
   }
 }
 

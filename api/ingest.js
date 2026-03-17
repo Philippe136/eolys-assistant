@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Auth dual-mode : Bearer (iOS Shortcut) ou session cookie (page /record)
+  // Auth dual-mode : Bearer (iOS Shortcut) ou session cookie (page /record ou dashboard)
   const authHeader = req.headers['authorization'] || '';
   if (authHeader.startsWith('Bearer ')) {
     if (!requireBearer(req, res)) return;
@@ -18,13 +18,44 @@ export default async function handler(req, res) {
     if (!requireSession(req, res)) return;
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN manquante dans Vercel' });
-  if (!process.env.TRIGGER_SECRET_KEY)    return res.status(500).json({ error: 'TRIGGER_SECRET_KEY manquante dans Vercel' });
+  if (!process.env.TRIGGER_SECRET_KEY) return res.status(500).json({ error: 'TRIGGER_SECRET_KEY manquante dans Vercel' });
 
   try {
-    let fileBuffer, contentType, filename, source, category, initialTag;
-
     const ct = req.headers['content-type'] || '';
+
+    // ── Mode C : JSON texte (quick-add dashboard / iOS shortcut texte) ────────
+    if (ct.includes('application/json')) {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+
+      const text = (body.text || '').trim();
+      if (!text) return res.status(400).json({ error: 'Champ "text" manquant ou vide.' });
+
+      const source      = body.source   || 'text';
+      const category    = body.category || 'inbox';
+      const initialTags = body.tag ? [body.tag.trim()] : (Array.isArray(body.tags) ? body.tags : []);
+
+      const [entry] = await sql`
+        INSERT INTO entries (source, category, tags, status)
+        VALUES (${source}, ${category}, ${initialTags}, 'processing')
+        RETURNING id
+      `;
+
+      const handle = await tasks.trigger('process-call', {
+        callId: entry.id, transcript: text, initialTags,
+      });
+
+      await sql`UPDATE entries SET job_id = ${handle.id} WHERE id = ${entry.id}`;
+
+      const appUrl = process.env.APP_URL ?? `https://${req.headers.host}`;
+      return res.status(202).json({ callId: entry.id, jobId: handle.id, status: 'processing', resultUrl: `${appUrl}/dashboard` });
+    }
+
+    // ── Audio : vérification token Blob ───────────────────────────────────────
+    if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN manquante dans Vercel' });
+
+    let fileBuffer, contentType, filename, source, category, initialTag;
 
     if (ct.includes('multipart/form-data')) {
       // ── Mode A : multipart/form-data (page /record, curl, tests) ──────────
@@ -37,12 +68,12 @@ export default async function handler(req, res) {
       fileBuffer  = fs.readFileSync(audioFile.filepath);
       contentType = audioFile.mimetype ?? 'audio/mp4';
       filename    = `entries/${Date.now()}-${audioFile.originalFilename ?? 'audio.m4a'}`;
-      source      = fields.source?.[0] || 'web';
+      source      = fields.source?.[0]   || 'web';
       category    = fields.category?.[0] || 'inbox';
       initialTag  = fields.tag?.[0]?.trim() || null;
 
     } else {
-      // ── Mode B : corps brut (iOS Shortcuts → Fichier) ──────────────────────
+      // ── Mode B : corps brut (iOS Shortcuts → Fichier audio) ───────────────
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
       fileBuffer = Buffer.concat(chunks);
@@ -59,35 +90,29 @@ export default async function handler(req, res) {
 
       contentType = mimeClean || 'audio/mp4';
       filename    = `entries/${Date.now()}-audio.${ext}`;
-      source      = req.query.source || 'shortcut';
+      source      = req.query.source   || 'shortcut';
       category    = req.query.category || 'inbox';
       initialTag  = req.query.tag?.trim() || null;
     }
 
-    // Tags initiaux : tag utilisateur pré-rempli si fourni
     const initialTags = initialTag ? [initialTag] : [];
 
-    // ── Upload vers Vercel Blob ─────────────────────────────────────────────
     const blob = await put(filename, fileBuffer, { access: 'public', contentType });
 
-    // ── Créer l'entrée en base ──────────────────────────────────────────────
     const [entry] = await sql`
       INSERT INTO entries (audio_url, source, category, tags, status)
       VALUES (${blob.url}, ${source}, ${category}, ${initialTags}, 'processing')
       RETURNING id
     `;
 
-    // ── Déclencher le job background Trigger.dev ────────────────────────────
     const handle = await tasks.trigger('process-call', {
       callId: entry.id, audioUrl: blob.url, initialTags,
     });
 
     await sql`UPDATE entries SET job_id = ${handle.id} WHERE id = ${entry.id}`;
 
-    const appUrl    = process.env.APP_URL ?? `https://${req.headers.host}`;
-    const resultUrl = `${appUrl}/dashboard`;
-
-    return res.status(202).json({ callId: entry.id, jobId: handle.id, status: 'processing', resultUrl });
+    const appUrl = process.env.APP_URL ?? `https://${req.headers.host}`;
+    return res.status(202).json({ callId: entry.id, jobId: handle.id, status: 'processing', resultUrl: `${appUrl}/dashboard` });
 
   } catch (err) {
     console.error('Erreur /api/ingest:', err);
