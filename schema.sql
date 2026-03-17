@@ -104,3 +104,33 @@ BEGIN
     ON CONFLICT (id) DO NOTHING;
   END IF;
 END $$;
+
+-- ── V3.1 : Espaces et Projets ─────────────────────────────────────────────
+-- Exécuter dans Neon SQL Editor après V3.0
+
+CREATE TABLE IF NOT EXISTS spaces (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       TEXT NOT NULL,
+  icon       TEXT NOT NULL DEFAULT '📁',
+  color      TEXT NOT NULL DEFAULT '#7a7268',
+  position   INT  NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  space_id    UUID REFERENCES spaces(id) ON DELETE SET NULL,
+  name        TEXT NOT NULL,
+  description TEXT,
+  color       TEXT NOT NULL DEFAULT '#c8410a',
+  status      TEXT NOT NULL DEFAULT 'active', -- active | paused | done | archived
+  position    INT  NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS projects_space_id_idx ON projects(space_id);
+CREATE INDEX IF NOT EXISTS projects_status_idx   ON projects(status);
+
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS entries_project_id_idx ON entries(project_id);

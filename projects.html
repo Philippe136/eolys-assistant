@@ -3,47 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vox — Tags</title>
+<title>Vox — Projets</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f2ed;
-    --surface: #ffffff;
-    --surface2: #f0ece5;
-    --border: #e0d9cf;
-    --ink: #1a1714;
-    --ink-muted: #7a7268;
-    --ink-dim: #b5afa6;
-    --accent: #c8410a;
-    --accent-light: #f5ede8;
-    --green: #1a6b3c;
-    --green-light: #e8f3ec;
-    --yellow: #d4a017;
-    --yellow-light: #fdf6e3;
-    --red: #b91c1c;
-    --red-light: #fef2f2;
-    --radius: 12px;
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5;
+    --border: #e0d9cf; --ink: #1a1714; --ink-muted: #7a7268;
+    --ink-dim: #b5afa6; --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --yellow: #d4a017; --yellow-light: #fdf6e3;
+    --red: #b91c1c; --red-light: #fef2f2; --radius: 12px;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
 
-  /* ── Header ── */
   header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 56px; display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 10;
   }
   .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
   .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
-  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .header-nav { display: flex; align-items: center; gap: 4px; }
   .btn-ghost {
     font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
     color: var(--ink-muted); background: none; border: none; cursor: pointer;
@@ -51,189 +32,275 @@
     transition: background 0.15s, color 0.15s;
   }
   .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
-
-  /* ── Main ── */
-  main { max-width: 900px; margin: 0 auto; padding: 32px 24px 96px; }
-  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
-  .page-subtitle { font-size: 14px; color: var(--ink-muted); margin-bottom: 28px; }
-
-  /* ── Stats bar ── */
-  .stats { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
-  .stat {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 12px 20px; flex: 1; min-width: 80px; text-align: center;
+  .btn-primary {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    padding: 8px 16px; border-radius: 9px; text-decoration: none;
+    transition: opacity 0.15s;
   }
-  .stat-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; margin-bottom: 4px; }
-  .stat-label { font-size: 11px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .btn-primary:hover { opacity: 0.88; }
 
-  /* ── Project cards grid ── */
-  .projects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
+  main { max-width: 1000px; margin: 0 auto; padding: 32px 24px 96px; }
+
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
   }
+  .page-header-left h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .page-header-left p { font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
+  .page-header-actions { display: flex; gap: 8px; }
+
+  /* ── Espaces ── */
+  .space-section { margin-bottom: 36px; }
+  .space-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  .space-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .space-title { font-size: 15px; font-weight: 700; flex: 1; display: flex; align-items: center; gap: 8px; }
+  .space-count { font-size: 12px; color: var(--ink-muted); font-weight: 500; }
+  .btn-icon {
+    background: none; border: none; cursor: pointer; padding: 4px 8px;
+    border-radius: 6px; color: var(--ink-dim); font-size: 13px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-icon:hover { background: var(--surface2); color: var(--ink); }
+
+  /* ── Grille projets ── */
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 
   .project-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    cursor: default;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-left: 4px solid var(--accent); border-radius: var(--radius);
+    padding: 16px; cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    display: flex; flex-direction: column; gap: 10px;
+    text-decoration: none; color: inherit;
   }
-  .project-card:hover { border-color: var(--ink-dim); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .project-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.08); border-color: var(--ink-dim); }
 
-  .project-card-name {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: -0.2px;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    line-height: 1.3;
+  .project-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .project-name { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.3; flex: 1; }
+  .project-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+  .badge-status {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px;
+    text-transform: uppercase; letter-spacing: 0.3px;
   }
+  .badge-active  { background: var(--green-light); color: var(--green); }
+  .badge-paused  { background: var(--yellow-light); color: var(--yellow); }
+  .badge-done    { background: var(--surface2); color: var(--ink-muted); }
 
-  .project-card-name .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-
-  /* ── Progress bar ── */
-  .progress-wrap { margin-bottom: 14px; }
+  .progress-wrap { }
   .progress-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ink-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--ink-muted); margin-bottom: 5px; font-weight: 500;
   }
-  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
-  .progress-fill.complete { background: var(--green); }
+  .progress-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
 
-  /* ── Mini stats ── */
-  .card-stats {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    border-top: 1px solid var(--border);
-    padding-top: 12px;
-    margin-top: 4px;
+  .project-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .project-stat { font-size: 12px; color: var(--ink-muted); display: flex; align-items: center; gap: 3px; }
+  .project-stat strong { color: var(--ink); font-weight: 600; }
+
+  .btn-new-project {
+    border: 1.5px dashed var(--border); border-radius: var(--radius);
+    padding: 16px; display: flex; align-items: center; justify-content: center;
+    gap: 8px; color: var(--ink-muted); font-size: 13px; font-weight: 600;
+    cursor: pointer; background: none; width: 100%;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    font-family: 'Syne', sans-serif;
   }
-  .card-stat { font-size: 12px; color: var(--ink-muted); display: flex; align-items: center; gap: 4px; }
-  .card-stat span { font-weight: 600; color: var(--ink); }
+  .btn-new-project:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
 
-  .badge-mini {
-    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 5px;
-    text-transform: uppercase; letter-spacing: 0.2px;
-  }
-  .badge-mini-green { background: var(--green-light); color: var(--green); }
-  .badge-mini-yellow { background: var(--yellow-light); color: var(--yellow); }
-  .badge-mini-red { background: var(--red-light); color: var(--red); }
+  /* ── Section sans espace ── */
+  .no-space-section { margin-top: 12px; }
 
-  .last-activity {
-    font-size: 11px;
-    color: var(--ink-dim);
-    font-family: 'JetBrains Mono', monospace;
-    margin-top: 10px;
-  }
-
-  /* ── Filtre projets ── */
-  .filter-bar {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 20px;
+  /* ── Empty states ── */
+  .empty-state {
+    text-align: center; padding: 48px 24px; color: var(--ink-muted);
+    border: 1.5px dashed var(--border); border-radius: var(--radius);
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 4px;
-    width: fit-content;
   }
-  .btn-filter {
+  .empty-state h3 { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; margin-bottom: 20px; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,23,20,0.6); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 16px; padding: 32px;
+    width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--ink-muted); display: block; margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 14px;
+    background: var(--surface); color: var(--ink); outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-swatch {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent;
+    transition: transform 0.1s, border-color 0.1s;
+  }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.selected { border-color: var(--ink); }
+  .modal-footer { display: flex; gap: 8px; margin-top: 24px; justify-content: flex-end; }
+  .btn-cancel {
     font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
-    padding: 6px 18px; border-radius: 7px; border: none; background: none;
-    color: var(--ink-muted); cursor: pointer; transition: background 0.15s, color 0.15s;
+    padding: 9px 18px; border-radius: 9px; border: 1.5px solid var(--border);
+    background: none; cursor: pointer; color: var(--ink-muted);
+    transition: background 0.15s;
   }
-  .btn-filter.active { background: var(--accent); color: #fff; }
-  .btn-filter:hover:not(.active) { color: var(--ink); }
+  .btn-cancel:hover { background: var(--surface2); }
+  .btn-submit {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    padding: 9px 20px; border-radius: 9px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-submit:hover { opacity: 0.88; }
+  .btn-submit:disabled { opacity: 0.5; cursor: default; }
+  .btn-danger {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 9px 16px; border-radius: 9px; border: none;
+    background: var(--red-light); color: var(--red); cursor: pointer;
+    margin-right: auto; transition: background 0.15s;
+  }
+  .btn-danger:hover { background: #fecaca; }
 
-  /* ── Empty / loading ── */
-  .state-empty, .state-loading, .state-error {
-    text-align: center; padding: 64px 24px; color: var(--ink-muted);
-    grid-column: 1/-1;
-  }
-  .state-loading-dot {
-    display: inline-block; width: 6px; height: 6px; background: var(--ink-dim);
-    border-radius: 50%; animation: pulse 1s infinite; margin: 0 2px;
-  }
-  .state-loading-dot:nth-child(2) { animation-delay: 0.2s; }
-  .state-loading-dot:nth-child(3) { animation-delay: 0.4s; }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; transform: scale(0.8); }
-    50%       { opacity: 1;   transform: scale(1); }
+  /* ── Login ── */
+  #login-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,23,20,0.7); z-index: 999;
+    align-items: center; justify-content: center;
   }
 
   @media (max-width: 640px) {
     main { padding: 20px 16px 64px; }
     .projects-grid { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; align-items: flex-start; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <div class="logo-dot"></div>
-    Vox
-  </div>
-  <div class="header-actions">
-    <a href="/record"    class="btn-ghost" style="color:var(--accent);font-weight:700">🎙 Enregistrer</a>
-    <a href="/dashboard" class="btn-ghost">Tableau de bord</a>
+  <div class="logo"><div class="logo-dot"></div>Vox</div>
+  <div class="header-nav">
+    <span id="last-refresh" style="font-size:11px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;margin-right:8px"></span>
+    <a href="/record"    class="btn-primary" style="font-size:13px">🎙 Enregistrer</a>
+    <a href="/dashboard" class="btn-ghost">Dashboard</a>
     <a href="/actions"   class="btn-ghost">Items</a>
+    <a href="/projects"  class="btn-ghost" style="color:var(--accent)">Projets</a>
   </div>
 </header>
 
 <main>
-  <div class="page-title">Tags</div>
-  <p class="page-subtitle">Vue synthèse par tag</p>
-
-  <div class="stats" id="stats" style="display:none">
-    <div class="stat">
-      <div class="stat-value" id="stat-projects">—</div>
-      <div class="stat-label">Tags</div>
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Projets</h1>
+      <p>Organisez vos enregistrements par projet et espace</p>
     </div>
-    <div class="stat">
-      <div class="stat-value" id="stat-calls">—</div>
-      <div class="stat-label">Entrées</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="stat-actions-todo" style="color:var(--accent)">—</div>
-      <div class="stat-label">Items à faire</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="stat-actions-done" style="color:var(--green)">—</div>
-      <div class="stat-label">Items faits</div>
+    <div class="page-header-actions">
+      <button class="btn-ghost" onclick="openSpaceModal()">+ Espace</button>
+      <button class="btn-primary" onclick="openProjectModal()">+ Nouveau projet</button>
     </div>
   </div>
 
-  <div class="filter-bar" id="filter-bar" style="display:none">
-    <button class="btn-filter active" id="btn-active"   onclick="setFilter('active')">Actifs</button>
-    <button class="btn-filter"        id="btn-all"      onclick="setFilter('all')">Tous</button>
-  </div>
-
-  <div class="projects-grid" id="projects-grid">
-    <div class="state-loading" style="grid-column:1/-1">
-      <span class="state-loading-dot"></span>
-      <span class="state-loading-dot"></span>
-      <span class="state-loading-dot"></span>
-    </div>
+  <div id="main-content">
+    <div style="text-align:center;padding:48px;color:var(--ink-muted)">Chargement…</div>
   </div>
 </main>
 
-<!-- Modal login (même pattern que dashboard) -->
+<!-- ── Modal Projet ── -->
+<div class="modal-overlay" id="project-modal">
+  <div class="modal">
+    <h2 id="project-modal-title">Nouveau projet</h2>
+    <input type="hidden" id="project-edit-id">
+
+    <div class="form-group">
+      <label class="form-label">Nom du projet *</label>
+      <input class="form-input" id="project-name" placeholder="Ex: Refonte site web" maxlength="80">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Espace</label>
+      <select class="form-select" id="project-space">
+        <option value="">— Sans espace —</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Couleur</label>
+      <div class="color-picker" id="project-color-picker"></div>
+      <input type="hidden" id="project-color" value="#c8410a">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="project-description" placeholder="Quelques mots sur ce projet…"></textarea>
+    </div>
+
+    <div class="form-group" id="project-status-group" style="display:none">
+      <label class="form-label">Statut</label>
+      <select class="form-select" id="project-status">
+        <option value="active">Actif</option>
+        <option value="paused">En pause</option>
+        <option value="done">Terminé</option>
+      </select>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-danger" id="project-delete-btn" style="display:none" onclick="deleteProject()">Supprimer</button>
+      <button class="btn-cancel" onclick="closeProjectModal()">Annuler</button>
+      <button class="btn-submit" id="project-submit" onclick="submitProject()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Espace ── -->
+<div class="modal-overlay" id="space-modal">
+  <div class="modal">
+    <h2 id="space-modal-title">Nouvel espace</h2>
+    <input type="hidden" id="space-edit-id">
+
+    <div class="form-group">
+      <label class="form-label">Nom *</label>
+      <input class="form-input" id="space-name" placeholder="Ex: Travail, Personnel, Santé…" maxlength="40">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Icône (emoji)</label>
+      <input class="form-input" id="space-icon" placeholder="📁" maxlength="4" style="font-size:20px;text-align:center">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Couleur</label>
+      <div class="color-picker" id="space-color-picker"></div>
+      <input type="hidden" id="space-color" value="#7a7268">
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-danger" id="space-delete-btn" style="display:none" onclick="deleteSpace()">Supprimer</button>
+      <button class="btn-cancel" onclick="closeSpaceModal()">Annuler</button>
+      <button class="btn-submit" id="space-submit" onclick="submitSpace()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Login ── -->
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,23,20,0.7);z-index:999;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:16px;padding:40px 48px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
     <div style="font-size:32px;margin-bottom:12px">🔐</div>
@@ -251,93 +318,319 @@
 </div>
 
 <script>
-let allProjects  = [];
-let currentFilter = 'active';
+const COLORS = [
+  { hex: '#c8410a', label: 'Orange' },
+  { hex: '#2563eb', label: 'Bleu' },
+  { hex: '#1a6b3c', label: 'Vert' },
+  { hex: '#d4a017', label: 'Or' },
+  { hex: '#b91c1c', label: 'Rouge' },
+  { hex: '#7c3aed', label: 'Violet' },
+  { hex: '#0891b2', label: 'Cyan' },
+  { hex: '#7a7268', label: 'Gris' },
+];
 
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+let spaces   = [];
+let projects = [];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const content = document.getElementById('main-content');
 
-function setFilter(f) {
-  currentFilter = f;
-  document.getElementById('btn-active').classList.toggle('active', f === 'active');
-  document.getElementById('btn-all').classList.toggle('active',    f === 'all');
-  renderProjects();
-}
-
-function renderProjects() {
-  // Filtrer: "active" = dernière entrée < 60 jours
-  const now = Date.now();
-  const filtered = currentFilter === 'active'
-    ? allProjects.filter(p => (now - new Date(p.last_entry_at)) < 60 * 24 * 3600 * 1000)
-    : allProjects;
-
-  const grid = document.getElementById('projects-grid');
-
-  if (!filtered.length) {
-    grid.innerHTML = `<div class="state-empty" style="grid-column:1/-1">
-      ${currentFilter === 'active' ? 'Aucun tag actif ces 60 derniers jours.' : 'Aucun tag.'}
-    </div>`;
+  if (!projects.length && !spaces.length) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <h3>Aucun projet pour le moment</h3>
+        <p>Créez votre premier espace et projet pour organiser vos enregistrements.</p>
+        <button class="btn-primary" onclick="openSpaceModal()">Créer un espace</button>
+      </div>`;
     return;
   }
 
-  grid.innerHTML = filtered.map(renderProjectCard).join('');
+  let html = '';
+
+  // Sections par espace
+  for (const space of spaces) {
+    const spaceProjects = projects.filter(p => p.space_id === space.id);
+    html += `
+      <div class="space-section">
+        <div class="space-header">
+          <div class="space-dot" style="background:${esc(space.color)}"></div>
+          <div class="space-title">
+            <span>${esc(space.icon)}</span>
+            <span>${esc(space.name)}</span>
+            <span class="space-count">${spaceProjects.length} projet${spaceProjects.length > 1 ? 's' : ''}</span>
+          </div>
+          <button class="btn-icon" onclick="editSpace('${space.id}')" title="Modifier l'espace">✏️</button>
+        </div>
+        <div class="projects-grid">
+          ${spaceProjects.map(renderProjectCard).join('')}
+          <button class="btn-new-project" onclick="openProjectModal('${space.id}')">+ Nouveau projet</button>
+        </div>
+      </div>`;
+  }
+
+  // Projets sans espace
+  const orphans = projects.filter(p => !p.space_id);
+  if (orphans.length) {
+    html += `
+      <div class="no-space-section">
+        <div class="space-header">
+          <div class="space-dot" style="background:var(--ink-dim)"></div>
+          <div class="space-title">
+            <span>📂</span><span>Sans espace</span>
+            <span class="space-count">${orphans.length} projet${orphans.length > 1 ? 's' : ''}</span>
+          </div>
+        </div>
+        <div class="projects-grid">${orphans.map(renderProjectCard).join('')}</div>
+      </div>`;
+  }
+
+  // Si des espaces mais aucun projet
+  if (!projects.length) {
+    html += `
+      <div class="empty-state" style="margin-top:16px">
+        <h3>Aucun projet</h3>
+        <p>Créez votre premier projet pour commencer à organiser vos enregistrements.</p>
+        <button class="btn-primary" onclick="openProjectModal()">Créer un projet</button>
+      </div>`;
+  }
+
+  content.innerHTML = html;
+
+  // Timestamp refresh
+  document.getElementById('last-refresh').textContent =
+    'Mis à jour ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
 }
 
 function renderProjectCard(p) {
-  const total   = p.total_items || 0;
-  const done    = p.done_items  || 0;
-  const todo    = total - done;
-  const pct     = total > 0 ? Math.round(done / total * 100) : 0;
+  const total  = p.total_items  || 0;
+  const done   = p.done_items   || 0;
+  const todo   = total - done;
+  const pct    = total > 0 ? Math.round(done / total * 100) : 0;
   const allDone = total > 0 && todo === 0;
 
-  const progressBar = total > 0 ? `
+  const statusBadge = {
+    active: `<span class="badge-status badge-active">Actif</span>`,
+    paused: `<span class="badge-status badge-paused">Pause</span>`,
+    done:   `<span class="badge-status badge-done">Terminé</span>`,
+  }[p.status] || '';
+
+  const progress = total > 0 ? `
     <div class="progress-wrap">
       <div class="progress-label">
-        <span>Items</span>
-        <span>${done}/${total}</span>
+        <span>Items</span><span>${done}/${total}</span>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill ${allDone ? 'complete' : ''}" style="width:${pct}%"></div>
+        <div class="progress-fill" style="width:${pct}%;background:${allDone ? 'var(--green)' : p.color}"></div>
       </div>
     </div>` : '';
 
-  const statusBadges = [
-    p.done_entries       ? `<span class="badge-mini badge-mini-green">${p.done_entries} traités</span>` : '',
-    p.processing_entries ? `<span class="badge-mini badge-mini-yellow">${p.processing_entries} en cours</span>` : '',
-    p.error_entries      ? `<span class="badge-mini badge-mini-red">${p.error_entries} erreurs</span>` : '',
-  ].filter(Boolean).join('');
-
-  const count = p.entry_count || 0;
+  const dashUrl = `/dashboard?project=${p.id}`;
 
   return `
-    <div class="project-card">
-      <div class="project-card-name">
-        <span class="icon">🏷</span>
-        <span>${escapeHtml(p.tag || 'Sans tag')}</span>
+    <div class="project-card" style="border-left-color:${esc(p.color)}" onclick="window.location='${dashUrl}'">
+      <div class="project-card-top">
+        <div class="project-name">${esc(p.name)}</div>
+        <div class="project-actions">
+          ${statusBadge}
+          <button class="btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Modifier">✏️</button>
+        </div>
       </div>
-      ${progressBar}
-      <div class="card-stats">
-        <span class="card-stat">🎙 <span>${count}</span> entrée${count > 1 ? 's' : ''}</span>
-        ${todo > 0 ? `<span class="card-stat" style="color:var(--accent)">☐ <span style="color:var(--accent)">${todo}</span> à faire</span>` : ''}
-        ${statusBadges}
+      ${progress}
+      <div class="project-meta">
+        <span class="project-stat">🎙 <strong>${p.entry_count || 0}</strong> enregistrement${(p.entry_count||0)>1?'s':''}</span>
+        ${todo > 0 ? `<span class="project-stat" style="color:var(--accent)">☐ <strong style="color:var(--accent)">${todo}</strong> à faire</span>` : ''}
+        ${p.last_entry_at ? `<span class="project-stat">📅 ${fmtDate(p.last_entry_at)}</span>` : ''}
       </div>
-      <div class="last-activity">Dernière entrée : ${formatDate(p.last_entry_at)}</div>
+      ${p.description ? `<div style="font-size:12px;color:var(--ink-muted);line-height:1.5;border-top:1px solid var(--border);padding-top:8px">${esc(p.description)}</div>` : ''}
     </div>`;
 }
 
+// ── Color pickers ─────────────────────────────────────────────────────────────
+function initColorPicker(containerId, hiddenId, selectedColor) {
+  const container = document.getElementById(containerId);
+  const hidden    = document.getElementById(hiddenId);
+  container.innerHTML = COLORS.map(c => `
+    <div class="color-swatch ${c.hex === selectedColor ? 'selected' : ''}"
+      style="background:${c.hex}" title="${c.label}"
+      onclick="selectColor('${containerId}','${hiddenId}','${c.hex}')"></div>
+  `).join('');
+  hidden.value = selectedColor;
+}
+
+function selectColor(containerId, hiddenId, hex) {
+  document.getElementById(hiddenId).value = hex;
+  document.querySelectorAll(`#${containerId} .color-swatch`).forEach(s => {
+    s.classList.toggle('selected', s.style.background === hex || s.style.backgroundColor === hex);
+  });
+}
+
+// ── Modal Projet ──────────────────────────────────────────────────────────────
+function openProjectModal(presetSpaceId = null) {
+  document.getElementById('project-modal-title').textContent = 'Nouveau projet';
+  document.getElementById('project-edit-id').value = '';
+  document.getElementById('project-name').value = '';
+  document.getElementById('project-description').value = '';
+  document.getElementById('project-status-group').style.display = 'none';
+  document.getElementById('project-delete-btn').style.display = 'none';
+  document.getElementById('project-submit').textContent = 'Créer';
+  initColorPicker('project-color-picker', 'project-color', '#c8410a');
+
+  // Populate space selector
+  const sel = document.getElementById('project-space');
+  sel.innerHTML = '<option value="">— Sans espace —</option>' +
+    spaces.map(s => `<option value="${s.id}" ${s.id === presetSpaceId ? 'selected' : ''}>${esc(s.icon)} ${esc(s.name)}</option>`).join('');
+
+  document.getElementById('project-modal').classList.add('open');
+  setTimeout(() => document.getElementById('project-name').focus(), 50);
+}
+
+function editProject(id) {
+  const p = projects.find(p => p.id === id);
+  if (!p) return;
+  document.getElementById('project-modal-title').textContent = 'Modifier le projet';
+  document.getElementById('project-edit-id').value = p.id;
+  document.getElementById('project-name').value = p.name;
+  document.getElementById('project-description').value = p.description || '';
+  document.getElementById('project-status-group').style.display = 'block';
+  document.getElementById('project-status').value = p.status;
+  document.getElementById('project-delete-btn').style.display = 'block';
+  document.getElementById('project-submit').textContent = 'Enregistrer';
+  initColorPicker('project-color-picker', 'project-color', p.color || '#c8410a');
+
+  const sel = document.getElementById('project-space');
+  sel.innerHTML = '<option value="">— Sans espace —</option>' +
+    spaces.map(s => `<option value="${s.id}" ${s.id === p.space_id ? 'selected' : ''}>${esc(s.icon)} ${esc(s.name)}</option>`).join('');
+
+  document.getElementById('project-modal').classList.add('open');
+}
+
+function closeProjectModal() { document.getElementById('project-modal').classList.remove('open'); }
+
+async function submitProject() {
+  const id   = document.getElementById('project-edit-id').value;
+  const name = document.getElementById('project-name').value.trim();
+  if (!name) { document.getElementById('project-name').focus(); return; }
+
+  const body = {
+    name,
+    space_id:    document.getElementById('project-space').value || null,
+    color:       document.getElementById('project-color').value,
+    description: document.getElementById('project-description').value.trim() || null,
+    status:      document.getElementById('project-status').value || 'active',
+  };
+
+  const btn = document.getElementById('project-submit');
+  btn.disabled = true; btn.textContent = '…';
+
+  try {
+    const res = await fetch(id ? `/api/projects?id=${id}` : '/api/projects', {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+    closeProjectModal();
+    await load();
+  } catch (err) {
+    alert(`Erreur : ${err.message}`);
+  } finally {
+    btn.disabled = false; btn.textContent = id ? 'Enregistrer' : 'Créer';
+  }
+}
+
+async function deleteProject() {
+  const id = document.getElementById('project-edit-id').value;
+  if (!id || !confirm('Supprimer ce projet ? Les enregistrements ne seront pas supprimés.')) return;
+  try {
+    await fetch(`/api/projects?id=${id}`, { method: 'DELETE' });
+    closeProjectModal();
+    await load();
+  } catch (err) { alert(`Erreur : ${err.message}`); }
+}
+
+// ── Modal Espace ──────────────────────────────────────────────────────────────
+function openSpaceModal() {
+  document.getElementById('space-modal-title').textContent = 'Nouvel espace';
+  document.getElementById('space-edit-id').value = '';
+  document.getElementById('space-name').value = '';
+  document.getElementById('space-icon').value = '';
+  document.getElementById('space-delete-btn').style.display = 'none';
+  document.getElementById('space-submit').textContent = 'Créer';
+  initColorPicker('space-color-picker', 'space-color', '#7a7268');
+  document.getElementById('space-modal').classList.add('open');
+  setTimeout(() => document.getElementById('space-name').focus(), 50);
+}
+
+function editSpace(id) {
+  const s = spaces.find(s => s.id === id);
+  if (!s) return;
+  document.getElementById('space-modal-title').textContent = 'Modifier l\'espace';
+  document.getElementById('space-edit-id').value = s.id;
+  document.getElementById('space-name').value = s.name;
+  document.getElementById('space-icon').value = s.icon || '';
+  document.getElementById('space-delete-btn').style.display = 'block';
+  document.getElementById('space-submit').textContent = 'Enregistrer';
+  initColorPicker('space-color-picker', 'space-color', s.color || '#7a7268');
+  document.getElementById('space-modal').classList.add('open');
+}
+
+function closeSpaceModal() { document.getElementById('space-modal').classList.remove('open'); }
+
+async function submitSpace() {
+  const id   = document.getElementById('space-edit-id').value;
+  const name = document.getElementById('space-name').value.trim();
+  if (!name) { document.getElementById('space-name').focus(); return; }
+
+  const body = {
+    name,
+    icon:  document.getElementById('space-icon').value.trim() || '📁',
+    color: document.getElementById('space-color').value,
+  };
+
+  const btn = document.getElementById('space-submit');
+  btn.disabled = true; btn.textContent = '…';
+
+  try {
+    const res = await fetch(id ? `/api/projects?resource=spaces&id=${id}` : '/api/projects?resource=spaces', {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+    closeSpaceModal();
+    await load();
+  } catch (err) {
+    alert(`Erreur : ${err.message}`);
+  } finally {
+    btn.disabled = false; btn.textContent = id ? 'Enregistrer' : 'Créer';
+  }
+}
+
+async function deleteSpace() {
+  const id = document.getElementById('space-edit-id').value;
+  if (!id || !confirm('Supprimer cet espace ? Les projets seront conservés mais sans espace.')) return;
+  try {
+    await fetch(`/api/projects?resource=spaces&id=${id}`, { method: 'DELETE' });
+    closeSpaceModal();
+    await load();
+  } catch (err) { alert(`Erreur : ${err.message}`); }
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
 function showLoginModal() {
-  const overlay = document.getElementById('login-overlay');
-  overlay.style.display = 'flex';
+  document.getElementById('login-overlay').style.display = 'flex';
   setTimeout(() => document.getElementById('login-password')?.focus(), 50);
 }
-function hideLoginModal() { document.getElementById('login-overlay').style.display = 'none'; }
 
 async function submitLogin() {
   const password = document.getElementById('login-password').value;
@@ -349,47 +642,41 @@ async function submitLogin() {
       body: JSON.stringify({ password }),
     });
     if (!res.ok) {
-      const data = await res.json();
-      errEl.textContent = data.error || 'Mot de passe incorrect.';
+      const d = await res.json();
+      errEl.textContent = d.error || 'Mot de passe incorrect.';
       errEl.style.display = 'block'; return;
     }
-    hideLoginModal(); loadProjects();
-  } catch {
-    errEl.textContent = 'Erreur réseau.'; errEl.style.display = 'block';
-  }
+    document.getElementById('login-overlay').style.display = 'none';
+    load();
+  } catch { errEl.textContent = 'Erreur réseau.'; errEl.style.display = 'block'; }
 }
 
-async function loadProjects() {
+// ── Load ──────────────────────────────────────────────────────────────────────
+async function load() {
   try {
-    const res = await fetch('/api/projects');
-    if (res.status === 401) { showLoginModal(); return; }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    allProjects = await res.json();
+    const [spacesRes, projectsRes] = await Promise.all([
+      fetch('/api/projects?resource=spaces'),
+      fetch('/api/projects'),
+    ]);
 
-    // Stats globales
-    const totalProjects = allProjects.length;
-    const totalCalls    = allProjects.reduce((s, p) => s + (p.entry_count||0), 0);
-    const totalActTodo  = allProjects.reduce((s, p) => s + Math.max(0, (p.total_items||0) - (p.done_items||0)), 0);
-    const totalActDone  = allProjects.reduce((s, p) => s + (p.done_items||0), 0);
+    if (spacesRes.status === 401 || projectsRes.status === 401) {
+      showLoginModal(); return;
+    }
 
-    document.getElementById('stats').style.display = allProjects.length ? 'flex' : 'none';
-    document.getElementById('filter-bar').style.display = allProjects.length ? 'flex' : 'none';
-    document.getElementById('stat-projects').textContent    = totalProjects;
-    document.getElementById('stat-calls').textContent       = totalCalls;
-    document.getElementById('stat-actions-todo').textContent = totalActTodo;
-    document.getElementById('stat-actions-done').textContent = totalActDone;
-
-    renderProjects();
+    spaces   = await spacesRes.json();
+    projects = await projectsRes.json();
+    render();
   } catch (err) {
-    document.getElementById('projects-grid').innerHTML =
-      `<div class="state-error" style="grid-column:1/-1">
-         <div>Impossible de charger les tags.</div>
-         <div style="color:#b91c1c;font-size:13px;margin-top:6px">${err.message}</div>
-       </div>`;
+    document.getElementById('main-content').innerHTML =
+      `<div class="empty-state"><h3>Erreur de chargement</h3><p>${err.message}</p></div>`;
   }
 }
 
-loadProjects();
+// Close modals on overlay click
+document.getElementById('project-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeProjectModal(); });
+document.getElementById('space-modal').addEventListener('click',   e => { if (e.target === e.currentTarget) closeSpaceModal(); });
+
+load();
 </script>
 </body>
 </html>

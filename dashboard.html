@@ -715,7 +715,7 @@
     <span id="last-refresh" style="font-size:11px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace"></span>
     <a href="/record"   class="btn-primary">🎙 Enregistrer</a>
     <a href="/actions"  class="btn-ghost">Items</a>
-    <a href="/projects" class="btn-ghost">Tags</a>
+    <a href="/projects" class="btn-ghost">Projets</a>
     <button class="btn-ghost" onclick="toggleStatsPanel()" title="Statistiques détaillées">📊 Analyse</button>
     <a href="/api/export" class="btn-export" title="Exporter en CSV">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -823,6 +823,7 @@
 let expandedId = null;
 let autoRefresh = null;
 let selectedIds = new Set();
+let projects    = [];
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -884,6 +885,7 @@ function renderCard(entry) {
           ${badgeStatus(entry.status)}
           <span class="badge badge-type">${escapeHtml(CATEGORY_LABEL[entry.category] || entry.category || '—')}</span>
           ${(entry.status === 'error' || (entry.status === 'processing' && Date.now() - new Date(entry.created_at) > 5 * 60 * 1000)) ? `<button class="btn-retry" onclick="retryCall('${entry.id}', event)">↺ Relancer</button>` : ''}
+          ${entry.project_name ? `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1.5px solid ${escapeHtml(entry.project_color||'#c8410a')};color:${escapeHtml(entry.project_color||'#c8410a')};white-space:nowrap;cursor:pointer" onclick="event.stopPropagation();window.location='/projects'" title="${escapeHtml(entry.project_name)}">◉ ${escapeHtml(entry.project_name)}</span>` : ''}
           <button class="btn-trash" onclick="startDelete('${entry.id}', event)" title="Supprimer">${trashIcon}</button>
         </div>
       </div>
@@ -914,6 +916,13 @@ function renderCard(entry) {
           <div class="email-block">${escapeHtml(entry.email_draft)}</div>
         </div>` : ''}
 
+        <div class="detail-section" style="margin-top:12px">
+          <div class="detail-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-muted);margin-bottom:6px">Projet</div>
+          <select style="font-family:'Syne',sans-serif;font-size:13px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;width:100%;max-width:280px" onchange="assignProject('${entry.id}',this.value)" onclick="event.stopPropagation()">
+            <option value="">— Sans projet —</option>
+            ${projects.map(p => `<option value="${p.id}" ${p.id === entry.project_id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}
+          </select>
+        </div>
         <div class="card-footer">
           ${entry.email_draft ? `
           <button class="btn-expand" onclick="copyEmail('${entry.id}', event)">Copier l'e-mail</button>
@@ -1056,7 +1065,7 @@ function renderFiltered() {
 
   const filtered = all.filter(c => {
     if (typeFilter    && c.category !== typeFilter)                          return false;
-    if (projectFilter && !(c.tags || []).includes(projectFilter))            return false;
+    if (projectFilter && c.project_id !== projectFilter)                     return false;
     if (statusFilter  && c.status   !== statusFilter)                        return false;
     if (currentQuery) {
       return (c.title    || '').toLowerCase().includes(currentQuery) ||
@@ -1121,13 +1130,12 @@ function renderList(calls) {
   document.getElementById('stat-processing').textContent = calls.filter(c => c.status === 'processing').length;
   document.getElementById('stat-error').textContent      = calls.filter(c => c.status === 'error').length;
 
-  // Afficher la filter-row et peupler le dropdown tags
+  // Afficher la filter-row et peupler le dropdown projets
   document.getElementById('filter-row').style.display = 'flex';
-  const projectSel = document.getElementById('filter-project');
+  const projectSel  = document.getElementById('filter-project');
   const currentProj = projectSel.value;
-  const allTags = [...new Set(calls.flatMap(c => c.tags || []))].sort();
-  projectSel.innerHTML = '<option value="">Tous les tags</option>' +
-    allTags.map(t => `<option value="${escapeHtml(t)}" ${t === currentProj ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('');
+  projectSel.innerHTML = '<option value="">Tous les projets</option>' +
+    projects.map(p => `<option value="${p.id}" ${p.id === currentProj ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
 
   // Actions globales (V2)
   const allActionItems = calls.flatMap(c => Array.isArray(c.action_items) ? c.action_items : []);
@@ -1148,6 +1156,24 @@ function renderList(calls) {
   if (calls.some(c => c.status === 'processing')) {
     autoRefresh = setTimeout(loadCalls, 5000);
   }
+}
+
+async function assignProject(entryId, projectId) {
+  try {
+    const res = await fetch(`/api/calls?id=${entryId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId || null }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const entry = window._calls?.find(c => c.id === entryId);
+    if (entry) {
+      entry.project_id = projectId || null;
+      const proj = projects.find(p => p.id === projectId);
+      entry.project_name  = proj?.name  || null;
+      entry.project_color = proj?.color || null;
+    }
+  } catch (err) { alert(`Erreur assignation projet : ${err.message}`); }
 }
 
 async function retryCall(id, e) {
@@ -1318,8 +1344,16 @@ async function submitLogin() {
   }
 }
 
+async function loadProjects() {
+  try {
+    const res = await fetch('/api/projects');
+    if (res.ok) projects = await res.json();
+  } catch { /* silencieux */ }
+}
+
 async function loadCalls() {
   try {
+    if (!projects.length) await loadProjects();
     const res = await fetch('/api/calls');
     if (res.status === 401) { showLoginModal(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1336,7 +1370,14 @@ async function loadCalls() {
   }
 }
 
-loadCalls();
+(async () => {
+  await loadCalls();
+  const urlProject = new URLSearchParams(window.location.search).get('project');
+  if (urlProject) {
+    const sel = document.getElementById('filter-project');
+    if (sel) { sel.value = urlProject; filterCalls(); }
+  }
+})();
 </script>
 
 </body>

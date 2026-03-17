@@ -4,7 +4,6 @@ import { sql } from '../lib/db.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Supprime les blobs Vercel associés à une liste d'URLs (silencieux si erreur). */
 async function deleteBlobs(urls) {
   const valid = urls.filter(Boolean);
   if (!valid.length) return;
@@ -12,23 +11,25 @@ async function deleteBlobs(urls) {
 }
 
 export default async function handler(req, res) {
-  cors(req, res, 'GET, DELETE, OPTIONS');
+  cors(req, res, 'GET, PATCH, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!requireSession(req, res)) return;
 
   // ── GET : liste des entrées ───────────────────────────────────────────────
   if (req.method === 'GET') {
     const entries = await sql`
-      SELECT id, created_at, source, status,
-             category, title, summary, tags, email_draft,
-             error, pinned, archived
-      FROM entries
-      WHERE archived = false
-      ORDER BY created_at DESC
-      LIMIT 100
+      SELECT e.id, e.created_at, e.source, e.status,
+             e.category, e.title, e.summary, e.tags, e.email_draft,
+             e.error, e.pinned, e.archived, e.project_id,
+             p.name  AS project_name,
+             p.color AS project_color
+      FROM entries e
+      LEFT JOIN projects p ON p.id = e.project_id
+      WHERE e.archived = false
+      ORDER BY e.created_at DESC
+      LIMIT 200
     `;
 
-    // Enrichir avec les items
     if (entries.length) {
       const ids = entries.map(e => e.id);
       const itemRows = await sql`
@@ -48,11 +49,27 @@ export default async function handler(req, res) {
     return res.status(200).json(entries);
   }
 
-  // ── DELETE : suppression simple ou multiple ───────────────────────────────
+  // ── PATCH : assigner un projet ────────────────────────────────────────────
+  if (req.method === 'PATCH') {
+    const { id } = req.query;
+    if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
+
+    const { project_id } = req.body || {};
+    if (project_id && !UUID.test(project_id)) return res.status(400).json({ error: 'project_id invalide.' });
+
+    const [entry] = await sql`
+      UPDATE entries SET project_id = ${project_id || null}
+      WHERE id = ${id}
+      RETURNING id, project_id
+    `;
+    if (!entry) return res.status(404).json({ error: 'Entrée introuvable.' });
+    return res.status(200).json(entry);
+  }
+
+  // ── DELETE ────────────────────────────────────────────────────────────────
   if (req.method === 'DELETE') {
     const { id, ids } = req.query;
 
-    // Suppression multiple : DELETE /api/calls?ids=uuid1,uuid2,...
     if (ids) {
       const list = ids.split(',').map(s => s.trim()).filter(s => UUID.test(s));
       if (!list.length) return res.status(400).json({ error: 'Aucun ID valide fourni.' });
@@ -62,7 +79,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ deleted: list.length });
     }
 
-    // Suppression simple : DELETE /api/calls?id=uuid
     if (id) {
       if (!UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
       const rows = await sql`SELECT audio_url FROM entries WHERE id = ${id}`;
