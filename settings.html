@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vox — Paramètres</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface2: #f0ece5;
+    --border: #e0d9cf;
+    --ink: #1a1714;
+    --ink-muted: #7a7268;
+    --ink-dim: #b5afa6;
+    --accent: #c8410a;
+    --accent-light: #f5ede8;
+    --green: #1a6b3c;
+    --green-light: #e8f3ec;
+    --yellow: #d4a017;
+    --yellow-light: #fdf6e3;
+    --red: #b91c1c;
+    --red-light: #fef2f2;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .header-nav { display: flex; align-items: center; gap: 4px; }
+
+  .btn-ghost {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s, color .15s;
+  }
+
+  .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
+
+  .btn-primary {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary:hover { opacity: .88; }
+
+  .btn-danger {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--red);
+    background: var(--red-light);
+    border: 1px solid #fecaca;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s;
+  }
+
+  .btn-danger:hover { opacity: .8; }
+
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 32px;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 28px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-row:last-child { border-bottom: none; }
+
+  .card-row-left { flex: 1; min-width: 0; }
+
+  .card-row-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .card-row-desc {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.4;
+  }
+
+  .card-row-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ── Status badge ── */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 20px;
+  }
+
+  .status-badge.ok      { background: var(--green-light); color: var(--green); }
+  .status-badge.missing { background: var(--red-light); color: var(--red); }
+  .status-badge.warn    { background: var(--yellow-light); color: var(--yellow); }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ── Alert banner ── */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .alert.success { background: var(--green-light); color: var(--green); border: 1px solid #a7d7b7; }
+  .alert.error   { background: var(--red-light);   color: var(--red);   border: 1px solid #fecaca; }
+
+  /* ── Connected email ── */
+  .connected-email {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+    padding: 3px 8px;
+    background: var(--surface2);
+    border-radius: 6px;
+  }
+
+  /* ── Env status grid ── */
+  .env-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+  }
+
+  .env-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .env-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 600px) {
+    main { padding: 20px 16px 80px; }
+    .page-title { font-size: 22px; }
+    .card-row { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div>Vox</div>
+  <div class="header-nav">
+    <a href="/record"    class="btn-primary" style="font-size:13px">🎙 Enregistrer</a>
+    <a href="/dashboard" class="btn-ghost">Dashboard</a>
+    <a href="/actions"   class="btn-ghost">Items</a>
+    <a href="/projects"  class="btn-ghost">Projets</a>
+    <a href="/today"     class="btn-ghost">Aujourd'hui</a>
+    <a href="/settings"  class="btn-ghost" style="color:var(--accent)">Paramètres</a>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">⚙️ Paramètres</h1>
+
+  <div id="alert-zone"></div>
+
+  <!-- ── Intégrations email ── -->
+  <div class="section">
+    <div class="section-label">Intégrations email</div>
+    <div class="card">
+
+      <!-- Outlook / Microsoft 365 -->
+      <div class="card-row">
+        <div class="card-row-left">
+          <div class="card-row-title">
+            <span style="font-size:16px;margin-right:6px">📧</span>Outlook / Microsoft 365
+          </div>
+          <div class="card-row-desc" id="outlook-desc">
+            Crée automatiquement des brouillons dans Outlook quand l'IA génère un email depuis vos notes.
+          </div>
+          <div id="outlook-email" style="margin-top:6px;display:none">
+            <span class="connected-email" id="outlook-email-text"></span>
+          </div>
+        </div>
+        <div class="card-row-right" id="outlook-actions">
+          <div class="status-badge warn">
+            <div class="status-dot"></div>Chargement…
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Variables d'environnement ── -->
+  <div class="section">
+    <div class="section-label">Variables d'environnement</div>
+    <div id="env-grid" class="env-grid">
+      <!-- rempli par JS -->
+    </div>
+  </div>
+
+  <!-- ── À propos ── -->
+  <div class="section">
+    <div class="section-label">Application</div>
+    <div class="card">
+      <div class="card-row">
+        <div class="card-row-left">
+          <div class="card-row-title">Version</div>
+          <div class="card-row-desc">Vox Life OS · Schéma V3.1</div>
+        </div>
+        <div class="card-row-right">
+          <span class="status-badge ok"><div class="status-dot"></div>Production</span>
+        </div>
+      </div>
+      <div class="card-row">
+        <div class="card-row-left">
+          <div class="card-row-title">Export des données</div>
+          <div class="card-row-desc">Toutes vos entrées au format CSV</div>
+        </div>
+        <div class="card-row-right">
+          <a href="/api/export" class="btn-ghost" style="font-size:12px">⬇ Télécharger CSV</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Lire les params URL (connexion/déconnexion/erreur) ────────────────────────
+const urlParams = new URLSearchParams(location.search);
+const alertZone = document.getElementById('alert-zone');
+
+if (urlParams.get('connected') === '1') {
+  alertZone.innerHTML = `<div class="alert success">✅ Outlook connecté avec succès ! Les brouillons seront créés automatiquement.</div>`;
+  history.replaceState({}, '', '/settings');
+}
+if (urlParams.get('disconnected') === '1') {
+  alertZone.innerHTML = `<div class="alert success">✅ Compte Outlook déconnecté.</div>`;
+  history.replaceState({}, '', '/settings');
+}
+if (urlParams.get('error')) {
+  alertZone.innerHTML = `<div class="alert error">❌ Erreur OAuth : ${escHtml(urlParams.get('error'))}</div>`;
+  history.replaceState({}, '', '/settings');
+}
+
+// ── Status Outlook ────────────────────────────────────────────────────────────
+async function loadOutlookStatus() {
+  const actionsEl = document.getElementById('outlook-actions');
+  const emailEl   = document.getElementById('outlook-email');
+  const emailText = document.getElementById('outlook-email-text');
+
+  try {
+    const res = await fetch('/api/microsoft-oauth?action=status');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const data = await res.json();
+
+    if (data.connected) {
+      if (data.email) {
+        emailText.textContent = data.email;
+        emailEl.style.display = 'block';
+      }
+      actionsEl.innerHTML = `
+        <span class="status-badge ok"><div class="status-dot"></div>Connecté</span>
+        <a href="/api/microsoft-oauth?action=disconnect" class="btn-danger" onclick="return confirm('Déconnecter Outlook ?')">Déconnecter</a>
+      `;
+    } else {
+      actionsEl.innerHTML = `
+        <span class="status-badge missing"><div class="status-dot"></div>Non connecté</span>
+        <a href="/api/microsoft-oauth?action=start" class="btn-primary" id="connect-btn">🔗 Connecter Outlook</a>
+      `;
+
+      // Vérifier si les env vars Microsoft sont présentes
+      const envRes = await fetch('/api/settings-status');
+      if (envRes.ok) {
+        const envData = await envRes.json();
+        if (!envData.microsoft_configured) {
+          document.getElementById('connect-btn')?.remove();
+          document.getElementById('outlook-desc').textContent =
+            'Configurez MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET et MICROSOFT_TENANT_ID dans Vercel pour activer cette intégration.';
+          actionsEl.innerHTML = `<span class="status-badge warn"><div class="status-dot"></div>Non configuré</span>`;
+        }
+      }
+    }
+  } catch (e) {
+    actionsEl.innerHTML = `<span class="status-badge missing"><div class="status-dot"></div>Erreur</span>`;
+    console.error('Erreur status Outlook:', e);
+  }
+}
+
+// ── Statut env vars ───────────────────────────────────────────────────────────
+async function loadEnvStatus() {
+  const grid = document.getElementById('env-grid');
+  try {
+    const res = await fetch('/api/settings-status');
+    if (!res.ok) {
+      grid.innerHTML = `<div style="color:var(--ink-muted);font-size:13px">Impossible de charger le statut des variables.</div>`;
+      return;
+    }
+    const data = await res.json();
+    const vars = data.vars || [];
+
+    if (!vars.length) {
+      grid.innerHTML = `<div style="color:var(--ink-muted);font-size:13px">Aucune variable à afficher.</div>`;
+      return;
+    }
+
+    grid.innerHTML = vars.map(v => `
+      <div class="env-item">
+        <span class="env-name" title="${escHtml(v.key)}">${escHtml(v.key)}</span>
+        <span class="status-badge ${v.set ? 'ok' : 'missing'}">
+          <div class="status-dot"></div>${v.set ? 'OK' : 'Manquante'}
+        </span>
+      </div>
+    `).join('');
+  } catch (e) {
+    grid.innerHTML = `<div style="color:var(--ink-muted);font-size:13px">Erreur de chargement.</div>`;
+    console.error('Erreur env vars:', e);
+  }
+}
+
+loadOutlookStatus();
+loadEnvStatus();
+</script>
+</body>
+</html>
