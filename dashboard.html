@@ -929,7 +929,7 @@ function renderCard(entry) {
             <span style="font-size:10px;color:var(--ink-dim);flex-shrink:0;margin-left:4px">${ITEM_LABEL[a.type] || a.type || ''}</span>
           </li>`).join('')}
        </ul>`
-    : '<span style="color:var(--ink-dim);font-size:13px">Aucun item extrait</span>';
+    : '<span style="color:var(--ink-dim);font-size:13px;font-style:italic">Note simple — aucune action détectée</span>';
 
   const actionsMeta = actionItems.length
     ? `<span title="Items faits">☑ ${actionItems.filter(a => a.done).length}/${actionItems.length}</span>`
@@ -971,11 +971,10 @@ function renderCard(entry) {
       </div>
 
       <div class="card-detail">
-        ${actionItems.length ? `
         <div class="detail-section">
           <div class="detail-label">Items extraits</div>
           <div class="detail-content">${itemsHtml}</div>
-        </div>` : ''}
+        </div>
 
         ${entry.email_draft ? `
         <div class="detail-section">
