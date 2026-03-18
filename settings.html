@@ -460,7 +460,7 @@ async function loadOutlookStatus() {
       `;
 
       // Vérifier si les env vars Microsoft sont présentes
-      const envRes = await fetch('/api/settings-status');
+      const envRes = await fetch('/api/weekly-review?action=settings');
       if (envRes.ok) {
         const envData = await envRes.json();
         if (!envData.microsoft_configured) {
@@ -481,7 +481,7 @@ async function loadOutlookStatus() {
 async function loadEnvStatus() {
   const grid = document.getElementById('env-grid');
   try {
-    const res = await fetch('/api/settings-status');
+    const res = await fetch('/api/weekly-review?action=settings');
     if (!res.ok) {
       grid.innerHTML = `<div style="color:var(--ink-muted);font-size:13px">Impossible de charger le statut des variables.</div>`;
       return;

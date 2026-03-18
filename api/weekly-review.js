@@ -1,17 +1,30 @@
 /**
  * /api/weekly-review
- * GET          → dernière rétrospective + historique (5 dernières semaines)
- * POST ?run=1  → déclenche manuellement la génération (pour tests)
+ * GET                   → dernière rétrospective + historique (8 dernières semaines)
+ * GET ?action=settings  → statut des variables d'env (ex-settings-status.js)
+ * POST                  → déclenche manuellement la génération
  */
 import { cors, requireSession } from '../lib/auth.js';
 import { sql } from '../lib/db.js';
 import Anthropic from '@anthropic-ai/sdk';
 import { WEEKLY_REVIEW_PROMPT } from '../lib/prompts.js';
 
+const REQUIRED_VARS = [
+  'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'DATABASE_URL',
+  'TRIGGER_SECRET_KEY', 'BLOB_READ_WRITE_TOKEN', 'INGEST_SECRET', 'DASHBOARD_SECRET',
+];
+const MICROSOFT_VARS = ['MICROSOFT_CLIENT_ID', 'MICROSOFT_CLIENT_SECRET', 'MICROSOFT_TENANT_ID'];
+
 export default async function handler(req, res) {
   cors(req, res, 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!requireSession(req, res)) return;
+
+  // ── GET ?action=settings : statut env vars ────────────────────────────────
+  if (req.method === 'GET' && req.query.action === 'settings') {
+    const vars = [...REQUIRED_VARS, ...MICROSOFT_VARS].map(key => ({ key, set: Boolean(process.env[key]) }));
+    return res.status(200).json({ vars, microsoft_configured: MICROSOFT_VARS.every(k => Boolean(process.env[k])) });
+  }
 
   // ── GET : historique ──────────────────────────────────────────────────────
   if (req.method === 'GET') {
