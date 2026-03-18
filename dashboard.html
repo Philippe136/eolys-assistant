@@ -1165,7 +1165,7 @@ async function confirmCalendarEvent(id, e) {
       entry.calendar_event_status = 'confirmed';
       if (data.url && entry.calendar_event) entry.calendar_event.google_event_url = data.url;
     }
-    renderCalls(window._calls);
+    renderFiltered();
   } catch (err) {
     btn.disabled = false;
     btn.textContent = '✓ Ajouter à Google Agenda';
@@ -1179,7 +1179,7 @@ async function dismissCalendarEvent(id, e) {
     await fetch(`/api/google-calendar?action=dismiss&id=${id}`, { method: 'POST' });
     const entry = (window._calls || []).find(c => c.id === id);
     if (entry) entry.calendar_event_status = 'dismissed';
-    renderCalls(window._calls);
+    renderFiltered();
   } catch (err) {
     console.error('Dismiss error:', err);
   }
