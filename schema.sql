@@ -141,3 +141,15 @@ CREATE INDEX IF NOT EXISTS entries_project_id_idx ON entries(project_id);
 ALTER TABLE entries ADD COLUMN IF NOT EXISTS calendar_event        JSONB;
 ALTER TABLE entries ADD COLUMN IF NOT EXISTS calendar_event_status TEXT;
 -- calendar_event_status : NULL (non détecté) | 'suggested' | 'confirmed' | 'dismissed'
+
+-- ── V3.3 : Rétrospectives hebdomadaires ─────────────────────────────────────
+-- Exécuter dans Neon SQL Editor après V3.2
+
+CREATE TABLE IF NOT EXISTS weekly_reviews (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  week_start   DATE        NOT NULL,
+  entry_count  INT         NOT NULL DEFAULT 0,
+  data         JSONB       NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS weekly_reviews_week_start_idx ON weekly_reviews(week_start);

@@ -341,6 +341,61 @@
   .all-done-sub   { font-size: 14px; color: var(--ink-muted); }
 
   /* ── Bottom Nav Mobile ── */
+  /* ── Rétrospective ── */
+  .retro-card {
+    background: linear-gradient(135deg, #1a1714 0%, #2d2520 100%);
+    color: #f5f2ed;
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .retro-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+  }
+  .retro-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.6; }
+  .retro-score {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .retro-score-num {
+    font-size: 36px; font-weight: 800; letter-spacing: -1px; line-height: 1;
+  }
+  .retro-score-label { font-size: 11px; opacity: 0.5; }
+  .retro-bar {
+    height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px;
+    margin-bottom: 16px; overflow: hidden;
+  }
+  .retro-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .retro-mood { font-size: 13px; opacity: 0.7; margin-bottom: 12px; }
+  .retro-themes { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .retro-theme {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    background: rgba(255,255,255,0.12); border-radius: 20px;
+  }
+  .retro-section { margin-bottom: 10px; }
+  .retro-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.5; margin-bottom: 5px; }
+  .retro-list { list-style: none; }
+  .retro-list li { font-size: 13px; line-height: 1.5; opacity: 0.85; padding: 2px 0; }
+  .retro-list li::before { content: "→ "; opacity: 0.5; }
+  .retro-suggestion {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    font-size: 13.5px; line-height: 1.6; font-style: italic; opacity: 0.9;
+  }
+  .retro-footer {
+    margin-top: 12px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .retro-meta { font-size: 11px; opacity: 0.4; }
+  .btn-retro-gen {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    padding: 5px 12px; border-radius: 7px;
+    background: rgba(255,255,255,0.12); color: #f5f2ed;
+    border: 1px solid rgba(255,255,255,0.2); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-retro-gen:hover { background: rgba(255,255,255,0.2); }
+  .btn-retro-gen:disabled { opacity: 0.4; cursor: default; }
+
   .mobile-nav { display: none; }
 
   @media (max-width: 640px) {
@@ -398,6 +453,9 @@
     <h1 class="page-title">☀️ Aujourd'hui</h1>
     <span class="page-date" id="page-date"></span>
   </div>
+
+  <!-- Rétrospective hebdomadaire -->
+  <div id="retro-wrap" style="display:none;margin-bottom:24px"></div>
 
   <div id="content">
     <div class="item-list">
@@ -531,6 +589,90 @@ function renderSection({ title, badge, badgeClass, items, renderFn, context, lis
     </div>`;
 }
 
+// ── Rétrospective ─────────────────────────────────────────────────────────────
+
+function scoreColor(score) {
+  if (score >= 7) return '#4ade80';
+  if (score >= 4) return '#facc15';
+  return '#f87171';
+}
+
+function renderRetro(r, meta) {
+  const score = r.mental_load_score ?? 5;
+  const pct   = Math.round((score / 10) * 100);
+  const themes = (r.dominant_themes || []).map(t => `<span class="retro-theme">${escHtml(t)}</span>`).join('');
+  const highlights = (r.highlights || []).map(h => `<li>${escHtml(h)}</li>`).join('');
+  const attention  = (r.attention_points || []).map(a => `<li>${escHtml(a)}</li>`).join('');
+
+  return `
+    <div class="retro-card">
+      <div class="retro-header">
+        <span class="retro-title">Rétrospective hebdomadaire</span>
+        <div class="retro-score">
+          <span class="retro-score-num" style="color:${scoreColor(score)}">${score}</span>
+          <span class="retro-score-label">/10<br>charge</span>
+        </div>
+      </div>
+      <div class="retro-bar">
+        <div class="retro-bar-fill" style="width:${pct}%;background:${scoreColor(score)}"></div>
+      </div>
+      ${r.mood_trend ? `<div class="retro-mood">Humeur : ${escHtml(r.mood_trend)}</div>` : ''}
+      ${themes ? `<div class="retro-themes">${themes}</div>` : ''}
+      ${highlights ? `<div class="retro-section"><div class="retro-section-label">Points forts</div><ul class="retro-list">${highlights}</ul></div>` : ''}
+      ${attention  ? `<div class="retro-section"><div class="retro-section-label">Points d'attention</div><ul class="retro-list">${attention}</ul></div>` : ''}
+      ${r.suggestion ? `<div class="retro-suggestion">"${escHtml(r.suggestion)}"</div>` : ''}
+      <div class="retro-footer">
+        <span class="retro-meta">${meta}</span>
+        <button class="btn-retro-gen" id="btn-retro-gen" onclick="generateRetro()">Régénérer</button>
+      </div>
+    </div>`;
+}
+
+async function loadRetro() {
+  try {
+    const res = await fetch('/api/weekly-review');
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (!rows.length) {
+      // No retro yet — show a generate button
+      const wrap = document.getElementById('retro-wrap');
+      wrap.style.display = '';
+      wrap.innerHTML = `
+        <div class="retro-card" style="text-align:center;padding:20px">
+          <div style="font-size:13px;opacity:0.6;margin-bottom:12px">Aucune rétrospective cette semaine</div>
+          <button class="btn-retro-gen" id="btn-retro-gen" onclick="generateRetro()">Générer maintenant</button>
+        </div>`;
+      return;
+    }
+    const latest = rows[0];
+    const weekDate = new Date(latest.week_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    const meta = `Semaine du ${weekDate} · ${latest.entry_count} note${latest.entry_count > 1 ? 's' : ''}`;
+    const wrap = document.getElementById('retro-wrap');
+    wrap.style.display = '';
+    wrap.innerHTML = renderRetro(latest.data, meta);
+  } catch (e) {
+    console.warn('Retro load error:', e);
+  }
+}
+
+async function generateRetro() {
+  const btn = document.getElementById('btn-retro-gen');
+  if (btn) { btn.disabled = true; btn.textContent = 'Génération…'; }
+  try {
+    const res = await fetch('/api/weekly-review', { method: 'POST' });
+    const json = await res.json();
+    if (json.skipped) {
+      alert(json.reason || 'Pas assez de notes cette semaine.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Générer maintenant'; }
+      return;
+    }
+    await loadRetro();
+  } catch (e) {
+    console.error('Retro gen error:', e);
+    if (btn) { btn.disabled = false; btn.textContent = 'Réessayer'; }
+  }
+}
+
 // ── Main load ─────────────────────────────────────────────────────────────────
 
 async function loadData() {
@@ -611,6 +753,7 @@ async function loadData() {
 }
 
 loadData();
+loadRetro();
 </script>
 
 <nav class="mobile-nav">
