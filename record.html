@@ -672,7 +672,7 @@ async function pollStatus(callId) {
     }
 
     try {
-      const res = await fetch(`/api/status?callId=${callId}`);
+      const res = await fetch(`/api/calls?callId=${callId}`);
       if (!res.ok) return;
       const data = await res.json();
 

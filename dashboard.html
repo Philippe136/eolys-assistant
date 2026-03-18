@@ -1156,7 +1156,7 @@ async function confirmCalendarEvent(id, e) {
   btn.disabled = true;
   btn.textContent = 'Création…';
   try {
-    const res = await fetch(`/api/calendar-confirm?id=${id}`, { method: 'POST' });
+    const res = await fetch(`/api/google-calendar?action=confirm&id=${id}`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     // Mettre à jour l'entry en mémoire
@@ -1176,7 +1176,7 @@ async function confirmCalendarEvent(id, e) {
 async function dismissCalendarEvent(id, e) {
   e.stopPropagation();
   try {
-    await fetch(`/api/calendar-confirm?id=${id}&action=dismiss`, { method: 'POST' });
+    await fetch(`/api/google-calendar?action=dismiss&id=${id}`, { method: 'POST' });
     const entry = (window._calls || []).find(c => c.id === id);
     if (entry) entry.calendar_event_status = 'dismissed';
     renderCalls(window._calls);

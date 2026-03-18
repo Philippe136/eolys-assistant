@@ -15,6 +15,18 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!requireSession(req, res)) return;
 
+  // ── GET : entrée unique par callId (ex-status.js) ────────────────────────
+  if (req.method === 'GET' && req.query.callId) {
+    const { callId } = req.query;
+    if (!UUID.test(callId)) return res.status(400).json({ error: 'callId invalide.' });
+    const [entry] = await sql`
+      SELECT id, created_at, source, status, category, title, summary, tags, email_draft, error
+      FROM entries WHERE id = ${callId} LIMIT 1
+    `;
+    if (!entry) return res.status(404).json({ error: 'Entrée introuvable.' });
+    return res.status(200).json(entry);
+  }
+
   // ── GET : liste des entrées ───────────────────────────────────────────────
   if (req.method === 'GET') {
     const entries = await sql`

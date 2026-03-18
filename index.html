@@ -353,7 +353,7 @@
         return;
       }
       try {
-        const res  = await fetch(`/api/status?callId=${callId}`);
+        const res  = await fetch(`/api/calls?callId=${callId}`);
         const data = await res.json();
         if (data.status === 'done') {
           clearInterval(pollingInterval);

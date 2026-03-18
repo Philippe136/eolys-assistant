@@ -515,7 +515,7 @@ async function submitLogin() {
 
 async function loadActions() {
   try {
-    const res = await fetch('/api/action-items');
+    const res = await fetch('/api/actions');
     if (res.status === 401) { showLoginModal(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     allActions = await res.json();

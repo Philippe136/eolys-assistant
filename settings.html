@@ -408,7 +408,7 @@ async function loadGCalStatus() {
   const emailText = document.getElementById('gcal-email-text');
 
   try {
-    const res = await fetch('/api/google-oauth?action=status');
+    const res = await fetch('/api/google-calendar?action=status');
     if (res.status === 401) { window.location.href = '/login'; return; }
     const data = await res.json();
 
@@ -419,12 +419,12 @@ async function loadGCalStatus() {
       }
       actionsEl.innerHTML = `
         <span class="status-badge ok"><div class="status-dot"></div>Connecté</span>
-        <a href="/api/google-oauth?action=disconnect" class="btn-danger" onclick="return confirm('Déconnecter Google Agenda ?')">Déconnecter</a>
+        <a href="/api/google-calendar?action=disconnect" class="btn-danger" onclick="return confirm('Déconnecter Google Agenda ?')">Déconnecter</a>
       `;
     } else {
       actionsEl.innerHTML = `
         <span class="status-badge missing"><div class="status-dot"></div>Non connecté</span>
-        <a href="/api/google-oauth?action=start" class="btn-primary" id="gcal-connect-btn">🔗 Connecter Google Agenda</a>
+        <a href="/api/google-calendar?action=start" class="btn-primary" id="gcal-connect-btn">🔗 Connecter Google Agenda</a>
       `;
     }
   } catch (e) {
