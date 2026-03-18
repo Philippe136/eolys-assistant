@@ -2,16 +2,23 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Vox">
-<meta name="theme-color" content="#c8410a">
+<meta name="theme-color" content="#f5f2ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1714" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23c8410a'/><text x='96' y='130' font-size='100' text-anchor='middle' font-family='serif' fill='white'>V</text></svg>">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<rect width='192' height='192' rx='40' fill='%23c8410a'/><text x='96' y='130' font-size='100' text-anchor='middle' font-family='serif' fill='white'>V</text></svg>">
 <title>Vox — Tableau de bord</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  /* ── Native PWA feel ── */
+  *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html { overscroll-behavior: none; }
+  body { overscroll-behavior: none; -webkit-overflow-scrolling: touch; }
+  button, a, [role="button"] { touch-action: manipulation; }
   :root {
     --bg: #f5f2ed;
     --surface: #ffffff;
@@ -1703,5 +1710,6 @@ async function loadCalls() {
   </a>
 </nav>
 
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
 </body>
 </html>
