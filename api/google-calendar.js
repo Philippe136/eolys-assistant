@@ -93,9 +93,11 @@ async function createGCalEvent(accessToken, calEvent) {
 export default async function handler(req, res) {
   cors(req, res, 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!requireSession(req, res)) return;
 
   const { action, id } = req.query;
+
+  // Le callback Google arrive sans session (redirection externe) — on l'exempte
+  if (action !== 'callback' && !requireSession(req, res)) return;
   const appUrl      = process.env.APP_URL ?? `https://${req.headers.host}`;
   const redirectUri = `${appUrl}/api/google-calendar?action=callback`;
 
