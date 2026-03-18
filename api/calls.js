@@ -29,6 +29,7 @@ export default async function handler(req, res) {
 
   // ── GET : liste des entrées ───────────────────────────────────────────────
   if (req.method === 'GET') {
+    const viewArchived = req.query.archived === '1';
     const entries = await sql`
       SELECT e.id, e.created_at, e.source, e.status,
              e.category, e.title, e.summary, e.tags, e.email_draft,
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
              p.color AS project_color
       FROM entries e
       LEFT JOIN projects p ON p.id = e.project_id
-      WHERE e.archived = false
+      WHERE e.archived = ${viewArchived}
       ORDER BY e.created_at DESC
       LIMIT 200
     `;
@@ -67,8 +68,19 @@ export default async function handler(req, res) {
     const { id } = req.query;
     if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
 
-    const { project_id } = req.body || {};
+    const { project_id, archived } = req.body || {};
     if (project_id && !UUID.test(project_id)) return res.status(400).json({ error: 'project_id invalide.' });
+
+    // Archive toggle
+    if (typeof archived === 'boolean') {
+      const [entry] = await sql`
+        UPDATE entries SET archived = ${archived}
+        WHERE id = ${id}
+        RETURNING id, archived
+      `;
+      if (!entry) return res.status(404).json({ error: 'Entrée introuvable.' });
+      return res.status(200).json(entry);
+    }
 
     const [entry] = await sql`
       UPDATE entries SET project_id = ${project_id || null}

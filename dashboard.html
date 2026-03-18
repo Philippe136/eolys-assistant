@@ -418,6 +418,20 @@
 
   .btn-expand:hover { background: var(--border); }
 
+  /* ── Archive button ── */
+  .btn-archive {
+    font-size: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    opacity: 0.5;
+    transition: opacity 0.15s, background 0.15s;
+    line-height: 1;
+  }
+  .btn-archive:hover { opacity: 1; background: var(--surface2); }
+
   /* ── Delete confirm bar ── */
   .delete-confirm-bar {
     display: none;
@@ -964,6 +978,7 @@
       <option value="error">Erreur</option>
     </select>
     <button class="btn-filter-reset" onclick="resetFilters()">✕ Réinitialiser</button>
+    <button class="btn-filter-reset" id="btn-show-archived" onclick="toggleArchived()" style="background:var(--surface2)">📦 Archives</button>
   </div>
 
   <div class="search-bar">
@@ -1074,6 +1089,10 @@ function renderCard(entry) {
           <span class="badge badge-type">${escapeHtml(CATEGORY_LABEL[entry.category] || entry.category || '—')}</span>
           ${(entry.status === 'error' || (entry.status === 'processing' && Date.now() - new Date(entry.created_at) > 5 * 60 * 1000)) ? `<button class="btn-retry" onclick="retryCall('${entry.id}', event)">↺ Relancer</button>` : ''}
           ${entry.project_name ? `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1.5px solid ${escapeHtml(entry.project_color||'#c8410a')};color:${escapeHtml(entry.project_color||'#c8410a')};white-space:nowrap;cursor:pointer" onclick="event.stopPropagation();window.location='/projects'" title="${escapeHtml(entry.project_name)}">◉ ${escapeHtml(entry.project_name)}</span>` : ''}
+          ${showArchived
+            ? `<button class="btn-archive" onclick="archiveEntry('${entry.id}', false, event)" title="Désarchiver">↩</button>`
+            : `<button class="btn-archive" onclick="archiveEntry('${entry.id}', true, event)" title="Archiver">📦</button>`
+          }
           <button class="btn-trash" onclick="startDelete('${entry.id}', event)" title="Supprimer">${trashIcon}</button>
         </div>
       </div>
@@ -1230,6 +1249,22 @@ function clearSelection() {
   updateBulkBar();
 }
 
+async function archiveEntry(id, archived, e) {
+  e.stopPropagation();
+  try {
+    const res = await fetch(`/api/calls?id=${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archived }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    window._calls = window._calls.filter(c => c.id !== id);
+    renderFiltered();
+  } catch (err) {
+    alert('Erreur archivage : ' + err.message);
+  }
+}
+
 function startDelete(id, e) {
   e.stopPropagation();
   // Hide any other open confirm bars
@@ -1293,6 +1328,7 @@ async function deleteSelected() {
 const PAGE_SIZE = 20;
 let currentPage = 1;
 let currentQuery = '';
+let showArchived = false;
 
 function filterCalls() {
   currentQuery = document.getElementById('search-input').value.toLowerCase().trim();
@@ -1308,6 +1344,17 @@ function resetFilters() {
   currentQuery = '';
   currentPage  = 1;
   renderFiltered();
+}
+
+function toggleArchived() {
+  showArchived = !showArchived;
+  const btn = document.getElementById('btn-show-archived');
+  if (btn) {
+    btn.textContent = showArchived ? '← Notes actives' : '📦 Archives';
+    btn.style.background = showArchived ? 'var(--accent-light)' : 'var(--surface2)';
+    btn.style.color = showArchived ? 'var(--accent)' : '';
+  }
+  loadCalls();
 }
 
 function renderFiltered() {
@@ -1663,7 +1710,8 @@ async function loadProjects() {
 async function loadCalls() {
   try {
     if (!projects.length) await loadProjects();
-    const res = await fetch('/api/calls');
+    const url = showArchived ? '/api/calls?archived=1' : '/api/calls';
+    const res = await fetch(url);
     if (res.status === 401) { showLoginModal(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const calls = await res.json();
