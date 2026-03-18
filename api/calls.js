@@ -21,6 +21,7 @@ export default async function handler(req, res) {
       SELECT e.id, e.created_at, e.source, e.status,
              e.category, e.title, e.summary, e.tags, e.email_draft,
              e.error, e.pinned, e.archived, e.project_id,
+             e.calendar_event, e.calendar_event_status,
              p.name  AS project_name,
              p.color AS project_color
       FROM entries e

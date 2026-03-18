@@ -134,3 +134,10 @@ CREATE INDEX IF NOT EXISTS projects_status_idx   ON projects(status);
 
 ALTER TABLE entries ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS entries_project_id_idx ON entries(project_id);
+
+-- ── V3.2 : Événements calendrier Google ────────────────────────────────────
+-- Exécuter dans Neon SQL Editor après V3.1
+
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS calendar_event        JSONB;
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS calendar_event_status TEXT;
+-- calendar_event_status : NULL (non détecté) | 'suggested' | 'confirmed' | 'dismissed'

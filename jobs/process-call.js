@@ -158,17 +158,27 @@ export const processCall = task({
       const userTags = Array.isArray(initialTags) ? initialTags : [];
       const tags     = [...new Set([...userTags, ...aiTags])];
 
+      // Préparer la suggestion calendrier
+      const calEvent       = result.calendar_event ?? null;
+      const calEventStatus = calEvent ? 'suggested' : null;
+
       await sql`
         UPDATE entries SET
-          status      = 'done',
-          transcript  = ${transcript},
-          category    = ${result.category ?? 'inbox'},
-          title       = ${result.title ?? null},
-          summary     = ${result.summary ?? null},
-          tags        = ${tags},
-          email_draft = ${result.email_draft ?? null}
+          status                = 'done',
+          transcript            = ${transcript},
+          category              = ${result.category ?? 'inbox'},
+          title                 = ${result.title ?? null},
+          summary               = ${result.summary ?? null},
+          tags                  = ${tags},
+          email_draft           = ${result.email_draft ?? null},
+          calendar_event        = ${calEvent ? JSON.stringify(calEvent) : null},
+          calendar_event_status = ${calEventStatus}
         WHERE id = ${callId}
       `;
+
+      if (calEvent) {
+        console.log(`[${callId}] 📅 Événement calendrier suggéré : ${calEvent.title} le ${calEvent.date}`);
+      }
 
       // ── Étape 6 : Items extraits ───────────────────────────────────────────
       if (result.items && result.items.length > 0) {

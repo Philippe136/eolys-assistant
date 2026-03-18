@@ -287,6 +287,29 @@
   <div id="alert-zone"></div>
 
   <!-- ── Intégrations email ── -->
+  <!-- ── Google Agenda ── -->
+  <div class="section">
+    <div class="section-label">Intégrations calendrier</div>
+    <div class="card">
+      <div class="card-row">
+        <div class="card-row-left">
+          <div class="card-row-title">
+            <span style="font-size:16px;margin-right:6px">📅</span>Google Agenda
+          </div>
+          <div class="card-row-desc" id="gcal-desc">
+            Quand une note vocale mentionne un rendez-vous avec une date, Vox vous propose de le créer directement dans Google Agenda.
+          </div>
+          <div id="gcal-email" style="margin-top:6px;display:none">
+            <span class="connected-email" id="gcal-email-text"></span>
+          </div>
+        </div>
+        <div class="card-row-right" id="gcal-actions">
+          <div class="status-badge warn"><div class="status-dot"></div>Chargement…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="section">
     <div class="section-label">Intégrations email</div>
     <div class="card">
@@ -365,9 +388,49 @@ if (urlParams.get('disconnected') === '1') {
   alertZone.innerHTML = `<div class="alert success">✅ Compte Outlook déconnecté.</div>`;
   history.replaceState({}, '', '/settings');
 }
+if (urlParams.get('gcal_connected') === '1') {
+  alertZone.innerHTML = `<div class="alert success">✅ Google Agenda connecté ! Les événements détectés vous seront proposés automatiquement.</div>`;
+  history.replaceState({}, '', '/settings');
+}
+if (urlParams.get('gcal_disconnected') === '1') {
+  alertZone.innerHTML = `<div class="alert success">✅ Google Agenda déconnecté.</div>`;
+  history.replaceState({}, '', '/settings');
+}
 if (urlParams.get('error')) {
   alertZone.innerHTML = `<div class="alert error">❌ Erreur OAuth : ${escHtml(urlParams.get('error'))}</div>`;
   history.replaceState({}, '', '/settings');
+}
+
+// ── Status Google Agenda ──────────────────────────────────────────────────────
+async function loadGCalStatus() {
+  const actionsEl = document.getElementById('gcal-actions');
+  const emailEl   = document.getElementById('gcal-email');
+  const emailText = document.getElementById('gcal-email-text');
+
+  try {
+    const res = await fetch('/api/google-oauth?action=status');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const data = await res.json();
+
+    if (data.connected) {
+      if (data.email) {
+        emailEl.style.display = 'block';
+        emailText.textContent = data.email;
+      }
+      actionsEl.innerHTML = `
+        <span class="status-badge ok"><div class="status-dot"></div>Connecté</span>
+        <a href="/api/google-oauth?action=disconnect" class="btn-danger" onclick="return confirm('Déconnecter Google Agenda ?')">Déconnecter</a>
+      `;
+    } else {
+      actionsEl.innerHTML = `
+        <span class="status-badge missing"><div class="status-dot"></div>Non connecté</span>
+        <a href="/api/google-oauth?action=start" class="btn-primary" id="gcal-connect-btn">🔗 Connecter Google Agenda</a>
+      `;
+    }
+  } catch (e) {
+    actionsEl.innerHTML = `<span class="status-badge missing"><div class="status-dot"></div>Erreur</span>`;
+    console.error('Erreur status Google Agenda:', e);
+  }
 }
 
 // ── Status Outlook ────────────────────────────────────────────────────────────
@@ -397,7 +460,7 @@ async function loadOutlookStatus() {
       `;
 
       // Vérifier si les env vars Microsoft sont présentes
-      const envRes = await fetch('/api/status?type=settings');
+      const envRes = await fetch('/api/settings-status');
       if (envRes.ok) {
         const envData = await envRes.json();
         if (!envData.microsoft_configured) {
@@ -445,6 +508,7 @@ async function loadEnvStatus() {
   }
 }
 
+loadGCalStatus();
 loadOutlookStatus();
 loadEnvStatus();
 </script>
