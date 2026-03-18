@@ -116,7 +116,7 @@ export const processCall = task({
           model,
           max_tokens: 1500,
           system:     SYSTEM_PROMPT,
-          messages:   [{ role: 'user', content: `Transcription :\n${transcript}` }],
+          messages:   [{ role: 'user', content: `Date du jour : ${new Date().toISOString().slice(0, 10)}\n\nTranscription :\n${transcript}` }],
         });
 
         const raw = message.content.map(b => b.text || '').join('');
