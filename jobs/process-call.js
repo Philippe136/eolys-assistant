@@ -183,16 +183,23 @@ export const processCall = task({
       // ── Étape 6 : Items extraits ───────────────────────────────────────────
       if (result.items && result.items.length > 0) {
         await sql`DELETE FROM items WHERE entry_id = ${callId}`;
+        let inserted = 0;
         for (let i = 0; i < result.items.length; i++) {
           const item = result.items[i];
+          const text = (item.text ?? '').trim();
+          if (!text) {
+            console.warn(`[${callId}] Item ${i} ignoré : text vide ou null`);
+            continue;
+          }
           const validTypes = ['task', 'idea', 'decision', 'reminder'];
           const type = validTypes.includes(item.type) ? item.type : 'task';
           await sql`
             INSERT INTO items (entry_id, type, text, due_date, position)
-            VALUES (${callId}, ${type}, ${item.text}, ${item.due ?? null}, ${i})
+            VALUES (${callId}, ${type}, ${text}, ${item.due ?? null}, ${inserted})
           `;
+          inserted++;
         }
-        console.log(`[${callId}] ✅ ${result.items.length} item(s) inséré(s)`);
+        console.log(`[${callId}] ✅ ${inserted} item(s) inséré(s) sur ${result.items.length}`);
       }
 
       console.log(`[${callId}] ✅ Traitement terminé`);

@@ -800,16 +800,26 @@
     .filter-select { font-size: 12px; padding: 6px 28px 6px 10px; }
     .btn-filter-reset { font-size: 12px; padding: 6px 10px; }
 
+    /* iOS anti-zoom : tout input/textarea >= 16px */
+    input, textarea, select { font-size: 16px !important; }
+    .filter-select { font-size: 12px !important; } /* exception filtres */
+    .quick-add-textarea { font-size: 16px !important; min-height: 32px; }
+
     /* Cards compactes */
     .call-card { padding: 12px 14px; }
     .card-header { flex-direction: row; flex-wrap: nowrap; gap: 8px; margin-bottom: 6px; }
-    .card-badges { justify-content: flex-end; flex-wrap: nowrap; }
+    .card-badges { justify-content: flex-end; flex-wrap: nowrap; gap: 4px; }
     .card-title { font-size: 14px; }
     /* Résumé masqué : titre suffit sur mobile */
     .card-resume { display: none; }
     .card-meta { font-size: 11px; gap: 10px; margin-bottom: 8px; }
-    /* Badge type masqué pour gagner de la place */
+    /* Badge type et status masqués pour laisser la place aux boutons action */
     .badge-type { display: none; }
+    .badge-status { display: none; }
+    /* Boutons action toujours visibles et non-compressibles */
+    .btn-archive { flex-shrink: 0; opacity: 0.8; font-size: 16px; padding: 4px; }
+    .btn-trash   { flex-shrink: 0; opacity: 0.8; }
+    .btn-retry   { flex-shrink: 0; font-size: 10px; padding: 3px 7px; }
 
     /* Card étendue : overlay plein écran */
     .call-card.expanded {
