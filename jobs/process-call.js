@@ -2,7 +2,7 @@ import { task } from '@trigger.dev/sdk/v3';
 import OpenAI, { toFile } from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { sql } from '../lib/db.js';
-import { SYSTEM_PROMPT } from '../lib/prompts.js';
+import { SYSTEM_PROMPT, MODE_PROMPTS } from '../lib/prompts.js';
 
 // ── Microsoft Graph : obtenir un access token depuis le refresh token ──────
 async function getMicrosoftAccessToken(sql) {
@@ -65,7 +65,7 @@ export const processCall = task({
   id: 'process-call',
   maxDuration: 300,
 
-  run: async ({ callId, audioUrl, transcript: directTranscript, initialTags = [] }) => {
+  run: async ({ callId, audioUrl, transcript: directTranscript, initialTags = [], mode = 'standard' }) => {
     try {
       let transcript;
 
@@ -114,6 +114,10 @@ export const processCall = task({
           }`
         : '';
 
+      // Sélectionner le prompt selon le mode d'enregistrement
+      const systemPrompt = MODE_PROMPTS[mode] ?? SYSTEM_PROMPT;
+      console.log(`[${callId}] Mode : ${mode}`);
+
       // Modèles par ordre de préférence (du plus récent au plus sûr)
       const CLAUDE_MODELS = [
         'claude-haiku-4-5-20251001',
@@ -127,7 +131,7 @@ export const processCall = task({
         const message = await anthropic.messages.create({
           model,
           max_tokens: 1500,
-          system:     SYSTEM_PROMPT,
+          system:     systemPrompt,
           messages:   [{ role: 'user', content: `Date du jour : ${new Date().toISOString().slice(0, 10)}${contextBlock}\n\nTranscription :\n${transcript}` }],
         });
 

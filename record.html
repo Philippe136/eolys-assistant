@@ -91,30 +91,39 @@
     letter-spacing: 0.6px; color: var(--ink-muted); margin-bottom: 12px;
   }
 
-  /* ── Type buttons ── */
-  .type-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  /* ── Mode picker ── */
+  .mode-scroll {
+    display: flex;
     gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
-  .btn-type {
-    padding: 12px 8px;
+  .mode-scroll::-webkit-scrollbar { display: none; }
+  .btn-mode {
+    flex-shrink: 0;
+    width: 86px;
+    padding: 11px 6px 9px;
     border: 1.5px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     background: var(--surface2);
-    font-size: 13px; font-weight: 600;
-    color: var(--ink-muted);
     cursor: pointer;
     transition: all 0.15s;
     text-align: center;
     display: flex; flex-direction: column; align-items: center; gap: 4px;
+    -webkit-tap-highlight-color: transparent;
   }
-  .btn-type .type-icon { font-size: 20px; }
-  .btn-type.selected {
+  .btn-mode .mode-icon { font-size: 22px; line-height: 1; }
+  .btn-mode .mode-name { font-size: 11px; font-weight: 700; color: var(--ink-muted); letter-spacing: -0.1px; }
+  .btn-mode .mode-desc { font-size: 9.5px; color: var(--ink-dim); line-height: 1.3; }
+  .btn-mode.selected {
     border-color: var(--accent);
     background: var(--accent-light);
-    color: var(--accent);
+    transform: scale(1.03);
   }
+  .btn-mode.selected .mode-name { color: var(--accent); }
+  .btn-mode.selected .mode-desc { color: var(--accent); opacity: 0.75; }
 
   /* ── Project input ── */
   .input-wrap { position: relative; }
@@ -342,19 +351,37 @@
   <div class="screen active" id="screen-input">
 
     <div class="card">
-      <div class="card-label">Type</div>
-      <div class="type-grid">
-        <button class="btn-type selected" data-type="work"     onclick="selectType(this)">
-          <span class="type-icon">💼</span>Work
+      <div class="card-label">Mode d'analyse</div>
+      <div class="mode-scroll">
+        <button class="btn-mode selected" data-mode="standard" onclick="selectMode(this)">
+          <span class="mode-icon">✨</span>
+          <span class="mode-name">Standard</span>
+          <span class="mode-desc">Analyse complète</span>
         </button>
-        <button class="btn-type" data-type="personal"  onclick="selectType(this)">
-          <span class="type-icon">👤</span>Personnel
+        <button class="btn-mode" data-mode="rapide" onclick="selectMode(this)">
+          <span class="mode-icon">⚡</span>
+          <span class="mode-name">Rapide</span>
+          <span class="mode-desc">1 tâche max</span>
         </button>
-        <button class="btn-type" data-type="idea"      onclick="selectType(this)">
-          <span class="type-icon">💡</span>Idée
+        <button class="btn-mode" data-mode="reunion" onclick="selectMode(this)">
+          <span class="mode-icon">💼</span>
+          <span class="mode-name">Réunion</span>
+          <span class="mode-desc">Compte rendu</span>
         </button>
-        <button class="btn-type" data-type="meeting"   onclick="selectType(this)">
-          <span class="type-icon">🤝</span>Réunion
+        <button class="btn-mode" data-mode="idee" onclick="selectMode(this)">
+          <span class="mode-icon">💡</span>
+          <span class="mode-name">Idée</span>
+          <span class="mode-desc">Brainstorm</span>
+        </button>
+        <button class="btn-mode" data-mode="reflexion" onclick="selectMode(this)">
+          <span class="mode-icon">🪞</span>
+          <span class="mode-name">Réflexion</span>
+          <span class="mode-desc">Journal perso</span>
+        </button>
+        <button class="btn-mode" data-mode="email" onclick="selectMode(this)">
+          <span class="mode-icon">📧</span>
+          <span class="mode-name">Email</span>
+          <span class="mode-desc">Brouillon</span>
         </button>
       </div>
     </div>
@@ -457,7 +484,7 @@
 
 <script>
 // ── État global ──────────────────────────────────────────────────────────────
-let selectedType   = 'work';
+let selectedMode   = 'standard';
 let mediaRecorder  = null;
 let audioChunks    = [];
 let audioBlob      = null;
@@ -474,9 +501,9 @@ function loadCombos() {
   catch { return []; }
 }
 
-function saveCombos(type, tag) {
-  const combos = loadCombos().filter(c => !(c.type === type && c.tag === tag));
-  combos.unshift({ type, tag });
+function saveCombos(mode, tag) {
+  const combos = loadCombos().filter(c => !(c.mode === mode && c.tag === tag));
+  combos.unshift({ mode, tag });
   localStorage.setItem(COMBOS_KEY, JSON.stringify(combos.slice(0, 5)));
 }
 
@@ -486,30 +513,30 @@ function renderCombos() {
   if (!combos.length) { wrap.innerHTML = ''; return; }
   wrap.innerHTML = combos.map(c => `
     <button class="combo-pill" onclick="applyCombo(${JSON.stringify(c)})">
-      ${typeIcon(c.type)} ${c.tag || c.type}
+      ${modeIcon(c.mode)} ${c.tag || c.mode}
     </button>
   `).join('');
 }
 
 function applyCombo(c) {
-  selectTypeByValue(c.type);
+  selectModeByValue(c.mode || 'standard');
   document.getElementById('tag-input').value = c.tag || '';
 }
 
-function typeIcon(t) {
-  return { work:'💼', personal:'👤', idea:'💡', meeting:'🤝' }[t] || '🎙';
+function modeIcon(m) {
+  return { standard:'✨', rapide:'⚡', reunion:'💼', idee:'💡', reflexion:'🪞', email:'📧' }[m] || '🎙';
 }
 
-// ── Type selector ──────────────────────────────────────────────────────────
-function selectType(btn) {
-  document.querySelectorAll('.btn-type').forEach(b => b.classList.remove('selected'));
+// ── Mode selector ─────────────────────────────────────────────────────────────
+function selectMode(btn) {
+  document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
-  selectedType = btn.dataset.type;
+  selectedMode = btn.dataset.mode;
 }
 
-function selectTypeByValue(val) {
-  const btn = document.querySelector(`.btn-type[data-type="${val}"]`);
-  if (btn) selectType(btn);
+function selectModeByValue(val) {
+  const btn = document.querySelector(`.btn-mode[data-mode="${val}"]`);
+  if (btn) selectMode(btn);
 }
 
 // ── Timer ────────────────────────────────────────────────────────────────────
@@ -615,12 +642,12 @@ async function uploadAndProcess() {
   if (!audioBlob) return;
 
   const tag  = document.getElementById('tag-input').value.trim();
-  saveCombos(selectedType, tag);
+  saveCombos(selectedMode, tag);
 
   const formData = new FormData();
   formData.append('audio', audioBlob, audioFilename);
   formData.append('source', 'web');
-  formData.append('category', selectedType);
+  formData.append('mode', selectedMode);
   if (tag) formData.append('tag', tag);
 
   showScreen('processing');

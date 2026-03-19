@@ -32,9 +32,10 @@ export default async function handler(req, res) {
       const text = (body.text || '').trim();
       if (!text) return res.status(400).json({ error: 'Champ "text" manquant ou vide.' });
 
-      const source      = body.source   || 'text';
-      const category    = body.category || 'inbox';
-      const initialTags = body.tag ? [body.tag.trim()] : (Array.isArray(body.tags) ? body.tags : []);
+      const source        = body.source   || 'text';
+      const category      = body.category || 'inbox';
+      const initialTags   = body.tag ? [body.tag.trim()] : (Array.isArray(body.tags) ? body.tags : []);
+      const recordingMode = body.mode?.trim() || 'standard';
 
       const [entry] = await sql`
         INSERT INTO entries (source, category, tags, status)
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
       `;
 
       const handle = await tasks.trigger('process-call', {
-        callId: entry.id, transcript: text, initialTags,
+        callId: entry.id, transcript: text, initialTags, mode: recordingMode,
       });
 
       await sql`UPDATE entries SET job_id = ${handle.id} WHERE id = ${entry.id}`;
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
     // ── Audio : vérification token Blob ───────────────────────────────────────
     if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(500).json({ error: 'BLOB_READ_WRITE_TOKEN manquante dans Vercel' });
 
-    let fileBuffer, contentType, filename, source, category, initialTag;
+    let fileBuffer, contentType, filename, source, category, initialTag, recordingMode = 'standard';
 
     if (ct.includes('multipart/form-data')) {
       // ── Mode A : multipart/form-data (page /record, curl, tests) ──────────
@@ -71,6 +72,7 @@ export default async function handler(req, res) {
       source      = fields.source?.[0]   || 'web';
       category    = fields.category?.[0] || 'inbox';
       initialTag  = fields.tag?.[0]?.trim() || null;
+      recordingMode = fields.mode?.[0]?.trim() || 'standard';
 
     } else {
       // ── Mode B : corps brut (iOS Shortcuts → Fichier audio) ───────────────
@@ -93,6 +95,7 @@ export default async function handler(req, res) {
       source      = req.query.source   || 'shortcut';
       category    = req.query.category || 'inbox';
       initialTag  = req.query.tag?.trim() || null;
+      recordingMode = req.query.mode?.trim() || 'standard';
     }
 
     const initialTags = initialTag ? [initialTag] : [];
@@ -106,7 +109,7 @@ export default async function handler(req, res) {
     `;
 
     const handle = await tasks.trigger('process-call', {
-      callId: entry.id, audioUrl: blob.url, initialTags,
+      callId: entry.id, audioUrl: blob.url, initialTags, mode: recordingMode,
     });
 
     await sql`UPDATE entries SET job_id = ${handle.id} WHERE id = ${entry.id}`;
