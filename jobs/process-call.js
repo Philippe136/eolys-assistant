@@ -102,6 +102,18 @@ export const processCall = task({
       console.log(`[${callId}] Analyse Claude...`);
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+      // Charger les entités contextuelles personnelles
+      const entities = await sql`
+        SELECT alias, real_name, relation, notes FROM context_entities ORDER BY lower(alias) ASC
+      `;
+      const contextBlock = entities.length
+        ? `\n\nContexte personnel — entités connues (utilise ces infos pour enrichir ton analyse) :\n${
+            entities.map(e =>
+              `- "${e.alias}"${e.real_name ? ` = ${e.real_name}` : ''}${e.relation ? ` (${e.relation})` : ''}${e.notes ? ` — ${e.notes}` : ''}`
+            ).join('\n')
+          }`
+        : '';
+
       // Modèles par ordre de préférence (du plus récent au plus sûr)
       const CLAUDE_MODELS = [
         'claude-haiku-4-5-20251001',
@@ -116,7 +128,7 @@ export const processCall = task({
           model,
           max_tokens: 1500,
           system:     SYSTEM_PROMPT,
-          messages:   [{ role: 'user', content: `Date du jour : ${new Date().toISOString().slice(0, 10)}\n\nTranscription :\n${transcript}` }],
+          messages:   [{ role: 'user', content: `Date du jour : ${new Date().toISOString().slice(0, 10)}${contextBlock}\n\nTranscription :\n${transcript}` }],
         });
 
         const raw = message.content.map(b => b.text || '').join('');

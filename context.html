@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Mon Contexte</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5; --border: #e0d9cf;
+    --ink: #1a1714; --ink-muted: #7a7268; --ink-dim: #b5afa6;
+    --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --red: #b91c1c; --red-light: #fef2f2;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  /* Header */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .btn-back { font-size: 13px; font-weight: 600; color: var(--ink-muted); text-decoration: none; display: flex; align-items: center; gap: 5px; }
+  .btn-back:hover { color: var(--ink); }
+
+  /* Main */
+  main { max-width: 680px; margin: 0 auto; padding: 24px 20px 100px; }
+  .page-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .page-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; line-height: 1.5; }
+
+  /* Add form */
+  .add-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 28px; }
+  .add-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 14px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-full { grid-column: 1 / -1; }
+  .form-field { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink-dim); }
+  .form-input { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 14px; font-family: 'Syne', sans-serif; color: var(--ink); transition: border-color 0.15s; width: 100%; }
+  .form-input:focus { outline: none; border-color: var(--accent); }
+  .form-input::placeholder { color: var(--ink-dim); }
+  .form-hint { font-size: 11px; color: var(--ink-dim); margin-top: 2px; }
+  .btn-add { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 700; font-family: 'Syne', sans-serif; cursor: pointer; transition: opacity 0.15s; margin-top: 4px; }
+  .btn-add:hover { opacity: 0.88; }
+  .btn-add:disabled { opacity: 0.5; cursor: default; }
+
+  /* Entity list */
+  .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 12px; }
+  .entity-list { display: flex; flex-direction: column; gap: 8px; }
+  .entity-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s; }
+  .entity-card:hover { border-color: var(--ink-dim); }
+  .entity-card.editing { border-color: var(--accent); }
+  .entity-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .entity-body { flex: 1; min-width: 0; }
+  .entity-alias { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+  .entity-meta { font-size: 13px; color: var(--ink-muted); margin-top: 2px; line-height: 1.4; }
+  .entity-notes { font-size: 12px; color: var(--ink-dim); margin-top: 4px; font-style: italic; }
+  .entity-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-edit, .btn-del { background: none; border: none; cursor: pointer; padding: 5px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; transition: background 0.15s; }
+  .btn-edit { color: var(--ink-muted); }
+  .btn-edit:hover { background: var(--surface2); color: var(--ink); }
+  .btn-del { color: var(--red); }
+  .btn-del:hover { background: var(--red-light); }
+
+  /* Edit inline form */
+  .edit-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: none; }
+  .edit-form.open { display: block; }
+  .edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-save { background: var(--accent); color: white; border: none; border-radius: 7px; padding: 7px 16px; font-size: 12px; font-weight: 700; font-family: 'Syne', sans-serif; cursor: pointer; }
+  .btn-cancel { background: var(--surface2); color: var(--ink-muted); border: none; border-radius: 7px; padding: 7px 14px; font-size: 12px; font-weight: 600; font-family: 'Syne', sans-serif; cursor: pointer; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--ink-dim); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; line-height: 1.5; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 100px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    main { padding: 16px 14px 90px; }
+    .page-title { font-size: 22px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .edit-row { grid-template-columns: 1fr; }
+
+    /* Bottom Navigation */
+    .mobile-nav { display: flex; }
+  }
+
+  /* Bottom Navigation */
+  .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: var(--surface); border-top: 1px solid var(--border); align-items: stretch; justify-content: space-around; z-index: 100; padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+  .mobile-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1; font-size: 9px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; transition: color 0.15s; }
+  .mobile-nav a.active { color: var(--accent); }
+  .mobile-nav a svg { width: 22px; height: 22px; }
+  .mobile-nav a.nav-record { font-size: 24px; background: var(--accent); color: white; width: 48px; height: 48px; border-radius: 50%; margin-top: -12px; align-self: center; flex: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div>Vox</div>
+  <a href="/settings" class="btn-back">← Réglages</a>
+</header>
+
+<main>
+  <h1 class="page-title">🧠 Mon Contexte</h1>
+  <p class="page-sub">
+    Dis à Vox qui sont les personnes, lieux et références dans ta vie.<br>
+    Claude utilisera ces infos pour enrichir automatiquement toutes tes analyses.
+  </p>
+
+  <!-- Formulaire d'ajout -->
+  <div class="add-card">
+    <div class="add-title">+ Nouvelle entité</div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label">Alias <span style="color:var(--accent)">*</span></label>
+        <input class="form-input" id="inp-alias" placeholder="Polochonne, le chantier…" maxlength="60">
+        <span class="form-hint">Le mot que tu utilises dans tes vocaux</span>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Vrai nom</label>
+        <input class="form-input" id="inp-real" placeholder="Louane, Chantier Batignolles…" maxlength="80">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Relation</label>
+        <input class="form-input" id="inp-relation" placeholder="ma copine, mon patron…" maxlength="80">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="inp-notes" placeholder="Infos utiles pour Claude…" maxlength="200">
+      </div>
+    </div>
+    <button class="btn-add" id="btn-add" onclick="addEntity()">Ajouter</button>
+  </div>
+
+  <!-- Liste des entités -->
+  <div class="section-title" id="list-title" style="display:none">Entités enregistrées</div>
+  <div class="entity-list" id="entity-list">
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-text">Aucune entité pour l'instant.<br>Ajoute des personnes, lieux ou références que tu mentionnes souvent.</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<nav class="mobile-nav" style="view-transition-name: mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/record" class="nav-record">🎙</a>
+  <a href="/projects">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    Projets
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
+<script>
+let entities = [];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toast(msg, dur = 2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function entityIcon(e) {
+  const rel = (e.relation || '').toLowerCase();
+  if (rel.includes('copine') || rel.includes('femme') || rel.includes('sœur') || rel.includes('mère')) return '👩';
+  if (rel.includes('copain') || rel.includes('mari') || rel.includes('frère') || rel.includes('père') || rel.includes('patron')) return '👨';
+  if (rel.includes('collègue') || rel.includes('chef') || rel.includes('manager')) return '💼';
+  if (rel.includes('chantier') || rel.includes('lieu') || rel.includes('bureau') || rel.includes('maison')) return '📍';
+  if (rel.includes('animal') || rel.includes('chat') || rel.includes('chien')) return '🐾';
+  return '🏷';
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+function render() {
+  const list = document.getElementById('entity-list');
+  const title = document.getElementById('list-title');
+
+  if (!entities.length) {
+    title.style.display = 'none';
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-text">Aucune entité pour l'instant.<br>Ajoute des personnes, lieux ou références que tu mentionnes souvent.</div>
+      </div>`;
+    return;
+  }
+
+  title.style.display = '';
+  list.innerHTML = entities.map(e => `
+    <div class="entity-card" id="ec-${e.id}">
+      <div class="entity-icon">${entityIcon(e)}</div>
+      <div class="entity-body">
+        <div class="entity-alias">${esc(e.alias)}</div>
+        <div class="entity-meta">
+          ${e.real_name ? `<strong>${esc(e.real_name)}</strong>` : ''}
+          ${e.real_name && e.relation ? ' · ' : ''}
+          ${e.relation ? esc(e.relation) : ''}
+          ${!e.real_name && !e.relation ? '<span style="color:var(--ink-dim)">Aucun détail</span>' : ''}
+        </div>
+        ${e.notes ? `<div class="entity-notes">${esc(e.notes)}</div>` : ''}
+
+        <!-- Inline edit form -->
+        <div class="edit-form" id="ef-${e.id}">
+          <div class="edit-row">
+            <div class="form-field">
+              <label class="form-label">Alias</label>
+              <input class="form-input" id="ea-${e.id}" value="${esc(e.alias)}" maxlength="60">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Vrai nom</label>
+              <input class="form-input" id="er-${e.id}" value="${esc(e.real_name||'')}" maxlength="80">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Relation</label>
+              <input class="form-input" id="eo-${e.id}" value="${esc(e.relation||'')}" maxlength="80">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Notes</label>
+              <input class="form-input" id="en-${e.id}" value="${esc(e.notes||'')}" maxlength="200">
+            </div>
+          </div>
+          <div class="edit-actions">
+            <button class="btn-save" onclick="saveEntity('${e.id}')">Sauvegarder</button>
+            <button class="btn-cancel" onclick="cancelEdit('${e.id}')">Annuler</button>
+          </div>
+        </div>
+      </div>
+      <div class="entity-actions">
+        <button class="btn-edit" onclick="startEdit('${e.id}')" title="Modifier">✏️</button>
+        <button class="btn-del" onclick="deleteEntity('${e.id}')" title="Supprimer">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── CRUD ──────────────────────────────────────────────────────────────────────
+async function loadEntities() {
+  try {
+    const res = await fetch('/api/context');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) throw new Error(await res.text());
+    entities = await res.json();
+    render();
+  } catch (e) {
+    document.getElementById('entity-list').innerHTML =
+      `<div style="color:var(--red);font-size:13px;padding:16px">Erreur : ${e.message}</div>`;
+  }
+}
+
+async function addEntity() {
+  const alias    = document.getElementById('inp-alias').value.trim();
+  const real_name = document.getElementById('inp-real').value.trim();
+  const relation = document.getElementById('inp-relation').value.trim();
+  const notes    = document.getElementById('inp-notes').value.trim();
+
+  if (!alias) { document.getElementById('inp-alias').focus(); return; }
+
+  const btn = document.getElementById('btn-add');
+  btn.disabled = true; btn.textContent = '…';
+
+  try {
+    const res = await fetch('/api/context', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alias, real_name, relation, notes }),
+    });
+    const data = await res.json();
+    if (!res.ok) { toast('⚠️ ' + (data.error || 'Erreur')); return; }
+
+    entities.unshift(data);
+    render();
+    // Reset form
+    ['inp-alias','inp-real','inp-relation','inp-notes'].forEach(id => document.getElementById(id).value = '');
+    toast('✓ Entité ajoutée');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ajouter';
+  }
+}
+
+function startEdit(id) {
+  // Close other open forms
+  document.querySelectorAll('.edit-form.open').forEach(f => f.classList.remove('open'));
+  document.querySelectorAll('.entity-card.editing').forEach(c => c.classList.remove('editing'));
+
+  document.getElementById(`ef-${id}`).classList.add('open');
+  document.getElementById(`ec-${id}`).classList.add('editing');
+  document.getElementById(`ea-${id}`).focus();
+}
+
+function cancelEdit(id) {
+  document.getElementById(`ef-${id}`).classList.remove('open');
+  document.getElementById(`ec-${id}`).classList.remove('editing');
+}
+
+async function saveEntity(id) {
+  const alias     = document.getElementById(`ea-${id}`).value.trim();
+  const real_name = document.getElementById(`er-${id}`).value.trim();
+  const relation  = document.getElementById(`eo-${id}`).value.trim();
+  const notes     = document.getElementById(`en-${id}`).value.trim();
+
+  if (!alias) return;
+
+  const res = await fetch(`/api/context?id=${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alias, real_name, relation, notes }),
+  });
+  const data = await res.json();
+  if (!res.ok) { toast('⚠️ ' + (data.error || 'Erreur')); return; }
+
+  const idx = entities.findIndex(e => e.id === id);
+  if (idx !== -1) entities[idx] = data;
+  render();
+  toast('✓ Sauvegardé');
+}
+
+async function deleteEntity(id) {
+  if (!confirm('Supprimer cette entité ?')) return;
+  await fetch(`/api/context?id=${id}`, { method: 'DELETE' });
+  entities = entities.filter(e => e.id !== id);
+  render();
+  toast('Entité supprimée');
+}
+
+// Entrée sur le champ alias → submit
+document.getElementById('inp-alias').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('inp-notes').focus();
+});
+document.getElementById('inp-notes').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addEntity();
+});
+
+loadEntities();
+</script>
+<script src="/app.js"></script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
+</body>
+</html>

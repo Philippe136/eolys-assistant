@@ -153,3 +153,17 @@ CREATE TABLE IF NOT EXISTS weekly_reviews (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS weekly_reviews_week_start_idx ON weekly_reviews(week_start);
+
+-- ── V3.4 : Entités contextuelles personnelles ────────────────────────────────
+-- Exécuter dans Neon SQL Editor après V3.3
+
+CREATE TABLE IF NOT EXISTS context_entities (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  alias      TEXT        NOT NULL,      -- "Polochonne", "le chantier", "Nathalie"
+  real_name  TEXT,                      -- "Louane", "Chantier Batignolles"
+  relation   TEXT,                      -- "ma copine", "mon patron", "collègue RH"
+  notes      TEXT,                      -- infos supplémentaires libres
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ctx_alias_idx ON context_entities(lower(alias));

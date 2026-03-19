@@ -11,6 +11,7 @@
     { "source": "/projects",  "destination": "/projects.html"  },
     { "source": "/record",    "destination": "/record.html"    },
     { "source": "/today",     "destination": "/today.html"     },
-    { "source": "/settings",  "destination": "/settings.html"  }
+    { "source": "/settings",  "destination": "/settings.html"  },
+    { "source": "/context",   "destination": "/context.html"   }
   ]
 }
