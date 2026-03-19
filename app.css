@@ -1,0 +1,38 @@
+/* ── Vox — Shared PWA App Shell ─────────────────────────────────────────── */
+
+/* ── MPA View Transitions (Chrome 126+ / Safari 18.2+) ── */
+@view-transition { navigation: auto; }
+
+/* Page qui part : fondu rapide */
+@keyframes vox-fade-out {
+  to { opacity: 0; transform: scale(0.98); }
+}
+/* Page qui arrive : glisse vers le haut avec fondu */
+@keyframes vox-slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+::view-transition-old(root) {
+  animation: vox-fade-out 0.15s ease-in both;
+}
+::view-transition-new(root) {
+  animation: vox-slide-in 0.22s ease-out both;
+}
+
+/* La bottom nav reste stable (pas d'animation pendant la transition) */
+::view-transition-old(mobile-nav),
+::view-transition-new(mobile-nav) {
+  animation: none;
+}
+
+/* ── Prefetch au hover/focus des liens de nav ── */
+/* (géré par app.js) */
+
+/* ── Tap highlight iOS/Android supprimé ── */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ── Safe areas (iPhone notch / Dynamic Island) ── */
+.mobile-nav {
+  padding-bottom: max(env(safe-area-inset-bottom), 8px);
+}

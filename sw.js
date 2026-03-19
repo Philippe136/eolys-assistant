@@ -1,5 +1,8 @@
-const CACHE = 'vox-v2';
-const SHELLS = ['/today', '/dashboard', '/record', '/projects', '/actions', '/settings', '/login'];
+const CACHE = 'vox-v3';
+const SHELLS = [
+  '/today', '/dashboard', '/record', '/projects', '/actions', '/settings', '/login',
+  '/app.css', '/app.js', '/manifest.json',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
