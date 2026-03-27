@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Patterns</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5; --border: #e0d9cf;
+    --ink: #1a1714; --ink-muted: #7a7268; --ink-dim: #b5afa6;
+    --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --blue: #1e40af; --blue-light: #eff6ff;
+    --purple: #6d28d9; --purple-light: #f5f3ff;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  /* Header */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: env(safe-area-inset-top, 0px) 24px 0; height: calc(56px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .period-picker { display: flex; gap: 6px; }
+  .period-btn { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 700; font-family: 'Syne', sans-serif; color: var(--ink-muted); cursor: pointer; transition: all 0.15s; }
+  .period-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .period-btn:hover:not(.active) { border-color: var(--ink-dim); color: var(--ink); }
+
+  /* Main */
+  main { max-width: 760px; margin: 0 auto; padding: 24px 20px 100px; }
+  .page-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .page-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; line-height: 1.5; }
+
+  /* Grid layout */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } .grid-3 { grid-template-columns: 1fr 1fr; } }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 12px; }
+  .card-full { margin-bottom: 16px; }
+
+  /* Stat pills */
+  .stat-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-pill { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 18px; flex: 1; min-width: 100px; }
+  .stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .stat-label { font-size: 12px; color: var(--ink-muted); margin-top: 2px; font-weight: 600; }
+
+  /* Bar charts */
+  .bar-chart { display: flex; align-items: flex-end; gap: 3px; height: 80px; }
+  .bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; }
+  .bar { background: var(--accent); border-radius: 3px 3px 0 0; width: 100%; min-height: 2px; transition: height 0.4s ease; opacity: 0.8; }
+  .bar:hover { opacity: 1; }
+  .bar-label { font-size: 10px; color: var(--ink-dim); font-weight: 600; white-space: nowrap; }
+  .bar-val { font-size: 10px; color: var(--ink-muted); font-weight: 700; }
+
+  /* Hour chart — 24 columns */
+  .hour-chart { display: flex; align-items: flex-end; gap: 2px; height: 70px; }
+  .hour-bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .hour-bar { background: var(--accent); border-radius: 2px 2px 0 0; width: 100%; min-height: 2px; opacity: 0.75; transition: opacity 0.15s; }
+  .hour-bar:hover { opacity: 1; }
+  .hour-ticks { display: flex; justify-content: space-between; margin-top: 4px; padding: 0 1px; }
+  .hour-tick { font-size: 10px; color: var(--ink-dim); font-weight: 600; }
+
+  /* Category donut-like horizontal bar */
+  .cat-list { display: flex; flex-direction: column; gap: 10px; }
+  .cat-row { display: flex; align-items: center; gap: 10px; }
+  .cat-name { font-size: 12px; font-weight: 700; min-width: 70px; }
+  .cat-bar-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 10px; overflow: hidden; }
+  .cat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .cat-count { font-size: 12px; font-weight: 700; color: var(--ink-muted); min-width: 28px; text-align: right; }
+
+  /* Category colors */
+  .cat-work     { background: var(--accent); }
+  .cat-meeting  { background: var(--blue); }
+  .cat-idea     { background: var(--purple); }
+  .cat-personal { background: var(--green); }
+  .cat-inbox    { background: var(--ink-dim); }
+
+  /* Tags */
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag-pill { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .tag-count { background: var(--accent); color: white; border-radius: 10px; padding: 1px 6px; font-size: 10px; font-weight: 700; }
+
+  /* Completion gauge */
+  .gauge-wrap { display: flex; align-items: center; gap: 16px; }
+  .gauge-ring { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+  .gauge-ring svg { transform: rotate(-90deg); }
+  .gauge-bg { fill: none; stroke: var(--surface2); stroke-width: 8; }
+  .gauge-fill { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .gauge-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+  .gauge-meta { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+  .gauge-meta strong { color: var(--ink); }
+
+  /* Insight cards */
+  .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .insight-grid { grid-template-columns: 1fr; } }
+  .insight-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .insight-icon { font-size: 22px; margin-bottom: 8px; }
+  .insight-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 6px; }
+  .insight-text { font-size: 13px; line-height: 1.55; color: var(--ink); }
+  .insight-suggestion { background: var(--accent-light); border: 1.5px solid #e8c4b0; border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+  .insight-suggestion .insight-icon { font-size: 20px; }
+  .insight-suggestion .insight-text { font-size: 14px; font-weight: 600; }
+
+  /* Empty / loading */
+  .loading { text-align: center; padding: 60px 20px; color: var(--ink-muted); }
+  .loading-dots { display: inline-flex; gap: 6px; }
+  .loading-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+  .empty { text-align: center; padding: 60px 20px; color: var(--ink-muted); font-size: 14px; line-height: 1.7; }
+  .empty strong { display: block; font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+
+  /* Section header */
+  .section-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin: 24px 0 12px; }
+
+  /* Mobile nav */
+  .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; padding: 6px 0 max(8px, env(safe-area-inset-bottom)); z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; padding: 6px 4px; color: var(--ink-dim); font-size: 10px; font-weight: 600; transition: color 0.15s; }
+  .nav-item:hover, .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 20px; line-height: 1; }
+
+  /* ── Bouton refresh ── */
+  .btn-refresh {
+    width: 32px; height: 32px; border: none; background: none; cursor: pointer;
+    padding: 0; border-radius: 8px; color: var(--ink-dim); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-refresh:hover { background: var(--surface2); color: var(--ink); }
+  .btn-refresh.spinning svg { animation: spin-refresh 0.65s linear infinite; }
+  @keyframes spin-refresh { to { transform: rotate(360deg); } }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg> Vox</div>
+  <div class="period-picker">
+    <button class="period-btn" data-days="7" onclick="setPeriod(7, this)">7j</button>
+    <button class="period-btn active" data-days="30" onclick="setPeriod(30, this)">30j</button>
+    <button class="period-btn" data-days="90" onclick="setPeriod(90, this)">90j</button>
+      <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">Patterns</div>
+  <div class="page-sub" id="page-sub">Analyse comportementale de tes 30 derniers jours.</div>
+
+  <div id="content">
+    <div class="loading">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+      <p style="margin-top:16px;font-size:13px;">Analyse en cours…</p>
+    </div>
+  </div>
+</main>
+
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
+<script src="/app.js"></script>
+<script>
+let currentDays = 30;
+
+const CAT_COLORS = {
+  work: '#c8410a', meeting: '#1e40af', idea: '#6d28d9', personal: '#1a6b3c', inbox: '#b5afa6'
+};
+const CAT_LABELS = {
+  work: 'Travail', meeting: 'Réunion', idea: 'Idée', personal: 'Perso', inbox: 'Inbox'
+};
+const DOW_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const INSIGHT_META = {
+  energy_peak:      { icon: '⚡', label: 'Pic d\'énergie' },
+  best_day:         { icon: '📅', label: 'Meilleur jour' },
+  dominant_mode:    { icon: '🎯', label: 'Mode dominant' },
+  hidden_pattern:   { icon: '🔍', label: 'Pattern caché' },
+  completion_insight:{ icon: '✅', label: 'Complétion' },
+};
+
+function setPeriod(days, btn) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentDays = days;
+  document.getElementById('page-sub').textContent = `Analyse comportementale de tes ${days} derniers jours.`;
+  load();
+}
+
+async function load() {
+  document.getElementById('content').innerHTML = `
+    <div class="loading">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+      <p style="margin-top:16px;font-size:13px;">Analyse en cours…</p>
+    </div>`;
+  try {
+    const res = await fetch(`/api/weekly-review?action=patterns&days=${currentDays}`);
+    if (!res.ok) throw new Error(res.status);
+    const { stats, insights } = await res.json();
+    render(stats, insights);
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="empty"><strong>Erreur</strong>Impossible de charger les données.</div>`;
+  }
+}
+
+function render(stats, insights) {
+  if (!stats.total_entries) {
+    document.getElementById('content').innerHTML = `
+      <div class="empty">
+        <strong>Aucune donnée</strong>
+        Enregistre quelques notes et reviens dans quelques jours !
+      </div>`;
+    return;
+  }
+
+  const html = [];
+
+  // ── Stat pills ────────────────────────────────────────────────────────────
+  html.push(`<div class="stat-row">`);
+  html.push(statPill(stats.total_entries, 'notes enregistrées'));
+  if (stats.completion_pct !== null) html.push(statPill(stats.completion_pct + '%', 'tâches complétées'));
+  if (stats.top_tags.length) html.push(statPill(stats.top_tags.length, 'tags différents'));
+  html.push(`</div>`);
+
+  // ── Activity by hour ──────────────────────────────────────────────────────
+  html.push(`<div class="card card-full">`);
+  html.push(`<div class="card-title">Activité par heure</div>`);
+  html.push(hourChart(stats.by_hour));
+  html.push(`</div>`);
+
+  // ── By DOW + Categories ───────────────────────────────────────────────────
+  html.push(`<div class="grid-2">`);
+  html.push(`<div class="card"><div class="card-title">Par jour de la semaine</div>${dowChart(stats.by_dow)}</div>`);
+  html.push(`<div class="card"><div class="card-title">Par catégorie</div>${catChart(stats.by_category, stats.total_entries)}</div>`);
+  html.push(`</div>`);
+
+  // ── Tags + Completion ─────────────────────────────────────────────────────
+  html.push(`<div class="grid-2">`);
+  html.push(`<div class="card"><div class="card-title">Top tags</div>${tagCloud(stats.top_tags)}</div>`);
+  if (stats.completion_pct !== null) {
+    html.push(`<div class="card"><div class="card-title">Complétion des tâches</div>${completionGauge(stats)}</div>`);
+  }
+  html.push(`</div>`);
+
+  // ── AI insights ───────────────────────────────────────────────────────────
+  if (insights) {
+    html.push(`<div class="section-header">✨ Insights IA</div>`);
+    if (insights.suggestion) {
+      html.push(`<div class="insight-suggestion card-full">
+        <div class="insight-icon">💡</div>
+        <div class="insight-label">Conseil</div>
+        <div class="insight-text">${esc(insights.suggestion)}</div>
+      </div>`);
+    }
+    html.push(`<div class="insight-grid">`);
+    for (const key of ['energy_peak','best_day','dominant_mode','hidden_pattern','completion_insight']) {
+      if (insights[key]) {
+        const m = INSIGHT_META[key];
+        html.push(`<div class="insight-card">
+          <div class="insight-icon">${m.icon}</div>
+          <div class="insight-label">${m.label}</div>
+          <div class="insight-text">${esc(insights[key])}</div>
+        </div>`);
+      }
+    }
+    html.push(`</div>`);
+  }
+
+  document.getElementById('content').innerHTML = html.join('');
+
+  // Animate bars after paint
+  requestAnimationFrame(() => {
+    document.querySelectorAll('[data-height]').forEach(el => {
+      el.style.height = el.dataset.height;
+    });
+    document.querySelectorAll('[data-width]').forEach(el => {
+      el.style.width = el.dataset.width;
+    });
+    const fill = document.querySelector('.gauge-fill');
+    if (fill) {
+      const pct = parseFloat(fill.dataset.pct);
+      const circ = 2 * Math.PI * 34;
+      fill.style.strokeDashoffset = circ - (pct / 100) * circ;
+    }
+  });
+}
+
+function statPill(val, label) {
+  return `<div class="stat-pill"><div class="stat-val">${val}</div><div class="stat-label">${label}</div></div>`;
+}
+
+function hourChart(byHour) {
+  const counts = Array(24).fill(0);
+  byHour.forEach(r => counts[r.hour] = r.count);
+  const max = Math.max(...counts, 1);
+  const bars = counts.map((c, h) => {
+    const pct = Math.round((c / max) * 100);
+    return `<div class="hour-bar-wrap" title="${h}h : ${c} note${c>1?'s':''}">
+      <div class="hour-bar" data-height="${pct}%" style="height:2px;"></div>
+    </div>`;
+  }).join('');
+  return `<div class="hour-chart">${bars}</div>
+    <div class="hour-ticks">
+      <span class="hour-tick">0h</span><span class="hour-tick">6h</span>
+      <span class="hour-tick">12h</span><span class="hour-tick">18h</span><span class="hour-tick">23h</span>
+    </div>`;
+}
+
+function dowChart(byDow) {
+  const counts = Array(7).fill(0);
+  byDow.forEach(r => counts[r.dow] = r.count);
+  const max = Math.max(...counts, 1);
+  const bars = counts.map((c, d) => {
+    const pct = Math.round((c / max) * 100);
+    return `<div class="bar-wrap" title="${DOW_LABELS[d]} : ${c} note${c>1?'s':''}">
+      <div class="bar-val">${c || ''}</div>
+      <div class="bar" data-height="${pct}%" style="height:2px;"></div>
+      <div class="bar-label">${DOW_LABELS[d]}</div>
+    </div>`;
+  }).join('');
+  return `<div class="bar-chart">${bars}</div>`;
+}
+
+function catChart(byCategory, total) {
+  if (!byCategory.length) return `<p style="font-size:13px;color:var(--ink-muted)">Aucune donnée</p>`;
+  const rows = byCategory.map(r => {
+    const pct = Math.round((r.count / total) * 100);
+    const cls = `cat-${r.category}`;
+    const color = CAT_COLORS[r.category] || '#b5afa6';
+    const label = CAT_LABELS[r.category] || r.category;
+    return `<div class="cat-row">
+      <span class="cat-name">${label}</span>
+      <div class="cat-bar-track"><div class="cat-bar-fill ${cls}" data-width="${pct}%" style="width:0%;background:${color}"></div></div>
+      <span class="cat-count">${r.count}</span>
+    </div>`;
+  }).join('');
+  return `<div class="cat-list">${rows}</div>`;
+}
+
+function tagCloud(topTags) {
+  if (!topTags.length) return `<p style="font-size:13px;color:var(--ink-muted)">Aucun tag</p>`;
+  return `<div class="tag-cloud">${topTags.map(t =>
+    `<div class="tag-pill">${esc(t.tag)}<span class="tag-count">${t.count}</span></div>`
+  ).join('')}</div>`;
+}
+
+function completionGauge(stats) {
+  const pct = stats.completion_pct;
+  const circ = 2 * Math.PI * 34;
+  return `<div class="gauge-wrap">
+    <div class="gauge-ring">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle class="gauge-bg" cx="40" cy="40" r="34"/>
+        <circle class="gauge-fill" cx="40" cy="40" r="34"
+          data-pct="${pct}"
+          stroke-dasharray="${circ}"
+          stroke-dashoffset="${circ}"
+          style="stroke:${pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--accent)' : '#b91c1c'}"/>
+      </svg>
+      <div class="gauge-text">${pct}%</div>
+    </div>
+    <div class="gauge-meta">
+      <strong>${stats.items_done} tâches</strong> terminées<br>
+      sur <strong>${stats.items_total}</strong> extraites<br>
+      en ${currentDays} jours
+    </div>
+  </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+load();
+
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) btn.classList.add('spinning');
+  try { await load(); } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+</script>
+</body>
+</html>

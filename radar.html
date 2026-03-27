@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Radar</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { overscroll-behavior: none; }
+  body { overscroll-behavior: none; -webkit-overflow-scrolling: touch; }
+  button, a, [role="button"] { touch-action: manipulation; }
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5; --border: #e0d9cf;
+    --ink: #1a1714; --ink-muted: #7a7268; --ink-dim: #b5afa6;
+    --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --orange: #c2620a; --orange-light: #fff3e8;
+    --red: #b91c1c; --red-light: #fef2f2;
+    --blue: #1e40af; --blue-light: #eff6ff;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  /* ── Header ── */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: env(safe-area-inset-top, 0px) 24px 0; height: calc(56px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .header-nav { display: flex; gap: 8px; align-items: center; }
+  .btn-primary { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; color: var(--ink-muted); text-decoration: none; display: inline-flex; align-items: center; }
+  .btn-ghost:hover { background: var(--surface2); }
+  @media (max-width: 640px) { .header-nav { display: none; } }
+
+  /* ── Main ── */
+  main { max-width: 760px; margin: 0 auto; padding: 28px 24px 100px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
+  .page-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+  .page-title span { font-size: 28px; }
+  .page-meta { font-size: 12px; color: var(--ink-dim); margin-top: 3px; }
+
+  /* ── Score ── */
+  .score-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; }
+  .score-num { font-size: 40px; font-weight: 800; letter-spacing: -2px; line-height: 1; min-width: 60px; }
+  .score-low { color: var(--green); }
+  .score-mid { color: var(--orange); }
+  .score-high { color: var(--red); }
+  .score-info { flex: 1; }
+  .score-label { font-size: 13px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 4px; }
+  .score-summary { font-size: 14px; color: var(--ink); line-height: 1.5; }
+  .score-track { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+  .score-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+
+  /* ── Signal cards ── */
+  .signals-grid { display: flex; flex-direction: column; gap: 12px; }
+  .signal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; display: flex; gap: 14px; border-left-width: 4px; border-left-style: solid; }
+  .signal-card.rouge { border-left-color: var(--red); }
+  .signal-card.orange { border-left-color: var(--orange); }
+  .signal-card.vert { border-left-color: var(--green); }
+  .signal-icon { font-size: 22px; line-height: 1; padding-top: 1px; flex-shrink: 0; }
+  .signal-body { flex: 1; min-width: 0; }
+  .signal-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .signal-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .signal-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; }
+  .badge-rouge { background: var(--red-light); color: var(--red); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-vert { background: var(--green-light); color: var(--green); }
+  .signal-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.55; margin-bottom: 8px; }
+  .signal-action { font-size: 12px; font-weight: 600; color: var(--accent); display: flex; align-items: center; gap: 5px; }
+  .signal-action::before { content: '→'; }
+
+  /* ── Raw data section ── */
+  .raw-section { margin-top: 28px; }
+  .raw-title { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 12px; }
+  .raw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .raw-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .raw-card-label { font-size: 11px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px; }
+  .raw-item { font-size: 12px; color: var(--ink); padding: 3px 0; border-bottom: 1px solid var(--surface2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .raw-item:last-child { border-bottom: none; }
+  .raw-item-count { font-size: 10px; color: var(--ink-dim); }
+  @media (max-width: 480px) { .raw-grid { grid-template-columns: 1fr; } }
+
+  /* ── States ── */
+  .loading-state { text-align: center; padding: 60px 20px; color: var(--ink-dim); }
+  .loading-ring { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .empty-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+  .error-state { background: var(--red-light); border: 1px solid #fecaca; border-radius: var(--radius); padding: 16px; font-size: 13px; color: var(--red); }
+
+  /* ── Bottom nav ── */
+  .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: calc(76px + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--border); align-items: stretch; justify-content: space-around; z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  @media (max-width: 640px) { .mobile-nav { display: flex; } }
+  .mobile-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; transition: color 0.15s; }
+  .mobile-nav a.active { color: var(--accent); }
+  .mobile-nav a svg { width: 24px; height: 24px; }
+  .mobile-nav a.nav-record { font-size: 24px; background: var(--accent); color: white; width: 48px; height: 48px; border-radius: 50%; margin-top: -12px; align-self: center; flex: none; }
+
+  @media (max-width: 640px) {
+    main { padding: 20px 16px calc(100px + env(safe-area-inset-bottom, 0px)); }
+    .page-title { font-size: 22px; }
+    .score-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>Vox</div>
+  <div class="header-nav">
+    <a href="/dashboard" class="btn-ghost">Dashboard</a>
+    <a href="/actions"   class="btn-ghost">Items</a>
+    <a href="/patterns"  class="btn-ghost">Patterns</a>
+    <a href="/gmail" class="btn-ghost">Gmail</a>
+    <a href="/settings"  class="btn-ghost">Paramètres</a>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><span>📡</span>Vox Radar</h1>
+      <div class="page-meta" id="meta-updated">Chargement…</div>
+    </div>
+    <button class="btn-ghost" id="btn-refresh" onclick="loadRadar()">↻ Analyser</button>
+  </div>
+
+  <div id="radar-content">
+    <div class="loading-state">
+      <div class="loading-ring"></div>
+      Analyse des signaux en cours…
+    </div>
+  </div>
+</main>
+
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
+<script>
+const TYPE_ICONS = {
+  stagnation: '🧊',
+  stress:     '🔴',
+  opportunity:'💡',
+  alert:      '⚠️',
+  positive:   '✅',
+};
+
+function scoreClass(s) {
+  if (s <= 3) return 'score-low';
+  if (s <= 6) return 'score-mid';
+  return 'score-high';
+}
+function scoreFillColor(s) {
+  if (s <= 3) return 'var(--green)';
+  if (s <= 6) return 'var(--orange)';
+  return 'var(--red)';
+}
+
+function renderRadar({ analysis, raw_data, generated_at }) {
+  const el = document.getElementById('radar-content');
+  const updatedEl = document.getElementById('meta-updated');
+  if (generated_at) {
+    updatedEl.textContent = 'Analysé le ' + new Date(generated_at).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  }
+
+  if (!analysis) {
+    el.innerHTML = `<div class="error-state">⚠️ Analyse IA indisponible. Les données brutes sont affichées ci-dessous.</div>`;
+    el.innerHTML += renderRawData(raw_data);
+    return;
+  }
+
+  const { signals = [], global_score = 5, summary = '' } = analysis;
+  const sc = scoreClass(global_score);
+  const fillW = Math.round(global_score * 10);
+  const fillColor = scoreFillColor(global_score);
+
+  let html = `
+    <div class="score-bar">
+      <div class="score-num ${sc}">${global_score}<span style="font-size:18px;font-weight:400">/10</span></div>
+      <div class="score-info">
+        <div class="score-label">Score de vigilance</div>
+        <div class="score-summary">${esc(summary)}</div>
+        <div class="score-track"><div class="score-fill" style="width:${fillW}%;background:${fillColor}"></div></div>
+      </div>
+    </div>`;
+
+  if (!signals.length) {
+    html += `
+      <div class="empty-state">
+        <div class="empty-icon">🟢</div>
+        <div class="empty-title">Tout est sous contrôle</div>
+        <div class="empty-desc">Aucun signal détecté. Continue comme ça !</div>
+      </div>`;
+  } else {
+    html += `<div class="signals-grid">`;
+    for (const s of signals) {
+      const icon = TYPE_ICONS[s.type] || '📌';
+      const sev  = s.severity || 'orange';
+      html += `
+        <div class="signal-card ${sev}">
+          <div class="signal-icon">${icon}</div>
+          <div class="signal-body">
+            <div class="signal-header">
+              <div class="signal-title">${esc(s.title)}</div>
+              <span class="signal-badge badge-${sev}">${sev.toUpperCase()}</span>
+            </div>
+            <div class="signal-desc">${esc(s.description)}</div>
+            ${s.action ? `<div class="signal-action">${esc(s.action)}</div>` : ''}
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Raw data
+  html += renderRawData(raw_data);
+  el.innerHTML = html;
+}
+
+function renderRawData(d) {
+  if (!d) return '';
+  const { overdueItems = [], stagnantItems = [], hotTags = [], silentProjects = [], weeklyVol = [], pending_total = 0 } = d;
+
+  let h = `<div class="raw-section"><div class="raw-title">Données brutes</div><div class="raw-grid">`;
+
+  // Overdue
+  h += `<div class="raw-card"><div class="raw-card-label">⏰ En retard (${overdueItems.length})</div>`;
+  if (!overdueItems.length) h += `<div class="raw-item" style="color:var(--ink-dim)">Aucune</div>`;
+  overdueItems.slice(0, 5).forEach(i => {
+    h += `<div class="raw-item" title="${esc(i.text)}">${esc(i.text)} <span class="raw-item-count">${i.due}</span></div>`;
+  });
+  h += `</div>`;
+
+  // Stagnant
+  h += `<div class="raw-card"><div class="raw-card-label">🧊 En attente +7j (${stagnantItems.length})</div>`;
+  if (!stagnantItems.length) h += `<div class="raw-item" style="color:var(--ink-dim)">Aucune</div>`;
+  stagnantItems.slice(0, 5).forEach(i => {
+    const days = Math.round((Date.now() - new Date(i.created_at)) / 86400000);
+    h += `<div class="raw-item" title="${esc(i.text)}">${esc(i.text)} <span class="raw-item-count">${days}j</span></div>`;
+  });
+  h += `</div>`;
+
+  // Hot tags
+  h += `<div class="raw-card"><div class="raw-card-label">🔥 Sujets récurrents</div>`;
+  if (!hotTags.length) h += `<div class="raw-item" style="color:var(--ink-dim)">Aucun</div>`;
+  hotTags.forEach(t => {
+    h += `<div class="raw-item">${esc(t.tag)} <span class="raw-item-count">×${t.count}</span></div>`;
+  });
+  h += `</div>`;
+
+  // Silent projects
+  h += `<div class="raw-card"><div class="raw-card-label">😶 Projets silencieux</div>`;
+  if (!silentProjects.length) h += `<div class="raw-item" style="color:var(--ink-dim)">Aucun</div>`;
+  silentProjects.forEach(p => {
+    const days = p.last_entry ? Math.round((Date.now() - new Date(p.last_entry)) / 86400000) : null;
+    h += `<div class="raw-item" title="${esc(p.name)}">${esc(p.name)} <span class="raw-item-count">${days ? `${days}j` : 'jamais'}</span></div>`;
+  });
+  h += `</div>`;
+
+  h += `</div></div>`;
+  return h;
+}
+
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function loadRadar() {
+  const btn = document.getElementById('btn-refresh');
+  btn.disabled = true;
+  btn.textContent = '…';
+  document.getElementById('meta-updated').textContent = 'Analyse en cours…';
+  document.getElementById('radar-content').innerHTML = `<div class="loading-state"><div class="loading-ring"></div>Analyse des signaux…</div>`;
+
+  try {
+    const res = await fetch('/api/weekly-review?action=radar');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) throw new Error(await res.text());
+    renderRadar(await res.json());
+  } catch(e) {
+    document.getElementById('radar-content').innerHTML = `<div class="error-state">Erreur : ${e.message}</div>`;
+    document.getElementById('meta-updated').textContent = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Analyser';
+  }
+}
+
+loadRadar();
+</script>
+<script src="/app.js"></script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
+</body>
+</html>

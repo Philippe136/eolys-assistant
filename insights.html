@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Insights</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5; --border: #e0d9cf;
+    --ink: #1a1714; --ink-muted: #7a7268; --ink-dim: #b5afa6;
+    --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --yellow: #d4a017; --yellow-light: #fdf6e3;
+    --blue: #1e40af; --blue-light: #eff6ff;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 0px) 24px 0;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+  .logo svg { flex-shrink: 0; display: block; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .period-picker { display: flex; gap: 6px; }
+  .period-btn { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 700; font-family: 'Syne', sans-serif; color: var(--ink-muted); cursor: pointer; transition: all 0.15s; }
+  .period-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .period-btn:hover:not(.active) { border-color: var(--ink-dim); color: var(--ink); }
+
+  main { max-width: 760px; margin: 0 auto; padding: 24px 20px 100px; }
+  .page-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .page-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; line-height: 1.5; }
+
+  /* Score */
+  .score-card {
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 24px; margin-bottom: 16px; display: flex; align-items: center; gap: 24px;
+  }
+  .score-ring {
+    flex-shrink: 0; width: 80px; height: 80px; position: relative;
+  }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring-num {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 22px; font-weight: 800; color: var(--ink);
+  }
+  .score-info { flex: 1; }
+  .score-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 6px; }
+  .score-summary { font-size: 14px; line-height: 1.5; color: var(--ink); }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;
+  }
+  @media (max-width: 480px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card {
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 16px; text-align: center;
+  }
+  .stat-num { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .stat-lbl { font-size: 11px; font-weight: 600; color: var(--ink-muted); margin-top: 2px; }
+
+  /* Section */
+  .section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--ink-muted); margin: 24px 0 10px;
+  }
+  .card {
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 18px; margin-bottom: 12px;
+  }
+
+  /* Insights list */
+  .insight-list { display: flex; flex-direction: column; gap: 10px; }
+  .insight-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px; border-radius: 10px; border: 1.5px solid var(--border);
+    background: var(--surface);
+  }
+  .insight-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .insight-body { flex: 1; }
+  .insight-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .insight-text { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+  .priority-high   { border-color: #fecaca; background: #fff5f5; }
+  .priority-medium { border-color: #fde68a; background: #fffbeb; }
+  .priority-low    { border-color: var(--border); background: var(--surface2); }
+
+  /* Tips */
+  .tips-grid { display: flex; flex-direction: column; gap: 8px; }
+  .tip-item {
+    font-size: 13px; padding: 12px 14px; border-radius: 10px;
+    background: var(--blue-light); border: 1.5px solid #bfdbfe;
+    color: var(--blue); line-height: 1.5;
+  }
+
+  /* Completion bar */
+  .completion-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .completion-label { font-size: 13px; font-weight: 600; min-width: 80px; }
+  .completion-bar-wrap { flex: 1; background: var(--surface2); border-radius: 20px; height: 8px; overflow: hidden; }
+  .completion-bar-fill { height: 100%; border-radius: 20px; background: var(--accent); transition: width 0.6s ease; }
+  .completion-pct { font-size: 12px; font-weight: 700; color: var(--ink-muted); min-width: 36px; text-align: right; }
+
+  /* State */
+  .state-loading { text-align: center; padding: 60px 20px; color: var(--ink-muted); }
+  .btn-analyze {
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    padding: 12px 24px; border-radius: 10px; border: none;
+    background: var(--accent); color: white; cursor: pointer; transition: opacity 0.15s;
+    display: flex; align-items: center; gap: 8px; margin: 0 auto;
+  }
+  .btn-analyze:hover { opacity: 0.88; }
+  .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  /* Mobile nav */
+  .mobile-nav {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    display: flex; justify-content: space-around; align-items: center; z-index: 20;
+  }
+  .mobile-nav a {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; color: var(--ink-muted); text-decoration: none;
+    padding: 4px 8px; border-radius: 8px; transition: color 0.15s;
+  }
+  .mobile-nav a svg { width: 22px; height: 22px; }
+  .mobile-nav a.active { color: var(--accent); }
+  @media (min-width: 640px) { .mobile-nav { display: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/dashboard" class="logo" style="text-decoration:none;color:inherit">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    Vox
+    <span class="logo-dot"></span>
+  </a>
+  <div class="header-right">
+    <div class="period-picker">
+      <button class="period-btn" onclick="analyze(30)" data-days="30">30j</button>
+      <button class="period-btn active" onclick="analyze(60)" data-days="60">60j</button>
+      <button class="period-btn" onclick="analyze(90)" data-days="90">90j</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">✦ Insights Vox</div>
+  <p class="page-sub">Claude analyse tes habitudes et te propose des améliorations personnalisées pour tirer le meilleur de Vox.</p>
+
+  <div id="content">
+    <div class="state-loading">
+      <button class="btn-analyze" onclick="analyze(60)" id="btn-start">
+        <span>Analyser mon utilisation</span>
+      </button>
+      <p style="margin-top:16px;font-size:12px;color:var(--ink-dim)">Analyse les 60 derniers jours · Prend ~5 secondes</p>
+    </div>
+  </div>
+</main>
+
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
+<script src="/app.js"></script>
+<script>
+let currentDays = 60;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scoreColor(score) {
+  if (score >= 75) return '#1a6b3c';
+  if (score >= 50) return '#d4a017';
+  return '#c8410a';
+}
+
+function priorityIcon(priority) {
+  if (priority === 'high')   return '🔴';
+  if (priority === 'medium') return '🟡';
+  return '🟢';
+}
+
+function renderDashboard(data) {
+  const { insights, stats, period_days } = data;
+  const score = insights?.score ?? null;
+
+  const CATEGORY_LABELS = { work: 'Travail', personal: 'Perso', idea: 'Idée', meeting: 'Réunion', inbox: 'Inbox', document: 'Document' };
+
+  let html = '';
+
+  // Score ring
+  if (score !== null) {
+    const radius = 32;
+    const circ   = 2 * Math.PI * radius;
+    const dash   = (score / 100) * circ;
+    const color  = scoreColor(score);
+    html += `
+      <div class="score-card">
+        <div class="score-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="${radius}" fill="none" stroke="#e0d9cf" stroke-width="8"/>
+            <circle cx="40" cy="40" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
+              stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"/>
+          </svg>
+          <div class="score-ring-num" style="color:${color}">${score}</div>
+        </div>
+        <div class="score-info">
+          <div class="score-label">Score d'efficacité · ${period_days} jours</div>
+          <div class="score-summary">${escapeHtml(insights?.summary || '')}</div>
+        </div>
+      </div>`;
+  }
+
+  // Stats grid
+  const completionPct = stats.completionPct;
+  html += `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num">${stats.total}</div>
+        <div class="stat-lbl">Notes créées</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:${completionPct >= 70 ? 'var(--green)' : completionPct >= 40 ? 'var(--yellow)' : 'var(--accent)'}">
+          ${completionPct !== null ? completionPct + '%' : '—'}
+        </div>
+        <div class="stat-lbl">Tâches complétées</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:${stats.stagnant > 5 ? 'var(--accent)' : 'var(--ink)'}">${stats.stagnant}</div>
+        <div class="stat-lbl">Tâches bloquées</div>
+      </div>
+    </div>`;
+
+  // Completion by category
+  if (stats.byCategory?.length) {
+    html += `<div class="section-title">Répartition des notes</div><div class="card">`;
+    stats.byCategory.forEach(c => {
+      const label = CATEGORY_LABELS[c.category] || c.category;
+      const pct   = stats.total > 0 ? Math.round((c.count / stats.total) * 100) : 0;
+      html += `
+        <div class="completion-row">
+          <div class="completion-label">${escapeHtml(label)}</div>
+          <div class="completion-bar-wrap"><div class="completion-bar-fill" style="width:${pct}%"></div></div>
+          <div class="completion-pct">${c.count}</div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Suggestions
+  if (insights?.suggestions?.length) {
+    html += `<div class="section-title">Recommandations personnalisées</div><div class="insight-list">`;
+    insights.suggestions.forEach(s => {
+      html += `
+        <div class="insight-item priority-${escapeHtml(s.priority || 'medium')}">
+          <div class="insight-icon">${priorityIcon(s.priority)}</div>
+          <div class="insight-body">
+            <div class="insight-title">${escapeHtml(s.title)}</div>
+            <div class="insight-text">${escapeHtml(s.body)}</div>
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Strengths & bottlenecks
+  if (insights?.strengths?.length || insights?.bottlenecks?.length) {
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">`;
+    if (insights.strengths?.length) {
+      html += `<div class="card">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--green);margin-bottom:10px">✓ Points forts</div>
+        ${insights.strengths.map(s => `<div style="font-size:13px;color:var(--ink-muted);margin-bottom:6px;line-height:1.4">· ${escapeHtml(s)}</div>`).join('')}
+      </div>`;
+    }
+    if (insights.bottlenecks?.length) {
+      html += `<div class="card">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin-bottom:10px">⚠ Points de friction</div>
+        ${insights.bottlenecks.map(s => `<div style="font-size:13px;color:var(--ink-muted);margin-bottom:6px;line-height:1.4">· ${escapeHtml(s)}</div>`).join('')}
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Voice tips
+  if (insights?.voice_tips?.length) {
+    html += `
+      <div class="section-title">Conseils pour tes notes vocales</div>
+      <div class="tips-grid">
+        ${insights.voice_tips.map(t => `<div class="tip-item">💡 ${escapeHtml(t)}</div>`).join('')}
+      </div>`;
+  }
+
+  // Refresh
+  html += `
+    <div style="text-align:center;margin-top:28px">
+      <button class="btn-analyze" onclick="analyze(${period_days})" style="font-size:12px;padding:9px 18px">
+        ↺ Réanalyser
+      </button>
+      <div style="font-size:11px;color:var(--ink-dim);margin-top:8px">
+        Généré le ${new Date(data.generated_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
+      </div>
+    </div>`;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+async function analyze(days) {
+  currentDays = days;
+
+  // Update active period button
+  document.querySelectorAll('.period-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.days) === days);
+  });
+
+  document.getElementById('content').innerHTML = `
+    <div class="state-loading">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;color:var(--ink-muted)">
+        <div style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+        Analyse en cours…
+      </div>
+      <p style="margin-top:12px;font-size:12px;color:var(--ink-dim)">Claude analyse tes ${days} derniers jours</p>
+    </div>`;
+
+  try {
+    const res  = await fetch(`/api/weekly-review?action=improve&days=${days}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    renderDashboard(data);
+  } catch (err) {
+    document.getElementById('content').innerHTML = `
+      <div class="state-loading">
+        <div style="font-size:13px;color:var(--accent)">Erreur : ${escapeHtml(err.message)}</div>
+        <button class="btn-analyze" onclick="analyze(${days})" style="margin-top:16px;font-size:13px;padding:10px 20px">
+          Réessayer
+        </button>
+      </div>`;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<meta name="theme-color" content="#f5f2ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1714" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Dossiers</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html { overscroll-behavior: none; overflow-x: hidden; }
+  body { overscroll-behavior: none; overflow-x: hidden; }
+  button, a, [role="button"] { touch-action: manipulation; }
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5;
+    --border: #e0d9cf; --ink: #1a1714; --ink-muted: #7a7268;
+    --ink-dim: #b5afa6; --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --yellow: #d4a017; --yellow-light: #fdf6e3;
+    --red: #b91c1c; --red-light: #fef2f2; --radius: 12px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #151210; --surface: #1e1b18; --surface2: #252220;
+    --border: #35302a; --ink: #f0ece5; --ink-muted: #a09890;
+    --ink-dim: #6a6460; --accent-light: #3a1a0a;
+    --green-light: #0d2e1a; --yellow-light: #2a2000; --red-light: #2a0d0d;
+  }
+  * { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 0px) 24px 0;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+  .logo svg { flex-shrink: 0; display: block; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .btn-ghost { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-muted); background: none; border: none; cursor: pointer; padding: 6px 12px; border-radius: 8px; text-decoration: none; transition: background 0.15s, color 0.15s; }
+  .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
+  .btn-primary { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.15s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-refresh { width: 32px; height: 32px; border: none; background: none; cursor: pointer; padding: 0; border-radius: 8px; color: var(--ink-dim); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; }
+  .btn-refresh:hover { background: var(--surface2); color: var(--ink); }
+  .btn-refresh.spinning svg { animation: spin-r 0.65s linear infinite; }
+  @keyframes spin-r { to { transform: rotate(360deg); } }
+  .btn-theme-toggle { font-size: 18px !important; padding: 4px 8px !important; }
+
+  @media (max-width: 640px) {
+    header { padding: env(safe-area-inset-top, 0px) 16px 0; }
+    .header-actions .btn-ghost { display: none; }
+    .header-actions .btn-primary { font-size: 12px; padding: 6px 12px; }
+  }
+
+  main { max-width: 960px; margin: 0 auto; padding: 28px 24px calc(100px + env(safe-area-inset-bottom, 0px)); }
+
+  .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; }
+
+  /* ── Folders grid ── */
+  .folders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+
+  .folder-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+    text-decoration: none; display: block;
+  }
+  .folder-card:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .folder-card.active { border-color: var(--accent); background: var(--accent-light); }
+
+  .folder-icon { font-size: 32px; margin-bottom: 10px; }
+  .folder-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .folder-desc { font-size: 12px; color: var(--ink-muted); line-height: 1.4; margin-bottom: 12px; }
+  .folder-count { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-dim); }
+  .folder-count span { color: var(--accent); }
+
+  /* ── Entries list ── */
+  .entries-section { display: none; }
+  .entries-section.active { display: block; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .section-icon { font-size: 24px; }
+  .section-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .btn-back { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink-muted); background: none; border: none; cursor: pointer; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; gap: 5px; }
+  .btn-back:hover { background: var(--surface2); color: var(--ink); }
+
+  .entry-row {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 8px; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .entry-row:hover { border-color: var(--ink-dim); }
+  .entry-row-top { display: flex; align-items: flex-start; gap: 10px; justify-content: space-between; }
+  .entry-title { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; flex: 1; }
+  .entry-date { font-size: 11px; color: var(--ink-dim); white-space: nowrap; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+  .entry-summary { font-size: 13px; color: var(--ink-muted); margin-top: 6px; line-height: 1.5; }
+  .entry-summary ul { padding-left: 16px; margin: 0; }
+  .entry-summary li { margin-bottom: 2px; }
+  .entry-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+  .tag-pill { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--surface2); color: var(--ink-muted); }
+  .priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .priority-3 { background: #d97706; }
+  .priority-4 { background: var(--red); }
+
+  .empty-folder { text-align: center; padding: 48px 20px; color: var(--ink-dim); }
+  .empty-folder-icon { font-size: 40px; margin-bottom: 12px; }
+
+  .loading { text-align: center; padding: 48px 20px; color: var(--ink-muted); font-size: 14px; }
+
+  /* ── App backlog ── */
+  .backlog-item {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .backlog-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 4px; }
+
+  /* ── Mobile nav ── */
+  .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); align-items: stretch; justify-content: space-around; z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0px); height: calc(60px + env(safe-area-inset-bottom, 0px)); }
+  @media (max-width: 640px) { .mobile-nav { display: flex; } }
+  .mobile-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1; color: var(--ink-muted); font-size: 10px; font-weight: 500; text-decoration: none; transition: color 0.15s; padding: 6px 0; }
+  .mobile-nav a.active { color: var(--accent); }
+  .mobile-nav a svg { width: 24px; height: 24px; }
+
+  .record-fab { display: none; position: fixed; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); right: 16px; width: 52px; height: 52px; background: var(--accent); color: white; border-radius: 50%; align-items: center; justify-content: center; font-size: 24px; z-index: 99; box-shadow: 0 4px 16px rgba(200,65,10,0.35); text-decoration: none; transition: transform 0.15s; }
+  .record-fab:hover { transform: scale(1.08); }
+  @media (max-width: 640px) { .record-fab { display: flex; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>
+    Vox
+  </div>
+  <div class="header-actions">
+    <a href="/dashboard" class="btn-ghost">Notes</a>
+    <a href="/actions"   class="btn-ghost">Actions</a>
+    <a href="/settings"  class="btn-ghost">⚙️</a>
+    <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+    </button>
+    <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Thème">🌙</button>
+  </div>
+</header>
+
+<main>
+  <!-- ── Vue liste des dossiers ── -->
+  <div id="view-folders">
+    <div class="page-title">📂 Dossiers</div>
+    <p class="page-subtitle">Vos enregistrements classés par thème</p>
+
+    <div class="folders-grid" id="folders-grid">
+      <div class="loading">Chargement…</div>
+    </div>
+  </div>
+
+  <!-- ── Vue contenu d'un dossier ── -->
+  <div id="view-entries" class="entries-section">
+    <div class="section-header">
+      <button class="btn-back" onclick="showFolders()">← Retour</button>
+      <span class="section-icon" id="folder-icon"></span>
+      <span class="section-title" id="folder-title"></span>
+    </div>
+    <div id="entries-list"></div>
+  </div>
+</main>
+
+
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+let allEntries = [];
+
+const FOLDERS = [
+  { id: 'work',     icon: '🏗️', name: 'Travail GTB',        desc: 'Chantiers, installations, clients, dépannages, devis — ton travail de technicien', categories: ['work'] },
+  { id: 'meeting',  icon: '🤝', name: 'Réunions',           desc: 'Comptes rendus de réunions de chantier, réunions d\'équipe',                        categories: ['meeting'] },
+  { id: 'personal', icon: '🧘', name: 'Perso',              desc: 'Notes personnelles, réflexions, vie privée',                                        categories: ['personal'] },
+  { id: 'idea',     icon: '💡', name: 'Idées',              desc: 'Brainstorming, concepts, pistes à explorer',                                        categories: ['idea'] },
+  { id: 'app',      icon: '⚙️', name: 'Amélioration App',   desc: 'Features, bugs et retours sur Vox-assistant',                                       categories: ['app'] },
+  { id: 'inbox',    icon: '📥', name: 'Inbox',              desc: 'Notes non classées ou mixtes',                                                      categories: ['inbox'] },
+];
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) + ' ' +
+         d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderSummaryHtml(text) {
+  if (!text) return '';
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const bullets = lines.map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+  if (bullets.length <= 1) return `<div class="entry-summary">${esc(text)}</div>`;
+  return `<div class="entry-summary"><ul>${bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul></div>`;
+}
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+async function load() {
+  try {
+    const res = await fetch('/api/calls?limit=200');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    allEntries = await res.json();
+    renderFolders();
+  } catch (e) {
+    document.getElementById('folders-grid').innerHTML =
+      `<div style="color:var(--red);font-size:13px;padding:16px">Erreur : ${e.message}</div>`;
+  }
+}
+
+// ── Render folders ────────────────────────────────────────────────────────────
+function renderFolders() {
+  const grid = document.getElementById('folders-grid');
+  grid.innerHTML = FOLDERS.map(folder => {
+    const count = allEntries.filter(e => folder.categories.includes(e.category) && e.status === 'done').length;
+    return `
+      <div class="folder-card" onclick="openFolder('${folder.id}')">
+        <div class="folder-icon">${folder.icon}</div>
+        <div class="folder-name">${folder.name}</div>
+        <div class="folder-desc">${folder.desc}</div>
+        <div class="folder-count"><span>${count}</span> note${count !== 1 ? 's' : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Open folder ───────────────────────────────────────────────────────────────
+function openFolder(folderId) {
+  const folder = FOLDERS.find(f => f.id === folderId);
+  if (!folder) return;
+
+  const entries = allEntries
+    .filter(e => folder.categories.includes(e.category) && e.status === 'done')
+    .sort((a, b) => {
+      // Sort by priority desc, then date desc
+      const pa = b.priority || 2, pb = a.priority || 2;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+  document.getElementById('folder-icon').textContent = folder.icon;
+  document.getElementById('folder-title').textContent = folder.name;
+
+  const list = document.getElementById('entries-list');
+  if (!entries.length) {
+    list.innerHTML = `<div class="empty-folder"><div class="empty-folder-icon">${folder.icon}</div><p>Aucune note dans ce dossier</p></div>`;
+  } else {
+    list.innerHTML = entries.map(e => {
+      const priorityDot = (e.priority === 3 || e.priority === 4)
+        ? `<div class="priority-dot priority-${e.priority}"></div>` : '';
+      const tags = (e.tags||[]).map(t => `<span class="tag-pill">${esc(t)}</span>`).join('');
+      // Special display for app entries: show as backlog items
+      if (folderId === 'app') {
+        return `
+          <div class="backlog-item" onclick="window.location='/dashboard?entry=${e.id}'">
+            <div class="backlog-badge">⚙️ Feature / Retour</div>
+            <div class="entry-title">${esc(e.title||'Sans titre')}</div>
+            ${renderSummaryHtml(e.summary)}
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+              <div class="entry-tags">${tags}</div>
+              <span class="entry-date">${fmtDate(e.created_at)}</span>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="entry-row" onclick="window.location='/dashboard?entry=${e.id}'">
+          <div class="entry-row-top">
+            ${priorityDot}
+            <div class="entry-title">${esc(e.title||'Sans titre')}</div>
+            <span class="entry-date">${fmtDate(e.created_at)}</span>
+          </div>
+          ${renderSummaryHtml(e.summary)}
+          ${tags ? `<div class="entry-tags">${tags}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  document.getElementById('view-folders').style.display = 'none';
+  document.getElementById('view-entries').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showFolders() {
+  document.getElementById('view-folders').style.display = '';
+  document.getElementById('view-entries').classList.remove('active');
+}
+
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) btn.classList.add('spinning');
+  try { await load(); } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+
+load();
+</script>
+<script src="/app.js"></script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");
+(function(){
+  const saved = localStorage.getItem('vox-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vox-theme', next);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+</script>
+</body>
+</html>

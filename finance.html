@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<meta name="theme-color" content="#f5f2ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1714" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html { overscroll-behavior: none; }
+  body { overscroll-behavior: none; -webkit-overflow-scrolling: touch; }
+  button, a, [role="button"] { touch-action: manipulation; }
+
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5;
+    --border: #e0d9cf; --ink: #1a1714; --ink-muted: #7a7268; --ink-dim: #b5afa6;
+    --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --yellow: #d4a017; --yellow-light: #fdf6e3;
+    --red: #b91c1c; --red-light: #fef2f2;
+    --radius: 12px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #151210; --surface: #1e1b18; --surface2: #252220;
+    --border: #35302a; --ink: #f0ece5; --ink-muted: #a09890; --ink-dim: #6a6460;
+    --accent-light: #3a1a0a; --green-light: #0d2e1a; --yellow-light: #2a2000; --red-light: #2a0d0d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100dvh;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+
+  /* ── Header ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-title { font-size: 18px; font-weight: 700; }
+  .btn-sync {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px;
+    background: var(--accent); color: #fff;
+    border: none; font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-sync:disabled { opacity: 0.5; cursor: default; }
+  .btn-sync:not(:disabled):hover { opacity: 0.88; }
+
+  /* ── Main content ── */
+  main { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  /* ── Balance card ── */
+  .balance-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px; margin-bottom: 16px;
+  }
+  .balance-label { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .balance-amount {
+    font-size: 36px; font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .balance-amount.positive { color: var(--green); }
+  .balance-amount.negative { color: var(--red); }
+  .balance-sub {
+    display: flex; gap: 16px; margin-top: 14px;
+    padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .balance-sub-item { flex: 1; }
+  .balance-sub-label { font-size: 11px; color: var(--ink-dim); margin-bottom: 2px; }
+  .balance-sub-value { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .income { color: var(--green); }
+  .expense { color: var(--red); }
+
+  /* ── Pareto section ── */
+  .pareto-box {
+    background: var(--yellow-light);
+    border: 1px solid var(--yellow);
+    border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 16px;
+  }
+  .pareto-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700; color: var(--yellow);
+    margin-bottom: 10px;
+  }
+  .pareto-stat { font-size: 12px; color: var(--ink-muted); margin-bottom: 8px; }
+  .pareto-list { display: flex; flex-direction: column; gap: 6px; }
+  .pareto-row {
+    background: var(--surface); border-radius: 8px;
+    border: 1px solid var(--border); overflow: hidden;
+  }
+  .pareto-row-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; cursor: pointer; user-select: none;
+    transition: background 0.15s;
+  }
+  .pareto-row-header:hover { background: var(--bg); }
+  .pareto-row-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .pareto-row-label { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pareto-row-cat { font-size: 11px; color: var(--ink-muted); }
+  .pareto-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .pareto-row-amount { font-size: 14px; font-weight: 700; color: var(--red); white-space: nowrap; }
+  .pareto-row-chevron { font-size: 10px; color: var(--ink-muted); transition: transform 0.2s; }
+  .pareto-row--minor { opacity: 0.6; }
+  /* Détail déroulant */
+  .pareto-detail { display: none; border-top: 1px solid var(--border); }
+  .pareto-detail.open { display: block; }
+  .pareto-detail-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 12px 6px 40px; font-size: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pareto-detail-item:last-child { border-bottom: none; }
+  .pareto-detail-label { color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .pareto-detail-date { color: var(--ink-muted); font-size: 11px; margin: 0 10px; flex-shrink: 0; }
+  .pareto-detail-amt { color: var(--red); font-weight: 600; flex-shrink: 0; }
+
+  /* ── Transactions list ── */
+  .section-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-muted);
+    margin-bottom: 10px; margin-top: 4px;
+  }
+  .tx-list { display: flex; flex-direction: column; gap: 8px; }
+  .tx-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .tx-card.is-pareto { border-color: var(--yellow); }
+  .tx-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; cursor: pointer; user-select: none;
+  }
+  .tx-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .tx-icon.is-pareto { background: var(--yellow-light); }
+  .tx-body { flex: 1; min-width: 0; }
+  .tx-label { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-meta { font-size: 11px; color: var(--ink-muted); margin-top: 1px; display: flex; gap: 6px; align-items: center; }
+  .tx-note-preview {
+    font-size: 11px; color: var(--ink-dim); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
+  }
+  .tx-amount {
+    font-size: 15px; font-weight: 700;
+    font-variant-numeric: tabular-nums; flex-shrink: 0;
+  }
+  .tx-amount.income { color: var(--green); }
+  .tx-amount.expense { color: var(--red); }
+
+  /* pareto badge */
+  .pareto-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 700; color: var(--yellow);
+    background: var(--yellow-light); border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  /* ── Note editor (inline) ── */
+  .tx-note-form {
+    display: none; padding: 0 14px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .tx-note-form.open { display: block; }
+  .tx-note-textarea {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Syne', sans-serif; font-size: 13px;
+    color: var(--ink); background: var(--surface2);
+    resize: none; min-height: 60px; outline: none;
+    transition: border-color 0.15s;
+    margin-top: 10px;
+  }
+  .tx-note-textarea:focus { border-color: var(--accent); }
+  .tx-note-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-save-note {
+    flex: 1; padding: 8px; border-radius: 8px;
+    background: var(--accent); color: #fff;
+    border: none; font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-cancel-note {
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--surface2); color: var(--ink-muted);
+    border: none; font-family: 'Syne', sans-serif;
+    font-size: 13px; cursor: pointer;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center; padding: 48px 24px;
+    color: var(--ink-muted); font-size: 14px;
+  }
+  .empty-state p { margin-top: 8px; font-size: 13px; color: var(--ink-dim); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--surface); border-radius: 20px;
+    padding: 8px 18px; font-size: 13px; font-weight: 600;
+    opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; z-index: 999;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Mobile nav ── */
+  .mobile-nav {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 0 0 env(safe-area-inset-bottom);
+  }
+  @media (max-width: 768px) { .mobile-nav { display: flex; } }
+  .mobile-nav a {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; padding: 8px 4px; text-decoration: none;
+    font-size: 10px; font-weight: 600; color: var(--ink-muted);
+    border: none; background: none; font-family: 'Syne', sans-serif;
+    transition: color 0.15s;
+  }
+  .mobile-nav a.active { color: var(--accent); }
+  .mobile-nav a svg { width: 22px; height: 22px; }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="header-title">Finance</span>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn-sync" style="background:var(--ink-muted);padding:7px 10px" id="btn-recat" onclick="recategorize()" title="Recatégoriser">✦</button>
+    <button class="btn-sync" style="background:var(--ink-muted);padding:7px 10px" id="btn-clear" onclick="clearFinance()" title="Vider">🗑</button>
+    <button class="btn-sync" id="btn-csv" onclick="document.getElementById('csv-input').click()">
+      <span id="csv-icon">↑</span> Importer CSV
+    </button>
+    <input type="file" id="csv-input" accept=".csv,text/csv" style="display:none" onchange="uploadCSV(this)">
+  </div>
+</header>
+
+<main>
+  <!-- Statut import -->
+  <div id="status-banner" style="display:none;background:var(--yellow-light);border:1px solid var(--yellow);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink)"></div>
+
+  <!-- Pareto -->
+  <div class="pareto-box" id="pareto-box" style="display:none">
+    <div class="pareto-header">📊 Règle 80/20 <span id="pareto-subtitle" style="font-weight:400;font-size:11px;color:var(--ink-muted)"></span></div>
+    <div class="pareto-stat" id="pareto-stat"></div>
+    <div class="pareto-list" id="pareto-list"></div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<!-- Mobile nav -->
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
+<script>
+const CAT_ICON = {
+  alimentation: '🛒', transport: '🚗', logement: '🏠',
+  loisirs: '🎮', santé: '💊', shopping: '🛍️',
+  restaurant: '🍽️', abonnement: '📱', revenu: '💰',
+  tabac: '🚬', transfert: '👥', avance: '🔄', frais: '🏦', other: '📋',
+};
+const CAT_LABEL = {
+  alimentation: 'Alimentation', transport: 'Transport', logement: 'Logement',
+  loisirs: 'Loisirs', santé: 'Santé', shopping: 'Shopping',
+  restaurant: 'Restauration', abonnement: 'Abonnements', revenu: 'Revenus',
+  tabac: 'Tabac', transfert: 'Transferts amis', avance: 'Avances remboursées',
+  frais: 'Frais bancaires', other: 'Autres',
+};
+// Catégories exclues du Pareto 80/20 (avances remboursées = net zéro)
+const CAT_EXCLUDE_PARETO = new Set(['avance']);
+
+function fmt(amount) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = dateStr.includes('T') ? dateStr.slice(0, 10) : dateStr;
+  return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Import CSV N26 ────────────────────────────────────────────────────────
+function toggleParetoDetail(i) {
+  const detail = document.getElementById(`pdetail-${i}`);
+  const chev   = document.getElementById(`pchev-${i}`);
+  const open   = detail.classList.toggle('open');
+  chev.style.transform = open ? 'rotate(90deg)' : '';
+}
+
+async function recategorize() {
+  const btn    = document.getElementById('btn-recat');
+  const banner = document.getElementById('status-banner');
+  if (!confirm('Recatégoriser toutes les transactions avec Claude ? Cela prend ~10 secondes.')) return;
+  btn.disabled   = true;
+  btn.textContent = '…';
+  banner.style.display     = 'block';
+  banner.style.background  = 'var(--yellow-light)';
+  banner.style.borderColor = 'var(--yellow)';
+  banner.textContent       = '⏳ Recatégorisation en cours…';
+  try {
+    const res  = await fetch('/api/calls?action=finance_recategorize', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      banner.style.background  = 'var(--red-light)';
+      banner.style.borderColor = 'var(--red)';
+      banner.textContent = '❌ ' + (data.error || 'Erreur');
+    } else {
+      banner.style.background  = 'var(--green-light)';
+      banner.style.borderColor = 'var(--green)';
+      banner.textContent = `✅ ${data.updated} transaction${data.updated > 1 ? 's' : ''} recatégorisée${data.updated > 1 ? 's' : ''}.`;
+      await loadFinance();
+      setTimeout(() => { banner.style.display = 'none'; }, 3000);
+    }
+  } catch {
+    banner.textContent = '❌ Erreur réseau.';
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = '✦';
+  }
+}
+
+async function clearFinance() {
+  if (!confirm('Supprimer toutes les transactions ? Cette action est irréversible.')) return;
+  const btn    = document.getElementById('btn-clear');
+  const banner = document.getElementById('status-banner');
+  btn.disabled = true;
+  try {
+    const res  = await fetch('/api/calls?action=finance_clear', { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      banner.style.display = 'block';
+      banner.textContent   = '❌ ' + (data.error || 'Erreur suppression');
+    } else {
+      banner.style.display     = 'block';
+      banner.style.background  = 'var(--green-light)';
+      banner.style.borderColor = 'var(--green)';
+      banner.textContent       = `🗑 ${data.deleted} transaction${data.deleted > 1 ? 's' : ''} supprimée${data.deleted > 1 ? 's' : ''}.`;
+      await loadFinance();
+    }
+  } catch {
+    banner.style.display = 'block';
+    banner.textContent   = '❌ Erreur réseau.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function uploadCSV(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const btn    = document.getElementById('btn-csv');
+  const icon   = document.getElementById('csv-icon');
+  const banner = document.getElementById('status-banner');
+
+  btn.disabled     = true;
+  icon.outerHTML   = '<span class="spinner" id="csv-icon"></span>';
+  banner.style.display = 'block';
+  banner.textContent   = '⏳ Analyse du CSV en cours par Claude…';
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const res  = await fetch('/api/calls?action=finance_csv_upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) {
+      banner.style.background = 'var(--red-light)';
+      banner.style.borderColor = 'var(--red)';
+      banner.textContent = '❌ ' + (data.error || 'Erreur import');
+    } else {
+      const n = data.inserted;
+      if (data.firstError) {
+        banner.style.background  = 'var(--red-light)';
+        banner.style.borderColor = 'var(--red)';
+        banner.textContent = `❌ Erreur DB : ${data.firstError}`;
+      } else if (n === 0 && data.total === 0) {
+        banner.textContent = `⚠️ Claude n'a extrait aucune transaction. Format CSV non reconnu ?`;
+      } else if (n === 0) {
+        banner.textContent = `⚠️ 0 insérée sur ${data.total} — toutes déjà présentes (doublons ignorés).`;
+      } else {
+        banner.style.background  = 'var(--green-light)';
+        banner.style.borderColor = 'var(--green)';
+        banner.innerHTML = `✅ <strong>${n} transaction${n > 1 ? 's' : ''}</strong> importée${n > 1 ? 's' : ''} sur ${data.total} détectées.`;
+      }
+      await loadFinance();
+    }
+  } catch {
+    banner.textContent = '❌ Erreur réseau.';
+  } finally {
+    btn.disabled = false;
+    document.getElementById('csv-icon').outerHTML = '<span id="csv-icon">↑</span>';
+    input.value = '';
+  }
+}
+
+// ── Load & render ──────────────────────────────────────────────────────────
+async function loadFinance() {
+  const banner = document.getElementById('status-banner');
+  try {
+    const res  = await fetch('/api/calls?action=finance');
+    if (!res.ok) {
+      banner.style.display = 'block';
+      banner.textContent   = `❌ Erreur GET finance : HTTP ${res.status}`;
+      return;
+    }
+    const data = await res.json();
+    banner.style.display = 'none';
+    renderPareto(data);
+  } catch (e) {
+    banner.style.display = 'block';
+    banner.textContent   = `❌ Erreur réseau : ${e.message}`;
+  }
+}
+
+function renderBalance({ balance = 0, transactions = [] }) {
+  const income  = transactions.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
+  const expense = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Number(t.amount), 0);
+
+  const el = document.getElementById('balance-amount');
+  el.textContent = fmt(balance);
+  el.className   = 'balance-amount ' + (balance >= 0 ? 'positive' : 'negative');
+  document.getElementById('income-total').textContent  = fmt(income);
+  document.getElementById('expense-total').textContent = fmt(Math.abs(expense));
+}
+
+function renderPareto({ transactions = [], totalSpend = 0 }) {
+  const box = document.getElementById('pareto-box');
+  const expenses = transactions.filter(t => Number(t.amount) < 0 && !CAT_EXCLUDE_PARETO.has(t.cat));
+  if (!expenses.length || totalSpend <= 0) { box.style.display = 'none'; return; }
+
+  // Grouper par catégorie
+  const bycat = {};
+  expenses.forEach(t => {
+    const c = t.cat || 'other';
+    if (!bycat[c]) bycat[c] = { cat: c, total: 0, count: 0 };
+    bycat[c].total += Math.abs(Number(t.amount));
+    bycat[c].count++;
+  });
+
+  // Trier par total DESC, calculer Pareto sur les groupes
+  const groups = Object.values(bycat).sort((a, b) => b.total - a.total);
+  let acc = 0;
+  groups.forEach(g => {
+    g.pct = Math.round(g.total / totalSpend * 100);
+    acc += g.total;
+    g.pareto = acc <= totalSpend * 0.82; // légère marge
+  });
+
+  const paretoGroups = groups.filter(g => g.pareto);
+  const paretoTotal  = paretoGroups.reduce((s, g) => s + g.total, 0);
+  const pct          = Math.round(paretoTotal / totalSpend * 100);
+  const groupShare   = Math.round(paretoGroups.length / groups.length * 100);
+
+  box.style.display = 'block';
+  document.getElementById('pareto-subtitle').textContent =
+    `${groupShare}% des catégories → ${pct}% des dépenses`;
+  document.getElementById('pareto-stat').textContent =
+    `${paretoGroups.length} catégorie${paretoGroups.length > 1 ? 's' : ''} représentent ${fmt(paretoTotal)} sur ${fmt(totalSpend)} de dépenses totales.`;
+
+  // Stocker les transactions par cat pour le détail
+  const txByCat = {};
+  expenses.forEach(t => {
+    const c = t.cat || 'other';
+    if (!txByCat[c]) txByCat[c] = [];
+    txByCat[c].push(t);
+  });
+  // Trier chaque groupe par montant DESC
+  Object.values(txByCat).forEach(arr => arr.sort((a, b) => Math.abs(Number(b.amount)) - Math.abs(Number(a.amount))));
+
+  document.getElementById('pareto-list').innerHTML = groups.map((g, i) => `
+    <div class="pareto-row${g.pareto ? '' : ' pareto-row--minor'}" id="prow-${i}">
+      <div class="pareto-row-header" onclick="toggleParetoDetail(${i})">
+        <div class="pareto-row-left">
+          <span style="font-size:20px">${CAT_ICON[g.cat] || '📋'}</span>
+          <div>
+            <div class="pareto-row-label">${CAT_LABEL[g.cat] || g.cat}</div>
+            <div class="pareto-row-cat">${g.count} transaction${g.count > 1 ? 's' : ''} · ${g.pct}%</div>
+          </div>
+        </div>
+        <div class="pareto-row-right">
+          <div class="pareto-row-amount" style="${g.pareto ? '' : 'color:var(--ink-muted)'}">${fmt(-g.total)}</div>
+          <span class="pareto-row-chevron" id="pchev-${i}">▶</span>
+        </div>
+      </div>
+      <div class="pareto-detail" id="pdetail-${i}">
+        ${(txByCat[g.cat] || []).map(t => `
+          <div class="pareto-detail-item">
+            <span class="pareto-detail-label">${escHtml(t.label)}</span>
+            <span class="pareto-detail-date">${fmtDate(t.date)}</span>
+            <span class="pareto-detail-amt">${fmt(t.amount)}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTransactions(txs, dbCount) {
+  const list  = document.getElementById('tx-list');
+  const title = document.getElementById('tx-title');
+  if (!txs.length) {
+    if (title) title.textContent = 'Transactions';
+    const hint = dbCount > 0
+      ? `${dbCount} lignes en base — problème d'affichage, contacte le support.`
+      : `Clique sur <strong>↑ Importer CSV</strong> pour charger ton export N26.`;
+    list.innerHTML = `<div class="empty-state">Aucune transaction.<p>${hint}</p></div>`;
+    return;
+  }
+  if (title) title.textContent = `${txs.length} transaction${txs.length > 1 ? 's' : ''}${dbCount > txs.length ? ` (${dbCount} en base)` : ''}`;
+  list.innerHTML = txs.map(t => {
+    const isIncome  = Number(t.amount) > 0;
+    const amountCls = isIncome ? 'income' : 'expense';
+    const sign      = isIncome ? '+' : '';
+    return `
+      <div class="tx-card${t.pareto ? ' is-pareto' : ''}" id="tx-${t.id}">
+        <div class="tx-row" onclick="toggleNote('${t.id}')">
+          <div class="tx-icon${t.pareto ? ' is-pareto' : ''}">${CAT_ICON[t.cat] || '📋'}</div>
+          <div class="tx-body">
+            <div class="tx-label">${escHtml(t.label)}</div>
+            <div class="tx-meta">
+              <span>${fmtDate(t.date)}</span>
+              <span>·</span>
+              <span>${t.cat}</span>
+              ${t.pareto ? '<span class="pareto-badge">⚡ 80/20</span>' : ''}
+            </div>
+            ${t.note ? `<div class="tx-note-preview" id="note-preview-${t.id}">${escHtml(t.note)}</div>` : `<div class="tx-note-preview" id="note-preview-${t.id}" style="display:none"></div>`}
+          </div>
+          <div class="tx-amount ${amountCls}">${sign}${fmt(t.amount)}</div>
+        </div>
+        <div class="tx-note-form" id="note-form-${t.id}">
+          <textarea class="tx-note-textarea" id="note-input-${t.id}"
+            placeholder="Ajoute un contexte… (dictée vocale ok)"
+            rows="2">${escHtml(t.note || '')}</textarea>
+          <div class="tx-note-actions">
+            <button class="btn-save-note" onclick="saveNote('${t.id}')">Enregistrer</button>
+            <button class="btn-cancel-note" onclick="toggleNote('${t.id}')">Annuler</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Toggle note editor ─────────────────────────────────────────────────────
+function toggleNote(id) {
+  const form = document.getElementById(`note-form-${id}`);
+  const isOpen = form.classList.contains('open');
+  document.querySelectorAll('.tx-note-form.open').forEach(f => f.classList.remove('open'));
+  if (!isOpen) {
+    form.classList.add('open');
+    document.getElementById(`note-input-${id}`).focus();
+  }
+}
+
+// ── Save note ──────────────────────────────────────────────────────────────
+async function saveNote(id) {
+  const input = document.getElementById(`note-input-${id}`);
+  const note  = input.value.trim();
+  try {
+    const res = await fetch(`/api/calls?action=finance_update&id=${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    });
+    if (!res.ok) throw new Error();
+    const preview = document.getElementById(`note-preview-${id}`);
+    if (note) { preview.textContent = note; preview.style.display = ''; }
+    else { preview.style.display = 'none'; }
+    document.getElementById(`note-form-${id}`).classList.remove('open');
+    showToast('Note enregistrée');
+  } catch {
+    showToast('Erreur lors de la sauvegarde');
+  }
+}
+
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Theme (dark mode sync) ─────────────────────────────────────────────────
+(function() {
+  const saved = localStorage.getItem('vox-theme');
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadFinance();
+</script>
+</body>
+</html>

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Gmail</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html { overscroll-behavior: none; }
+  body { overscroll-behavior: none; -webkit-overflow-scrolling: touch; }
+  button, a, [role="button"] { touch-action: manipulation; }
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5;
+    --border: #e0d9cf; --ink: #1a1714; --ink-muted: #7a7268;
+    --ink-dim: #b5afa6; --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --yellow: #d4a017; --yellow-light: #fdf6e3;
+    --red: #b91c1c; --red-light: #fef2f2;
+    --radius: 12px;
+  }
+  :root[data-theme="dark"] {
+  --bg: #151210;
+  --surface: #1e1b18;
+  --surface2: #252220;
+  --border: #35302a;
+  --ink: #f0ece5;
+  --ink-muted: #a09890;
+  --ink-dim: #6a6460;
+  --accent-light: #3a1a0a;
+  --green-light: #0d2e1a;
+  --yellow-light: #2a2000;
+  --red-light: #2a0d0d;
+  --blue-light: #0d1a3a;
+}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 0px) 24px 0;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo {
+    font-weight: 700; font-size: 15px; letter-spacing: -0.3px;
+    display: flex; align-items: center; gap: 8px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .logo svg { flex-shrink: 0; display: block; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  .btn-ghost {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ink-muted); background: none; border: none; cursor: pointer;
+    padding: 6px 12px; border-radius: 8px; text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
+  .btn-primary {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    padding: 8px 16px; border-radius: 9px; text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+  /* ── Bouton refresh ── */
+  .btn-refresh {
+    width: 32px; height: 32px; border: none; background: none; cursor: pointer;
+    padding: 0; border-radius: 8px; color: var(--ink-dim); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-refresh:hover { background: var(--surface2); color: var(--ink); }
+  .btn-refresh.spinning svg { animation: spin-refresh 0.65s linear infinite; }
+  @keyframes spin-refresh { to { transform: rotate(360deg); } }
+
+  main { max-width: 860px; margin: 0 auto; padding: 32px 24px 96px; }
+
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .page-subtitle { font-size: 14px; color: var(--ink-muted); margin-bottom: 28px; }
+
+  /* ── Connect banner ── */
+  .connect-banner {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; margin-bottom: 24px;
+  }
+  .connect-banner svg { margin-bottom: 12px; color: var(--ink-dim); }
+  .connect-banner h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .connect-banner p { font-size: 13px; color: var(--ink-muted); margin-bottom: 20px; max-width: 360px; margin-left: auto; margin-right: auto; }
+
+  /* ── Connected pill ── */
+  .connected-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--green-light); border: 1px solid var(--green);
+    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+  }
+  .connected-email { font-size: 13px; font-weight: 600; color: var(--green); }
+  .btn-scan {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    padding: 8px 18px; border-radius: 9px; transition: opacity 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-scan:hover { opacity: 0.88; }
+  .btn-scan:disabled { opacity: 0.5; cursor: default; }
+  .btn-disconnect { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; color: var(--red); background: none; border: none; cursor: pointer; text-decoration: underline; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
+  .tab { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 7px; border: none; background: none; color: var(--ink-muted); cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { background: var(--accent); color: #fff; }
+
+  /* ── Stats ── */
+  .stats { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 18px; text-align: center; min-width: 80px; }
+  .stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+  /* ── Email cards ── */
+  .email-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 10px;
+    transition: box-shadow 0.15s;
+  }
+  .email-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+  .email-card.spam { opacity: 0.5; }
+  .email-card.dismissed { opacity: 0.4; }
+
+  .email-header {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px; cursor: pointer;
+  }
+  .email-importance {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+  }
+  .imp-high   { background: var(--red); }
+  .imp-medium { background: var(--yellow); }
+  .imp-low    { background: var(--ink-dim); }
+
+  .email-meta { flex: 1; min-width: 0; }
+  .email-sender { font-size: 12px; color: var(--ink-muted); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-subject { font-size: 14px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+  .email-summary { font-size: 12.5px; color: var(--ink-muted); line-height: 1.5; }
+
+  .email-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .badge-spam    { background: var(--red-light); color: var(--red); }
+  .badge-high    { background: var(--red-light); color: var(--red); }
+  .badge-medium  { background: var(--yellow-light); color: var(--yellow); }
+  .badge-low     { background: var(--surface2); color: var(--ink-muted); }
+  .badge-approved { background: var(--green-light); color: var(--green); }
+
+  /* ── Email body (expanded) ── */
+  .email-body { padding: 0 16px 14px; border-top: 1px solid var(--border); padding-top: 14px; display: none; }
+  .email-card.expanded .email-body { display: block; }
+
+  .tasks-section { margin-bottom: 12px; }
+  .tasks-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 8px; }
+  .task-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; padding: 4px 0; }
+  .task-type { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: var(--accent-light); color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+
+  .reply-section { background: var(--surface2); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; line-height: 1.6; color: var(--ink-muted); white-space: pre-wrap; }
+  .reply-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin-bottom: 6px; }
+
+  .email-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-approve {
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+    padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
+    background: var(--green); color: #fff; transition: opacity 0.15s;
+  }
+  .btn-approve:hover { opacity: 0.85; }
+  .btn-approve:disabled { opacity: 0.5; cursor: default; }
+  .btn-dismiss {
+    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 7px 14px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: none; color: var(--ink-muted); cursor: pointer; transition: background 0.15s;
+  }
+  .btn-dismiss:hover { background: var(--surface2); }
+
+  /* ── Empty states ── */
+  .empty { text-align: center; padding: 64px 24px; color: var(--ink-muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  /* ── Mobile nav ── */
+  .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    height: calc(76px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface); border-top: 1px solid var(--border);
+    align-items: stretch; justify-content: space-around; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0px); }
+  @media (max-width: 640px) {
+    header { padding: env(safe-area-inset-top, 0px) 16px 0; }
+    main { padding: 20px 14px calc(96px + env(safe-area-inset-bottom, 0px)); }
+    .mobile-nav { display: flex; }
+    .header-actions .btn-ghost { display: none; }
+  }
+  .mobile-nav a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; flex: 1; font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+    text-transform: uppercase; color: var(--ink-dim); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .mobile-nav a.active { color: var(--accent); }
+  .mobile-nav a svg { width: 22px; height: 22px; }
+  .mobile-nav a.nav-record {
+    color: #fff; background: var(--accent); border-radius: 14px;
+    margin: 8px 4px; padding: 0 12px; font-size: 18px; line-height: 1; flex: 0 0 52px;
+  }
+  .btn-theme-toggle { font-size: 18px !important; padding: 4px 8px !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>
+    Vox
+  </div>
+  <div class="header-actions">
+    <a href="/dashboard" class="btn-ghost">Dashboard</a>
+    <a href="/actions"   class="btn-ghost">Items</a>
+    <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+    </button>
+    <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Thème sombre/clair" style="font-size:18px;padding:4px 8px">🌙</button>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">📬 Gmail</div>
+  <p class="page-subtitle">Scan automatique de vos emails — extraction de tâches vers Vox</p>
+
+  <div id="connect-area"></div>
+  <div id="main-area" style="display:none">
+    <div class="tabs">
+      <button class="tab active" id="tab-pending"  onclick="setTab('pending')">À traiter</button>
+      <button class="tab"        id="tab-approved" onclick="setTab('approved')">Ajoutés à Vox</button>
+      <button class="tab"        id="tab-all"      onclick="setTab('all')">Tout</button>
+    </div>
+    <div class="stats" id="stats" style="display:none"></div>
+    <div id="emails-container"></div>
+  </div>
+</main>
+
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
+
+<script>
+let allScans = [];
+let currentTab = 'pending';
+let gmailConnected = false;
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('connected')) history.replaceState({}, '', '/gmail');
+  if (params.get('disconnected')) history.replaceState({}, '', '/gmail');
+  if (params.get('error')) showToast('Erreur : ' + params.get('error'), 'error');
+
+  // Vérifier la session en appelant un endpoint protégé
+  const statusRes = await fetch('/api/google-calendar?resource=gmail&action=status');
+
+  const data = await statusRes.json();
+  gmailConnected = data.connected;
+
+  const area = document.getElementById('connect-area');
+  if (!data.connected) {
+    area.innerHTML = `
+      <div class="connect-banner">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <h3>Connectez Gmail à Vox</h3>
+        <p>Vox va scanner vos emails, détecter les tâches importantes et les ajouter directement à votre dashboard.</p>
+        <a href="/api/google-calendar?resource=gmail&action=start" class="btn-primary" style="display:inline-block">
+          Connecter Gmail →
+        </a>
+        <p style="margin-top:12px;font-size:11px;color:var(--ink-dim)">
+          ⚠️ Ajoutez <code style="background:var(--surface2);padding:2px 5px;border-radius:4px">/api/google-calendar?resource=gmail&action=callback</code> aux URI autorisées dans Google Cloud Console
+        </p>
+      </div>`;
+    document.getElementById('main-area').style.display = 'none';
+  } else {
+    area.innerHTML = `
+      <div class="connected-row">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--green);margin-bottom:2px">✓ Gmail connecté</div>
+          <div class="connected-email">${esc(data.email || '')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <select id="gmail-label-select" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;background:var(--surface);color:var(--ink);cursor:pointer">
+            <option value="INBOX">📥 Inbox principale</option>
+            <option value="CATEGORY_PERSONAL">👤 Personnel</option>
+            <option value="CATEGORY_PROMOTIONS">🏷 Promotions</option>
+            <option value="CATEGORY_SOCIAL">👥 Réseaux sociaux</option>
+            <option value="CATEGORY_UPDATES">📋 Notifications</option>
+          </select>
+          <button class="btn-scan" id="btn-scan" onclick="scanEmails()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+            Scanner inbox
+          </button>
+          <button class="btn-disconnect" onclick="if(confirm('Déconnecter Gmail ?'))location.href='/api/google-calendar?resource=gmail&action=disconnect'">Déconnecter</button>
+        </div>
+      </div>`;
+    document.getElementById('main-area').style.display = 'block';
+    await loadScans();
+  }
+}
+
+// loadStatus est maintenant intégré dans init() et submitLogin()
+
+async function loadScans() {
+  const res   = await fetch('/api/google-calendar?resource=gmail&action=list');
+  allScans    = await res.json();
+  renderScans();
+}
+
+function setTab(t) {
+  currentTab = t;
+  ['pending','approved','all'].forEach(k => {
+    document.getElementById(`tab-${k}`)?.classList.toggle('active', k === t);
+  });
+  renderScans();
+}
+
+function renderScans() {
+  const filtered = allScans.filter(s => {
+    if (currentTab === 'pending')  return s.status === 'pending' && !s.is_spam;
+    if (currentTab === 'approved') return s.status === 'approved';
+    return true;
+  });
+
+  // Stats
+  const totalPending  = allScans.filter(s => s.status === 'pending').length;
+  const totalApproved = allScans.filter(s => s.status === 'approved').length;
+  const totalSpam     = allScans.filter(s => s.is_spam).length;
+  const statsEl = document.getElementById('stats');
+  if (allScans.length) {
+    statsEl.style.display = 'flex';
+    statsEl.innerHTML = `
+      <div class="stat"><div class="stat-value" style="color:var(--accent)">${totalPending}</div><div class="stat-label">À traiter</div></div>
+      <div class="stat"><div class="stat-value" style="color:var(--green)">${totalApproved}</div><div class="stat-label">Ajoutés</div></div>
+      <div class="stat"><div class="stat-value" style="color:var(--ink-dim)">${totalSpam}</div><div class="stat-label">Spam</div></div>
+    `;
+  }
+
+  const container = document.getElementById('emails-container');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty">
+      <div class="empty-icon">${currentTab === 'pending' ? '✉️' : '📭'}</div>
+      <div class="empty-title">${currentTab === 'pending' ? 'Aucun email à traiter' : 'Aucun email ici'}</div>
+      <div class="empty-sub">${currentTab === 'pending' ? 'Lancez un scan pour analyser votre inbox.' : ''}</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(renderEmailCard).join('');
+}
+
+function renderEmailCard(scan) {
+  const tasks     = Array.isArray(scan.tasks) ? scan.tasks : [];
+  const impClass  = `imp-${scan.importance || 'medium'}`;
+  const cardClass = scan.status === 'dismissed' ? 'dismissed' : scan.is_spam ? 'spam' : '';
+  const badges = [
+    scan.is_spam      ? `<span class="badge badge-spam">Spam</span>` : '',
+    scan.status === 'approved' ? `<span class="badge badge-approved">✓ Vox</span>` : '',
+    !scan.is_spam && scan.importance === 'high'   ? `<span class="badge badge-high">Urgent</span>` : '',
+    !scan.is_spam && scan.importance === 'medium' ? `<span class="badge badge-medium">Normal</span>` : '',
+  ].filter(Boolean).join('');
+
+  const tasksHtml = tasks.length ? `
+    <div class="tasks-section">
+      <div class="tasks-label">Tâches détectées (${tasks.length})</div>
+      ${tasks.map(t => `
+        <div class="task-item">
+          <span class="task-type">${esc(t.type || 'tâche')}</span>
+          <span>${esc(t.text)}${t.due ? ` <span style="font-size:11px;color:var(--ink-dim)">· ${t.due}</span>` : ''}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  const replyHtml = scan.suggested_reply ? `
+    <div style="margin-bottom:12px">
+      <div class="reply-label">Réponse suggérée</div>
+      <div class="reply-section">${esc(scan.suggested_reply)}</div>
+    </div>` : '';
+
+  const actionsHtml = scan.status === 'pending' && !scan.is_spam && tasks.length ? `
+    <div class="email-actions">
+      <button class="btn-approve" onclick="approveEmail('${scan.id}', event)">
+        + Ajouter à Vox (${tasks.length} tâche${tasks.length > 1 ? 's' : ''})
+      </button>
+      <button class="btn-dismiss" onclick="dismissEmail('${scan.id}', event)">Ignorer</button>
+    </div>` : scan.status === 'approved' ? `<div style="font-size:12px;color:var(--green);font-weight:600">✓ Ajouté à Vox</div>` : '';
+
+  return `
+    <div class="email-card ${cardClass}" id="email-${scan.id}">
+      <div class="email-header" onclick="toggleEmail('${scan.id}')">
+        <div class="email-importance ${impClass}"></div>
+        <div class="email-meta">
+          <div class="email-sender">${esc(scan.sender)}</div>
+          <div class="email-subject">${esc(scan.subject || '(sans sujet)')}</div>
+          ${scan.summary ? `<div class="email-summary">${esc(scan.summary)}</div>` : ''}
+        </div>
+        <div class="email-badges">
+          ${badges}
+          <span style="font-size:11px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace">${fmtDate(scan.received_at)}</span>
+        </div>
+      </div>
+      <div class="email-body">
+        ${tasksHtml}
+        ${replyHtml}
+        ${actionsHtml}
+      </div>
+    </div>`;
+}
+
+function toggleEmail(id) {
+  document.getElementById(`email-${id}`)?.classList.toggle('expanded');
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+async function scanEmails() {
+  const btn = document.getElementById('btn-scan');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg style="animation:spin-refresh .65s linear infinite" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg> Scan…'; }
+  try {
+    const label = document.getElementById('gmail-label-select')?.value || 'INBOX';
+    const res  = await fetch(`/api/google-calendar?resource=gmail&action=scan&label=${encodeURIComponent(label)}`, { method: 'POST', headers: {'Content-Type':'application/json'} });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    showToast(`${data.scanned} nouveau${data.scanned !== 1 ? 'x' : ''} email${data.scanned !== 1 ? 's' : ''} analysé${data.scanned !== 1 ? 's' : ''}`);
+    await loadScans();
+  } catch (err) {
+    showToast('Erreur : ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg> Scanner inbox'; }
+  }
+}
+
+async function approveEmail(id, e) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const res = await fetch(`/api/google-calendar?resource=gmail&action=approve&id=${id}`, { method:'POST', headers:{'Content-Type':'application/json'} });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const scan = allScans.find(s => s.id === id);
+    if (scan) scan.status = 'approved';
+    showToast('Tâches ajoutées à Vox ✓');
+    renderScans();
+  } catch (err) {
+    btn.disabled = false;
+    showToast('Erreur : ' + err.message, 'error');
+  }
+}
+
+async function dismissEmail(id, e) {
+  e.stopPropagation();
+  await fetch(`/api/google-calendar?resource=gmail&action=dismiss&id=${id}`, { method:'POST', headers:{'Content-Type':'application/json'} });
+  const scan = allScans.find(s => s.id === id);
+  if (scan) scan.status = 'dismissed';
+  renderScans();
+}
+
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) btn.classList.add('spinning');
+  try { await loadScans(); } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:${type==='error'?'var(--red)':'var(--ink)'};color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.2)`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+init();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+// ── Dark mode ──────────────────────────────────────────────────────────────
+(function(){
+  const saved = localStorage.getItem('vox-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vox-theme', next);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+</script>
+</body>
+</html>
