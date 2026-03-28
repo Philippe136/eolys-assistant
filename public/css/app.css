@@ -36,3 +36,15 @@
 .mobile-nav {
   padding-bottom: max(env(safe-area-inset-bottom), 8px);
 }
+
+/* ── Bloquer rotation paysage ── */
+@media (orientation: landscape) and (max-height: 500px) {
+  html::after {
+    content: "Veuillez tourner votre appareil en mode portrait";
+    position: fixed; inset: 0; z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg, #f5f2ed); color: var(--ink, #1a1714);
+    font-family: 'Inter', sans-serif; font-size: 1.2rem;
+    text-align: center; padding: 2rem;
+  }
+}

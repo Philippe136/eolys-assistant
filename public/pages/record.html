@@ -31,12 +31,27 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  :root[data-theme="dark"] {
+  --bg: #151210;
+  --surface: #1e1b18;
+  --surface2: #252220;
+  --border: #35302a;
+  --ink: #f0ece5;
+  --ink-muted: #a09890;
+  --ink-dim: #6a6460;
+  --accent-light: #3a1a0a;
+  --green-light: #0d2e1a;
+  --yellow-light: #2a2000;
+  --red-light: #2a0d0d;
+  --blue-light: #0d1a3a;
+}
+
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overscroll-behavior: none; }
   body {
     background: var(--bg);
     color: var(--ink);
-    font-family: -apple-system, 'Syne', sans-serif;
+    font-family: -apple-system, 'Inter', sans-serif;
     min-height: 100%;
     display: flex;
     flex-direction: column;
@@ -46,14 +61,19 @@
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 20px;
-    height: 52px;
+    padding: env(safe-area-inset-top, 0px) 20px 0;
+    height: calc(52px + env(safe-area-inset-top, 0px));
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
-  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0; }
   .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
   .btn-ghost {
     font-size: 13px; font-weight: 600;
@@ -308,12 +328,6 @@
   }
 
   /* ── Login modal ── */
-  #login-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(26,23,20,0.7);
-    z-index: 999;
-    align-items: center; justify-content: center;
-  }
   .login-box {
     background: #fff; border-radius: 16px; padding: 40px 32px;
     text-align: center; max-width: 340px; width: 90%;
@@ -334,16 +348,42 @@
     font-size: 14px; font-weight: 700; cursor: pointer;
   }
   #login-error { color: var(--accent); font-size: 13px; margin-bottom: 8px; display: none; }
+
+  /* ── Mobile nav ── */
+  .mobile-nav { display: none; }
+  @media (max-width: 640px) {
+    .mobile-nav { display: flex; }
+    main { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  }
+  .mobile-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around; align-items: stretch;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    z-index: 100;
+  }
+  .mobile-nav a {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px; flex: 1;
+    color: var(--ink-muted); font-size: 10px; font-weight: 500;
+    text-decoration: none; transition: color 0.15s; padding: 6px 0;
+  }
+  .mobile-nav a.active { color: var(--accent); }
+  .mobile-nav a svg { width: 24px; height: 24px; }
+
+  .btn-theme-toggle { font-size: 18px !important; padding: 4px 8px !important; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-dot"></div>
+    <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>
     Vox
   </div>
   <a href="/dashboard" class="btn-ghost">Tableau de bord</a>
+  <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Thème sombre/clair" style="font-size:18px;padding:4px 8px">🌙</button>
 </header>
 
 <main>
@@ -469,18 +509,30 @@
 
 </main>
 
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Aujourd'hui
+  </a>
+  <a href="/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Notes
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+  <a href="/settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </a>
+</nav>
+
 <!-- Login modal -->
-<div id="login-overlay">
-  <div class="login-box">
-    <div style="font-size:32px;margin-bottom:12px">🔐</div>
-    <h2>Accès Vox</h2>
-    <p>Mot de passe requis</p>
-    <input type="password" class="login-input" id="login-password"
-      placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()">
-    <div id="login-error"></div>
-    <button class="login-btn" onclick="submitLogin()">Connexion</button>
-  </div>
-</div>
 
 <script>
 // ── État global ──────────────────────────────────────────────────────────────
@@ -657,7 +709,8 @@ async function uploadAndProcess() {
 
   try {
     const res = await fetch('/api/ingest', { method: 'POST', body: formData });
-    if (res.status === 401) { showLoginModal(); return; }
+    if (res.status === 401) {
+ return; }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `HTTP ${res.status}`);
@@ -767,32 +820,6 @@ function startOver() {
 }
 
 // ── Login ─────────────────────────────────────────────────────────────────────
-function showLoginModal() {
-  document.getElementById('login-overlay').style.display = 'flex';
-  setTimeout(() => document.getElementById('login-password')?.focus(), 50);
-}
-
-async function submitLogin() {
-  const password = document.getElementById('login-password').value;
-  const errEl    = document.getElementById('login-error');
-  errEl.style.display = 'none';
-  try {
-    const res = await fetch('/api/auth', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    if (!res.ok) {
-      const d = await res.json();
-      errEl.textContent = d.error || 'Mot de passe incorrect.';
-      errEl.style.display = 'block'; return;
-    }
-    document.getElementById('login-overlay').style.display = 'none';
-    // Relancer l'upload si on avait un audio en attente
-    if (audioBlob) uploadAndProcess();
-  } catch {
-    errEl.textContent = 'Erreur réseau.'; errEl.style.display = 'block';
-  }
-}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 renderCombos();
@@ -802,6 +829,22 @@ const lastCombo = loadCombos()[0];
 if (lastCombo) applyCombo(lastCombo);
 </script>
 <script src="/app.js"></script>
-<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");
+// ── Dark mode ──────────────────────────────────────────────────────────────
+(function(){
+  const saved = localStorage.getItem('vox-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vox-theme', next);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+</script>
 </body>
 </html>

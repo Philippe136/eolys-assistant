@@ -125,12 +125,12 @@ export const processCall = task({
         'claude-3-haiku-20240307',
       ];
 
-      let result;
+      let results; // tableau d'outputs (1 ou plusieurs)
       for (let attempt = 1; attempt <= 3; attempt++) {
         const model   = CLAUDE_MODELS[Math.min(attempt - 1, CLAUDE_MODELS.length - 1)];
         const message = await anthropic.messages.create({
           model,
-          max_tokens: 1500,
+          max_tokens: 2000,
           system:     systemPrompt,
           messages:   [{ role: 'user', content: `Date du jour : ${new Date().toISOString().slice(0, 10)}${contextBlock}\n\nTranscription :\n${transcript}` }],
         });
@@ -138,10 +138,18 @@ export const processCall = task({
         const raw = message.content.map(b => b.text || '').join('');
         try {
           const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
-          if (typeof parsed.title !== 'string' || typeof parsed.summary !== 'string' || !Array.isArray(parsed.items)) {
-            throw new Error('Champs requis manquants (title, summary, items)');
+          // ── Format multi-sujet : { "entries": [...] } ──
+          if (Array.isArray(parsed.entries) && parsed.entries.length > 0) {
+            results = parsed.entries.filter(e => typeof e.title === 'string' && typeof e.summary === 'string');
+            if (!results.length) throw new Error('entries[] vide ou invalide');
+            console.log(`[${callId}] 🔀 Multi-sujet détecté : ${results.length} entrées`);
+          } else {
+            // ── Format simple ──
+            if (typeof parsed.title !== 'string' || typeof parsed.summary !== 'string' || !Array.isArray(parsed.items)) {
+              throw new Error('Champs requis manquants (title, summary, items)');
+            }
+            results = [parsed];
           }
-          result = parsed;
           break;
         } catch (e) {
           console.warn(`[${callId}] Claude JSON invalide (tentative ${attempt}/3) :`, e.message, '— raw:', raw.substring(0, 200));
@@ -149,77 +157,86 @@ export const processCall = task({
         }
       }
 
-      // ── Étape 4 : Brouillon Outlook (si email_draft présent) ──────────────
-      let outlookDraftId  = null;
-      let outlookDraftUrl = null;
-
-      if (result.email_draft && process.env.MICROSOFT_CLIENT_ID) {
-        try {
-          console.log(`[${callId}] Création brouillon Outlook...`);
-          const accessToken = await getMicrosoftAccessToken(sql);
-          if (accessToken) {
-            const draft     = await createOutlookDraft(accessToken, result.email_draft, result.title);
-            outlookDraftId  = draft.id;
-            outlookDraftUrl = draft.webLink;
-            console.log(`[${callId}] Outlook ✅ brouillon créé`);
-          } else {
-            console.warn(`[${callId}] Outlook ignoré : pas de token`);
-          }
-        } catch (e) { console.warn(`[${callId}] Outlook ignoré :`, e.message); }
-      }
-
-      // ── Étape 5 : Sauvegarde en base ──────────────────────────────────────
-      // Merger les tags IA + tags pré-remplis par l'utilisateur (dédupliqués)
-      const aiTags   = Array.isArray(result.tags) ? result.tags : [];
+      // ── Étape 4 : Persister chaque output ─────────────────────────────────
+      // Le premier output met à jour l'entrée principale (callId)
+      // Les suivants créent de nouvelles entrées liées au même transcript
       const userTags = Array.isArray(initialTags) ? initialTags : [];
-      const tags     = [...new Set([...userTags, ...aiTags])];
+      let outlookDraftId = null;
 
-      // Préparer la suggestion calendrier
-      const calEvent       = result.calendar_event ?? null;
-      const calEventStatus = calEvent ? 'suggested' : null;
+      for (let idx = 0; idx < results.length; idx++) {
+        const result  = results[idx];
+        const entryId = idx === 0 ? callId : null; // null → on va créer une nouvelle entrée
 
-      await sql`
-        UPDATE entries SET
-          status                = 'done',
-          transcript            = ${transcript},
-          category              = ${result.category ?? 'inbox'},
-          title                 = ${result.title ?? null},
-          summary               = ${result.summary ?? null},
-          tags                  = ${tags},
-          email_draft           = ${result.email_draft ?? null},
-          calendar_event        = ${calEvent ? JSON.stringify(calEvent) : null},
-          calendar_event_status = ${calEventStatus}
-        WHERE id = ${callId}
-      `;
+        const aiTags     = Array.isArray(result.tags) ? result.tags : [];
+        const tags       = [...new Set([...userTags, ...aiTags])];
+        const calEvent   = result.calendar_event ?? null;
+        const calStatus  = calEvent ? 'suggested' : null;
 
-      if (calEvent) {
-        console.log(`[${callId}] 📅 Événement calendrier suggéré : ${calEvent.title} le ${calEvent.date}`);
-      }
-
-      // ── Étape 6 : Items extraits ───────────────────────────────────────────
-      if (result.items && result.items.length > 0) {
-        await sql`DELETE FROM items WHERE entry_id = ${callId}`;
-        let inserted = 0;
-        for (let i = 0; i < result.items.length; i++) {
-          const item = result.items[i];
-          const text = (item.text ?? '').trim();
-          if (!text) {
-            console.warn(`[${callId}] Item ${i} ignoré : text vide ou null`);
-            continue;
-          }
-          const validTypes = ['task', 'idea', 'decision', 'reminder'];
-          const type = validTypes.includes(item.type) ? item.type : 'task';
-          await sql`
-            INSERT INTO items (entry_id, type, text, due_date, position)
-            VALUES (${callId}, ${type}, ${text}, ${item.due ?? null}, ${inserted})
-          `;
-          inserted++;
+        // Brouillon Outlook (seulement pour le premier output)
+        if (idx === 0 && result.email_draft && process.env.MICROSOFT_CLIENT_ID) {
+          try {
+            const accessToken = await getMicrosoftAccessToken(sql);
+            if (accessToken) {
+              const draft = await createOutlookDraft(accessToken, result.email_draft, result.title);
+              outlookDraftId = draft.id;
+              console.log(`[${callId}] Outlook ✅ brouillon créé`);
+            }
+          } catch (e) { console.warn(`[${callId}] Outlook ignoré :`, e.message); }
         }
-        console.log(`[${callId}] ✅ ${inserted} item(s) inséré(s) sur ${result.items.length}`);
+
+        let targetId;
+        if (idx === 0) {
+          // Mettre à jour l'entrée principale
+          await sql`
+            UPDATE entries SET
+              status                = 'done',
+              transcript            = ${transcript},
+              category              = ${result.category ?? 'inbox'},
+              title                 = ${result.title ?? null},
+              summary               = ${result.summary ?? null},
+              tags                  = ${tags},
+              email_draft           = ${result.email_draft ?? null},
+              calendar_event        = ${calEvent ? JSON.stringify(calEvent) : null},
+              calendar_event_status = ${calStatus}
+            WHERE id = ${callId}
+          `;
+          targetId = callId;
+        } else {
+          // Créer une nouvelle entrée pour les sujets supplémentaires
+          const [newEntry] = await sql`
+            INSERT INTO entries (status, source, transcript, category, title, summary, tags, email_draft, calendar_event, calendar_event_status)
+            VALUES ('done', 'split', ${transcript}, ${result.category ?? 'inbox'}, ${result.title ?? null}, ${result.summary ?? null}, ${tags}, ${result.email_draft ?? null}, ${calEvent ? JSON.stringify(calEvent) : null}, ${calStatus})
+            RETURNING id
+          `;
+          targetId = newEntry.id;
+          console.log(`[${callId}] 🔀 Nouvelle entrée créée : ${targetId} (sujet ${idx + 1})`);
+        }
+
+        if (calEvent) console.log(`[${targetId}] 📅 Événement : ${calEvent.title} le ${calEvent.date}`);
+
+        // Items
+        const items = Array.isArray(result.items) ? result.items : [];
+        if (items.length > 0) {
+          await sql`DELETE FROM items WHERE entry_id = ${targetId}`;
+          let inserted = 0;
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const text = (item.text ?? '').trim();
+            if (!text) { console.warn(`[${targetId}] Item ${i} ignoré : text vide`); continue; }
+            const validTypes = ['task', 'idea', 'decision', 'reminder'];
+            const type = validTypes.includes(item.type) ? item.type : 'task';
+            await sql`
+              INSERT INTO items (entry_id, type, text, due_date, position)
+              VALUES (${targetId}, ${type}, ${text}, ${item.due ?? null}, ${inserted})
+            `;
+            inserted++;
+          }
+          console.log(`[${targetId}] ✅ ${inserted}/${items.length} items insérés`);
+        }
       }
 
-      console.log(`[${callId}] ✅ Traitement terminé`);
-      return { success: true, callId, outlookDraftId };
+      console.log(`[${callId}] ✅ Traitement terminé (${results.length} entrée(s))`);
+      return { success: true, callId, count: results.length, outlookDraftId };
 
     } catch (err) {
       console.error(`[${callId}] ❌ Erreur :`, err.message);

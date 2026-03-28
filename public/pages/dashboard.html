@@ -11,9 +11,10 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/app.css">
-<rect width='192' height='192' rx='40' fill='%23c8410a'/><text x='96' y='130' font-size='100' text-anchor='middle' font-family='serif' fill='white'>V</text></svg>">
 <title>Vox — Tableau de bord</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
   /* ── Native PWA feel ── */
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -39,12 +40,27 @@
     --radius: 12px;
   }
 
+  :root[data-theme="dark"] {
+  --bg: #151210;
+  --surface: #1e1b18;
+  --surface2: #252220;
+  --border: #35302a;
+  --ink: #f0ece5;
+  --ink-muted: #a09890;
+  --ink-dim: #6a6460;
+  --accent-light: #3a1a0a;
+  --green-light: #0d2e1a;
+  --yellow-light: #2a2000;
+  --red-light: #2a0d0d;
+  --blue-light: #0d1a3a;
+}
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     background: var(--bg);
     color: var(--ink);
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
   }
 
@@ -52,8 +68,8 @@
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
+    padding: env(safe-area-inset-top, 0px) 24px 0;
+    height: calc(56px + env(safe-area-inset-top, 0px));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -69,7 +85,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
+  .logo svg { flex-shrink: 0; display: block; }
 
   .logo-dot {
     width: 8px;
@@ -85,7 +104,7 @@
   }
 
   .btn-ghost {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
     color: var(--ink-muted);
@@ -101,7 +120,7 @@
   .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
 
   .btn-primary {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
     color: #fff;
@@ -292,6 +311,75 @@
     color: var(--ink-muted);
     margin-bottom: 14px;
   }
+  .card-resume-list {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-muted);
+    margin: 0 0 14px 16px;
+    padding: 0;
+  }
+  .card-resume-list li { margin-bottom: 2px; }
+  .badge-priority-high   { background: #fef9c3; color: #92400e; border: 1px solid #fde68a; }
+  .badge-priority-urgent { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+  /* ── Attachments ── */
+  .btn-attach {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 7px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-attach:hover { background: var(--surface2); color: var(--ink); }
+  .attachment-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px 4px 8px;
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+  }
+  .attachment-chip a { color: inherit; text-decoration: none; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attachment-chip:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .attachment-chip:hover a { color: var(--accent); }
+  .chip-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--ink-dim);
+    padding: 0;
+    margin-left: 2px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .chip-del:hover { color: var(--red); }
+  .attachment-img-thumb {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
 
   /* ── Expandable detail ── */
   .card-detail {
@@ -370,7 +458,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
     color: #0052cc;
@@ -389,7 +477,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
     color: #0078d4;
@@ -405,7 +493,7 @@
   .btn-outlook:hover { opacity: 0.8; }
 
   .btn-expand {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
     color: var(--ink-muted);
@@ -418,6 +506,71 @@
   }
 
   .btn-expand:hover { background: var(--border); }
+
+  /* ── Edit button ── */
+  .btn-edit-entry {
+    background: none; border: none; cursor: pointer;
+    padding: 4px 6px; border-radius: 6px;
+    color: var(--ink-dim); font-size: 13px;
+    display: flex; align-items: center;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-edit-entry:hover { background: var(--surface2); color: var(--ink); }
+
+  /* ── Inline edit form ── */
+  .card-edit-form {
+    display: none;
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+    padding-top: 14px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card-edit-form.open { display: flex; }
+  .edit-field-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--ink-dim); margin-bottom: 3px;
+  }
+  .edit-input {
+    width: 100%; padding: 8px 10px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    color: var(--ink); background: var(--surface);
+    outline: none; transition: border-color 0.15s;
+  }
+  .edit-input:focus { border-color: var(--accent); }
+  .edit-textarea {
+    width: 100%; padding: 8px 10px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    color: var(--ink); background: var(--surface);
+    outline: none; resize: vertical; min-height: 64px;
+    transition: border-color 0.15s; line-height: 1.5;
+  }
+  .edit-textarea:focus { border-color: var(--accent); }
+  .edit-select {
+    padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    color: var(--ink); background: var(--surface); outline: none;
+    transition: border-color 0.15s; cursor: pointer;
+  }
+  .edit-select:focus { border-color: var(--accent); }
+  .edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .btn-edit-save {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+    padding: 6px 16px; border-radius: 7px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-edit-save:hover { opacity: 0.88; }
+  .btn-edit-cancel {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 7px;
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--ink-muted); cursor: pointer; transition: background 0.15s;
+  }
+  .btn-edit-cancel:hover { background: var(--surface2); }
 
   /* ── Archive button ── */
   .btn-archive {
@@ -455,7 +608,7 @@
   }
 
   .btn-delete-confirm {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 700;
     color: #fff;
@@ -470,7 +623,7 @@
   .btn-delete-confirm:hover { opacity: 0.85; }
 
   .btn-delete-cancel {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
     color: var(--ink-muted);
@@ -514,7 +667,7 @@
   }
 
   .btn-bulk-delete {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 700;
     color: #fff;
@@ -529,7 +682,7 @@
   .btn-bulk-delete:hover { opacity: 0.85; }
 
   .btn-bulk-cancel {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
     color: rgba(255,255,255,0.6);
@@ -567,6 +720,29 @@
     50%       { opacity: 1;   transform: scale(1); }
   }
 
+  /* ── Skeleton loading ── */
+  @keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  .skeleton-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .skeleton-card + .skeleton-card { margin-top: 12px; }
+  .sk-title, .sk-meta, .sk-line {
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  .sk-title { height: 16px; width: 55%; margin-bottom: 10px; }
+  .sk-meta  { height: 11px; width: 35%; margin-bottom: 12px; }
+  .sk-line  { height: 13px; width: 90%; margin-bottom: 6px; }
+  .sk-short { width: 60%; }
+
   .error-text { color: var(--red); font-size: 13px; margin-top: 8px; }
 
   /* ── Processing spinner ── */
@@ -591,7 +767,7 @@
     border: 1.5px solid var(--border);
     border-radius: 10px;
     background: var(--surface);
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     color: var(--ink);
     outline: none;
@@ -606,7 +782,7 @@
     gap: 8px; margin-top: 20px;
   }
   .btn-page {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
     padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 8px;
     background: var(--surface); color: var(--ink); cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
@@ -618,7 +794,7 @@
 
   /* ── Retry button ── */
   .btn-retry {
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
     padding: 5px 12px; border-radius: 7px; border: 1.5px solid var(--red);
     background: transparent; color: var(--red); cursor: pointer;
     transition: background 0.15s, color 0.15s;
@@ -626,7 +802,7 @@
   .btn-retry:hover { background: var(--red); color: #fff; }
   .btn-retry:disabled { opacity: 0.5; cursor: default; }
 
-  /* ── Action items cochables (V2) ── */
+  /* ── Action items 3 états ── */
   .action-item {
     display: flex;
     align-items: flex-start;
@@ -635,17 +811,51 @@
     line-height: 1.5;
     list-style: none;
     padding: 3px 0;
+    flex-wrap: wrap;
   }
   .action-item::before { content: none; }
-  .action-item input[type="checkbox"] {
-    width: 15px; height: 15px;
-    margin-top: 2px;
-    flex-shrink: 0;
-    accent-color: var(--accent);
-    cursor: pointer;
+
+  /* Bouton statut cycle */
+  .status-btn {
+    width: 20px; height: 20px;
+    border: none; background: none; cursor: pointer; padding: 0;
+    flex-shrink: 0; margin-top: 2px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.12s;
   }
-  .action-text { transition: color 0.15s; }
+  .status-btn:hover { transform: scale(1.25); }
+  .status-todo { color: var(--ink-dim); }
+  .status-in-progress { color: var(--accent); animation: status-pulse 1.8s ease-in-out infinite; }
+  .status-done { color: var(--green); }
+  @keyframes status-pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.55; }
+  }
+
+  .action-text { transition: color 0.15s; flex: 1; min-width: 0; }
   .action-item.done .action-text { text-decoration: line-through; color: var(--ink-dim); }
+  .action-item.in-progress .action-text { color: var(--accent); }
+
+  /* Bouton déléguer Claude */
+  .btn-delegate {
+    font-size: 10px; font-weight: 700; font-family: 'Inter', sans-serif;
+    padding: 2px 7px; border-radius: 6px;
+    background: var(--accent-light); color: var(--accent);
+    border: none; cursor: pointer; flex-shrink: 0; margin-top: 3px;
+    transition: background 0.15s, opacity 0.15s;
+    display: none;
+  }
+  .btn-delegate:hover { background: #f0d5c8; }
+  .btn-delegate:disabled { opacity: 0.5; cursor: default; }
+  /* Afficher le bouton déléguer uniquement pour les tasks non terminées */
+  .action-item:not(.done) .btn-delegate { display: inline-flex; align-items: center; gap: 3px; }
+
+  /* Résultat agent */
+  .agent-result {
+    width: 100%; margin-top: 6px; padding: 10px 12px;
+    background: var(--accent-light); border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0; font-size: 12.5px; line-height: 1.6;
+    color: var(--ink); white-space: pre-wrap; word-break: break-word;
+  }
 
   /* ── Stats détaillées ── */
   .stats-panel {
@@ -675,7 +885,7 @@
 
   /* ── Bouton Export CSV ── */
   .btn-export {
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     color: var(--green); background: var(--green-light); border: none;
     border-radius: 8px; padding: 6px 12px; cursor: pointer;
     text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
@@ -692,7 +902,7 @@
     align-items: center;
   }
   .filter-select {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 500;
     padding: 7px 12px;
@@ -711,7 +921,7 @@
   }
   .filter-select:focus { border-color: var(--accent); }
   .btn-filter-reset {
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     padding: 7px 12px; border: 1.5px solid var(--border); border-radius: 9px;
     background: var(--surface); color: var(--ink-muted); cursor: pointer;
     transition: background 0.15s, color 0.15s;
@@ -720,8 +930,10 @@
 
   /* ── Quick Add ── */
   .quick-add-wrap {
-    margin-bottom: 24px;
+    margin-bottom: 12px;
   }
+
+
   .quick-add-box {
     background: var(--surface);
     border: 1.5px solid var(--border);
@@ -738,7 +950,7 @@
   }
   .quick-add-textarea {
     width: 100%; border: none; outline: none; resize: none;
-    font-family: 'Syne', sans-serif; font-size: 14px; color: var(--ink);
+    font-family: 'Inter', sans-serif; font-size: 14px; color: var(--ink);
     background: transparent; line-height: 1.5; min-height: 40px; max-height: 160px;
   }
   .quick-add-textarea::placeholder { color: var(--ink-dim); }
@@ -746,14 +958,14 @@
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   }
   .quick-add-select {
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     padding: 5px 10px; border: 1.5px solid var(--border); border-radius: 7px;
     background: var(--surface2); color: var(--ink-muted); outline: none; cursor: pointer;
   }
   .quick-add-select:focus { border-color: var(--accent); }
   .quick-add-hint { font-size: 11px; color: var(--ink-dim); margin-left: auto; }
   .btn-quick-submit {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
     padding: 7px 18px; border-radius: 8px; border: none;
     background: var(--accent); color: #fff; cursor: pointer;
     transition: opacity 0.15s; flex-shrink: 0;
@@ -768,8 +980,8 @@
 
   /* ── Responsive ── */
   @media (max-width: 640px) {
-    /* Header : logo + record seulement */
-    header { padding: 0 16px; }
+    /* Header : logo + actions */
+    header { padding: env(safe-area-inset-top, 0px) 16px 0; }
     .header-actions { gap: 8px; }
     .header-actions .btn-ghost,
     .header-actions .btn-export,
@@ -777,20 +989,14 @@
     .header-actions .btn-primary { font-size: 12px; padding: 6px 12px; }
 
     /* Main padding pour laisser place à la nav bottom */
-    main { padding: 16px 14px 90px; }
+    main { padding: 16px 14px calc(100px + env(safe-area-inset-bottom, 0px)); }
 
     /* Stats masquées sur mobile */
     .stats { display: none !important; }
 
-    /* Quick-add sticky en haut */
+    /* Quick-add : défile avec le contenu (non sticky) */
     .quick-add-wrap {
-      position: sticky;
-      top: 56px;
-      z-index: 9;
-      background: var(--bg);
-      margin: 0 -14px 16px;
-      padding: 8px 14px;
-      border-bottom: 1px solid var(--border);
+      margin: 0 0 16px;
     }
     .quick-add-box { border-radius: 10px; padding: 10px 14px; gap: 8px; }
     .quick-add-textarea { font-size: 13px; min-height: 32px; }
@@ -825,7 +1031,7 @@
     /* Card étendue : overlay plein écran */
     .call-card.expanded {
       position: fixed;
-      inset: 56px 0 72px 0;
+      inset: calc(56px + env(safe-area-inset-top, 0px)) 0 calc(76px + env(safe-area-inset-bottom, 0px)) 0;
       z-index: 50;
       overflow-y: auto;
       border-radius: 0;
@@ -837,15 +1043,17 @@
     .call-card.expanded .card-resume { display: block; }
 
     /* Bulk bar */
-    .bulk-bar { left: 12px; right: 12px; transform: translateY(100px); width: auto; white-space: normal; bottom: 80px; }
+    .bulk-bar { left: 12px; right: 12px; transform: translateY(100px); width: auto; white-space: normal; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
     .bulk-bar.visible { transform: translateY(0); }
 
     /* Stats panel */
     .stats-panel { display: none; }
 
-    /* Page title */
-    .page-title { font-size: 18px; }
-    .page-subtitle { font-size: 12px; margin-bottom: 16px; }
+    /* Page title masquée sur mobile — quick-add prend tout */
+    .page-title, .page-subtitle { display: none; }
+
+    /* Edit form : champs pleine largeur */
+    .edit-select { width: 100%; }
 
     /* Nav mobile visible */
     .mobile-nav { display: flex; }
@@ -855,13 +1063,13 @@
   .mobile-nav {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 64px;
+    height: calc(76px + env(safe-area-inset-bottom, 0px));
     background: var(--surface);
     border-top: 1px solid var(--border);
     align-items: stretch;
     justify-content: space-around;
     z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .mobile-nav a {
     display: flex;
@@ -870,7 +1078,7 @@
     justify-content: center;
     gap: 3px;
     flex: 1;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.3px;
     text-transform: uppercase;
@@ -880,7 +1088,7 @@
     padding: 6px 0;
   }
   .mobile-nav a.active { color: var(--accent); }
-  .mobile-nav a svg { width: 22px; height: 22px; }
+  .mobile-nav a svg { width: 24px; height: 24px; }
   .mobile-nav a.nav-record {
     color: #fff;
     background: var(--accent);
@@ -891,27 +1099,48 @@
     line-height: 1;
     flex: 0 0 52px;
   }
+
+  /* ── Bouton refresh ── */
+  .btn-refresh {
+    width: 32px; height: 32px; border: none; background: none; cursor: pointer;
+    padding: 0; border-radius: 8px; color: var(--ink-dim); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-refresh:hover { background: var(--surface2); color: var(--ink); }
+  .btn-refresh.spinning svg { animation: spin-refresh 0.65s linear infinite; }
+  @keyframes spin-refresh { to { transform: rotate(360deg); } }
+
+  .btn-theme-toggle { font-size: 18px !important; padding: 4px 8px !important; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-dot"></div>
+    <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>
     Vox
   </div>
   <div class="header-actions">
     <span id="last-refresh" style="font-size:11px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace"></span>
-    <a href="/record"   class="btn-primary">🎙 Enregistrer</a>
     <a href="/actions"  class="btn-ghost">Items</a>
-    <a href="/projects" class="btn-ghost">Projets</a>
+    <a href="/folders"  class="btn-ghost">Dossiers</a>
+    <a href="/finance"  class="btn-ghost">Finance</a>
     <a href="/today"    class="btn-ghost">Aujourd'hui</a>
+    <a href="/gmail" class="btn-ghost">Gmail</a>
     <a href="/settings" class="btn-ghost" title="Paramètres">⚙️</a>
     <button class="btn-ghost" onclick="toggleStatsPanel()" title="Statistiques détaillées">📊 Analyse</button>
     <a href="/api/export" class="btn-export" title="Exporter en CSV">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       CSV
     </a>
+      <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+    </button>
+    <button class="btn-refresh" onclick="exportPDF()" title="Exporter en PDF" style="display:none" id="btn-pdf">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </button>
+    <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Thème sombre/clair" style="font-size:18px;padding:4px 8px">🌙</button>
   </div>
 </header>
 
@@ -934,12 +1163,20 @@
           <option value="personal">👤 Perso</option>
           <option value="idea">💡 Idée</option>
           <option value="meeting">🤝 Réunion</option>
+          <option value="app">⚙️ App</option>
+        </select>
+        <select class="quick-add-select" id="quick-add-priority" title="Importance">
+          <option value="2">⚪ Normale</option>
+          <option value="3">🟡 Haute</option>
+          <option value="4">🔴 Urgente</option>
+          <option value="1">🔵 Faible</option>
         </select>
         <span class="quick-add-hint" id="quick-add-hint">⌘↵ pour envoyer</span>
         <button class="btn-quick-submit" id="quick-add-btn" onclick="submitQuickAdd()">Envoyer</button>
       </div>
     </div>
   </div>
+
 
   <div class="stats" id="stats" style="display:none">
     <div class="stat">
@@ -962,6 +1199,12 @@
       <div class="stat-value" id="stat-actions" style="color:var(--accent)">—</div>
       <div class="stat-label">Actions</div>
     </div>
+  </div>
+
+  <!-- Fusion auto des notes similaires -->
+  <div id="merge-bar" style="display:none;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+    <span style="font-size:13px;color:var(--ink-muted);flex:1">🧠 Regrouper automatiquement les notes similaires</span>
+    <button id="btn-merge" onclick="mergeSimilar()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer">Fusionner</button>
   </div>
 
   <!-- Panel Statistiques détaillées (toggle) -->
@@ -990,6 +1233,7 @@
     </select>
     <button class="btn-filter-reset" onclick="resetFilters()">✕ Réinitialiser</button>
     <button class="btn-filter-reset" id="btn-show-archived" onclick="toggleArchived()" style="background:var(--surface2)">📦 Archives</button>
+    <button class="btn-filter-reset" id="btn-retry-all" onclick="retryAllErrors()" style="display:none;background:var(--red-light);color:var(--red)">↺ Relancer erreurs</button>
   </div>
 
   <div class="search-bar">
@@ -999,34 +1243,15 @@
   </div>
 
   <div id="calls-list" class="calls-list">
-    <div class="state-loading">
-      <span class="state-loading-dot"></span>
-      <span class="state-loading-dot"></span>
-      <span class="state-loading-dot"></span>
-    </div>
+    <!-- Skeleton cards affichées immédiatement pendant le chargement -->
+    <div class="skeleton-card"><div class="sk-title"></div><div class="sk-meta"></div><div class="sk-line"></div><div class="sk-line sk-short"></div></div>
+    <div class="skeleton-card"><div class="sk-title"></div><div class="sk-meta"></div><div class="sk-line"></div></div>
+    <div class="skeleton-card"><div class="sk-title"></div><div class="sk-meta"></div><div class="sk-line"></div><div class="sk-line sk-short"></div></div>
   </div>
 
   <div class="pagination" id="pagination"></div>
 </main>
 
-<!-- Modal login -->
-<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,23,20,0.7);z-index:999;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:16px;padding:40px 48px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
-    <div style="font-size:32px;margin-bottom:12px">🔐</div>
-    <h2 style="font-size:20px;margin:0 0 6px">Accès dashboard</h2>
-    <p style="color:var(--ink-muted);font-size:13px;margin:0 0 24px">Accès restreint</p>
-    <input type="password" id="login-password"
-      style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box"
-      placeholder="Mot de passe" onkeydown="if(event.key==='Enter')submitLogin()" />
-    <div id="login-error" style="color:#c8410a;font-size:13px;margin-bottom:10px;display:none"></div>
-    <button onclick="submitLogin()"
-      style="width:100%;padding:11px;background:#c8410a;color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer">
-      Connexion
-    </button>
-  </div>
-</div>
-
-<!-- Bulk delete action bar -->
 <div class="bulk-bar" id="bulk-bar">
   <span class="bulk-count" id="bulk-count"></span>
   <button class="btn-bulk-delete" onclick="deleteSelected()">Supprimer</button>
@@ -1057,29 +1282,50 @@ function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-const CATEGORY_LABEL = { work: 'Travail', personal: 'Perso', idea: 'Idée', meeting: 'Réunion', inbox: 'Inbox' };
+const CATEGORY_LABEL  = { work: 'Travail', personal: 'Perso', idea: 'Idée', meeting: 'Réunion', app: '⚙️ App', inbox: 'Inbox' };
+const PRIORITY_BADGE  = { 1: '', 2: '', 3: '<span class="badge badge-priority-high">🟡 Haute</span>', 4: '<span class="badge badge-priority-urgent">🔴 Urgent</span>' };
+const PRIORITY_LABEL  = { 1: '🔵 Faible', 2: '⚪ Normale', 3: '🟡 Haute', 4: '🔴 Urgente' };
+
+function renderSummary(text) {
+  if (!text) return '';
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const bullets = lines.map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+  if (bullets.length <= 1) return `<div class="card-resume">${escapeHtml(text)}</div>`;
+  return `<ul class="card-resume-list">${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>`;
+}
 const ITEM_ICON      = { task: '☐', idea: '💡', decision: '✓', reminder: '🔔' };
 const ITEM_LABEL     = { task: 'Tâche', idea: 'Idée', decision: 'Décision', reminder: 'Rappel' };
+const STATUS_ICON    = { todo: '○', in_progress: '⟳', done: '✓' };
+const NEXT_STATUS    = { todo: 'in_progress', in_progress: 'done', done: 'todo' };
 
 function renderCard(entry) {
   const isExpanded  = expandedId === entry.id;
   const isSelected  = selectedIds.has(entry.id);
   const actionItems = Array.isArray(entry.action_items) ? entry.action_items : [];
+  const tasks       = actionItems.filter(a => a.type === 'task');
 
   const itemsHtml = actionItems.length > 0
     ? `<ul class="actions-list">
-        ${actionItems.map(a => `
-          <li class="action-item${a.done ? ' done' : ''}">
-            <input type="checkbox" ${a.done ? 'checked' : ''}
-                   onchange="toggleAction('${a.id}', this.checked, event)">
-            <span class="action-text">${escapeHtml(a.text)}</span>
+        ${actionItems.map(a => {
+          const st      = a.status || (a.done ? 'done' : 'todo');
+          const stClass = st === 'in_progress' ? 'in-progress' : st;
+          return `<li class="action-item ${stClass}">
+            <button class="status-btn status-${stClass}"
+                    data-status="${st}"
+                    onclick="cycleStatus('${a.id}','${st}',event)"
+                    title="Changer le statut">${STATUS_ICON[st] || STATUS_ICON.todo}</button>
+            <span class="action-text">${escapeHtml(a.text || '')}</span>
             <span style="font-size:10px;color:var(--ink-dim);flex-shrink:0;margin-left:4px">${ITEM_LABEL[a.type] || a.type || ''}</span>
-          </li>`).join('')}
+            ${a.agent_result ? `<div class="agent-result">${escapeHtml(a.agent_result)}</div>` : ''}
+            ${st !== 'done' ? `<button class="btn-delegate" onclick="executeTask('${a.id}',event)" title="Déléguer à Claude">✦ IA</button>` : ''}
+          </li>`;
+        }).join('')}
        </ul>`
     : '<span style="color:var(--ink-dim);font-size:13px;font-style:italic">Note simple — aucune action détectée</span>';
 
-  const actionsMeta = actionItems.length
-    ? `<span title="Items faits">☑ ${actionItems.filter(a => a.done).length}/${actionItems.length}</span>`
+  const doneCount   = tasks.filter(a => a.done || a.status === 'done').length;
+  const actionsMeta = tasks.length
+    ? `<span title="Tâches faites">☑ ${doneCount}/${tasks.length}</span>`
     : '';
 
   const tagsPills = (entry.tags || []).map(t =>
@@ -1099,11 +1345,13 @@ function renderCard(entry) {
           ${badgeStatus(entry.status)}
           <span class="badge badge-type">${escapeHtml(CATEGORY_LABEL[entry.category] || entry.category || '—')}</span>
           ${(entry.status === 'error' || (entry.status === 'processing' && Date.now() - new Date(entry.created_at) > 5 * 60 * 1000)) ? `<button class="btn-retry" onclick="retryCall('${entry.id}', event)">↺ Relancer</button>` : ''}
+          ${PRIORITY_BADGE[entry.priority] || ''}
           ${entry.project_name ? `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1.5px solid ${escapeHtml(entry.project_color||'#c8410a')};color:${escapeHtml(entry.project_color||'#c8410a')};white-space:nowrap;cursor:pointer" onclick="event.stopPropagation();window.location='/projects'" title="${escapeHtml(entry.project_name)}">◉ ${escapeHtml(entry.project_name)}</span>` : ''}
           ${showArchived
             ? `<button class="btn-archive" onclick="archiveEntry('${entry.id}', false, event)" title="Désarchiver">↩</button>`
             : `<button class="btn-archive" onclick="archiveEntry('${entry.id}', true, event)" title="Archiver">📦</button>`
           }
+          <button class="btn-edit-entry" onclick="toggleEditEntry('${entry.id}', event)" title="Modifier">✏️</button>
           <button class="btn-trash" onclick="startDelete('${entry.id}', event)" title="Supprimer">${trashIcon}</button>
         </div>
       </div>
@@ -1112,7 +1360,7 @@ function renderCard(entry) {
         ${tagsPills ? `<span style="display:flex;gap:4px;flex-wrap:wrap">${tagsPills}</span>` : ''}
         ${actionsMeta}
       </div>
-      ${entry.summary ? `<div class="card-resume">${escapeHtml(entry.summary)}</div>` : ''}
+      ${entry.summary ? renderSummary(entry.summary) : ''}
       ${entry.error   ? `<div class="card-resume" style="color:var(--red)">${escapeHtml(entry.error)}</div>` : ''}
 
       <div class="delete-confirm-bar" id="delete-confirm-${entry.id}">
@@ -1144,11 +1392,11 @@ function renderCard(entry) {
             ${entry.calendar_event.notes ? `<div style="font-size:13px;color:var(--ink-muted);margin-bottom:10px">${escapeHtml(entry.calendar_event.notes)}</div>` : ''}
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button onclick="confirmCalendarEvent('${entry.id}', event)"
-                style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;padding:6px 14px;border-radius:7px;border:none;background:#1a73e8;color:#fff;cursor:pointer">
+                style="font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:6px 14px;border-radius:7px;border:none;background:#1a73e8;color:#fff;cursor:pointer">
                 ✓ Ajouter à Google Agenda
               </button>
               <button onclick="dismissCalendarEvent('${entry.id}', event)"
-                style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink-muted);cursor:pointer">
+                style="font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink-muted);cursor:pointer">
                 ✕ Ignorer
               </button>
             </div>
@@ -1166,7 +1414,7 @@ function renderCard(entry) {
 
         <div class="detail-section" style="margin-top:12px">
           <div class="detail-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-muted);margin-bottom:6px">Projet</div>
-          <select style="font-family:'Syne',sans-serif;font-size:13px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;width:100%;max-width:280px" onchange="assignProject('${entry.id}',this.value)" onclick="event.stopPropagation()">
+          <select style="font-family:'Inter',sans-serif;font-size:13px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;width:100%;max-width:280px" onchange="assignProject('${entry.id}',this.value)" onclick="event.stopPropagation()">
             <option value="">— Sans projet —</option>
             ${projects.map(p => `<option value="${p.id}" ${p.id === entry.project_id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}
           </select>
@@ -1176,15 +1424,148 @@ function renderCard(entry) {
           <button class="btn-expand" onclick="copyEmail('${entry.id}', event)">Copier l'e-mail</button>
           <span id="copy-confirm-${entry.id}" style="font-size:12px;color:var(--green);display:none">✓ Copié !</span>` : ''}
         </div>
+
+        <!-- ── Pièces jointes ── -->
+        <div class="detail-section" id="attachments-section-${entry.id}">
+          <div class="detail-label">📎 Pièces jointes <span id="attach-count-${entry.id}" style="font-weight:400;font-size:11px;color:var(--ink-dim)"></span></div>
+          <div class="attachment-list" id="attach-list-${entry.id}">
+            <span style="font-size:12px;color:var(--ink-dim);font-style:italic">Chargement…</span>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
+            <button class="btn-attach" onclick="document.getElementById('attach-input-${entry.id}').click();event.stopPropagation()">
+              📎 Joindre
+            </button>
+            <input type="file" id="attach-input-${entry.id}" multiple accept="image/*,.pdf,.txt,.md,.docx,.xlsx,.csv"
+              style="display:none" onchange="uploadAttachments('${entry.id}',this)" onclick="event.stopPropagation()">
+            <span id="attach-upload-status-${entry.id}" style="font-size:12px;color:var(--ink-muted)"></span>
+          </div>
+        </div>
+
+        <!-- ── Formulaire d'édition inline ── -->
+        <div class="card-edit-form" id="edit-form-${entry.id}" onclick="event.stopPropagation()">
+          <div>
+            <div class="edit-field-label">Titre</div>
+            <input class="edit-input" id="edit-title-${entry.id}" value="${escapeHtml(entry.title||'')}">
+          </div>
+          <div>
+            <div class="edit-field-label">Résumé</div>
+            <textarea class="edit-textarea" id="edit-summary-${entry.id}">${escapeHtml(entry.summary||'')}</textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div class="edit-field-label">Catégorie</div>
+              <select class="edit-select" id="edit-category-${entry.id}">
+                <option value="work"     ${entry.category==='work'    ?'selected':''}>Travail</option>
+                <option value="personal" ${entry.category==='personal'?'selected':''}>Perso</option>
+                <option value="idea"     ${entry.category==='idea'    ?'selected':''}>Idée</option>
+                <option value="meeting"  ${entry.category==='meeting' ?'selected':''}>Réunion</option>
+                <option value="app"      ${entry.category==='app'     ?'selected':''}>⚙️ App</option>
+                <option value="inbox"    ${entry.category==='inbox'   ?'selected':''}>Inbox</option>
+              </select>
+            </div>
+            <div>
+              <div class="edit-field-label">Priorité</div>
+              <select class="edit-select" id="edit-priority-${entry.id}">
+                <option value="1" ${(entry.priority||2)===1?'selected':''}>🔵 Faible</option>
+                <option value="2" ${(entry.priority||2)===2?'selected':''}>⚪ Normale</option>
+                <option value="3" ${(entry.priority||2)===3?'selected':''}>🟡 Haute</option>
+                <option value="4" ${(entry.priority||2)===4?'selected':''}>🔴 Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <div class="edit-field-label">Tags (séparés par des virgules)</div>
+            <input class="edit-input" id="edit-tags-${entry.id}" value="${escapeHtml((entry.tags||[]).join(', '))}">
+          </div>
+          <div class="edit-actions">
+            <button class="btn-edit-save" onclick="saveEditEntry('${entry.id}')">Sauvegarder</button>
+            <button class="btn-edit-cancel" onclick="toggleEditEntry('${entry.id}', event)">Annuler</button>
+          </div>
+        </div>
       </div>
     </div>`;
 }
 
 function toggleCard(id, e) {
   if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' ||
-      e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL') return;
-  expandedId = expandedId === id ? null : id;
+      e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' ||
+      e.target.tagName === 'SELECT' || e.target.tagName === 'LABEL' ||
+      e.target.closest('.status-btn') || e.target.closest('.btn-delegate') ||
+      e.target.closest('.card-edit-form') || e.target.closest('.agent-result')) return;
+  const wasExpanded = expandedId === id;
+  expandedId = wasExpanded ? null : id;
   renderList(window._calls);
+  if (!wasExpanded) loadAttachments(id);
+}
+
+// ── Attachments ────────────────────────────────────────────────────────────
+function attachIcon(mime) {
+  if (!mime) return '📄';
+  if (mime.startsWith('image/')) return '🖼';
+  if (mime === 'application/pdf') return '📕';
+  if (mime.includes('word') || mime.includes('docx')) return '📝';
+  if (mime.includes('sheet') || mime.includes('xlsx') || mime.includes('csv')) return '📊';
+  return '📄';
+}
+
+function renderAttachmentsList(entryId, atts) {
+  const list  = document.getElementById(`attach-list-${entryId}`);
+  const count = document.getElementById(`attach-count-${entryId}`);
+  if (!list) return;
+  if (!atts || !atts.length) {
+    list.innerHTML = '<span style="font-size:12px;color:var(--ink-dim);font-style:italic">Aucune pièce jointe</span>';
+    if (count) count.textContent = '';
+    return;
+  }
+  if (count) count.textContent = `(${atts.length})`;
+  list.innerHTML = atts.map(a => {
+    const isImg = a.mime_type && a.mime_type.startsWith('image/');
+    return `<div class="attachment-chip">
+      ${isImg
+        ? `<img class="attachment-img-thumb" src="${escapeHtml(a.blob_url)}" alt="${escapeHtml(a.filename)}">`
+        : `<span>${attachIcon(a.mime_type)}</span>`}
+      <a href="${escapeHtml(a.blob_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escapeHtml(a.filename)}</a>
+      <button class="chip-del" onclick="deleteAttachment('${entryId}','${a.id}',event)" title="Supprimer">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function loadAttachments(entryId) {
+  try {
+    const res  = await fetch(`/api/calls?action=attachments&id=${entryId}`);
+    const atts = await res.json();
+    renderAttachmentsList(entryId, Array.isArray(atts) ? atts : []);
+  } catch {
+    const list = document.getElementById(`attach-list-${entryId}`);
+    if (list) list.innerHTML = '<span style="font-size:12px;color:var(--red)">Erreur de chargement</span>';
+  }
+}
+
+async function uploadAttachments(entryId, input) {
+  const status = document.getElementById(`attach-upload-status-${entryId}`);
+  if (!input.files || !input.files.length) return;
+  if (status) status.textContent = 'Envoi…';
+  try {
+    await Promise.all(Array.from(input.files).map(async file => {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`/api/calls?action=upload-attachment&id=${entryId}`, { method: 'POST', body: fd });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || `HTTP ${res.status}`); }
+      return res.json();
+    }));
+    if (status) { status.textContent = '✓ Envoyé'; setTimeout(() => { status.textContent = ''; }, 2500); }
+    await loadAttachments(entryId);
+  } catch (err) {
+    if (status) status.textContent = 'Erreur : ' + err.message;
+  }
+  input.value = '';
+}
+
+async function deleteAttachment(entryId, attId, e) {
+  e.stopPropagation();
+  if (!confirm('Supprimer cette pièce jointe ?')) return;
+  await fetch(`/api/calls?action=attachment&attId=${attId}`, { method: 'DELETE' });
+  await loadAttachments(entryId);
 }
 
 async function confirmCalendarEvent(id, e) {
@@ -1262,6 +1643,18 @@ function clearSelection() {
 
 async function archiveEntry(id, archived, e) {
   e.stopPropagation();
+  // Animation de sortie immédiate
+  const card = document.getElementById(`card-${id}`);
+  if (card && archived) {
+    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(40px)';
+    const h = card.offsetHeight;
+    card.style.maxHeight = h + 'px';
+    card.style.overflow = 'hidden';
+    setTimeout(() => { card.style.maxHeight = '0'; card.style.marginBottom = '0'; card.style.paddingTop = '0'; card.style.paddingBottom = '0'; }, 200);
+    setTimeout(() => card.remove(), 500);
+  }
   try {
     const res = await fetch(`/api/calls?id=${id}`, {
       method: 'PATCH',
@@ -1269,9 +1662,10 @@ async function archiveEntry(id, archived, e) {
       body: JSON.stringify({ archived }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    window._calls = window._calls.filter(c => c.id !== id);
-    renderFiltered();
+    window._calls = (window._calls || []).filter(c => c.id !== id);
+    if (!archived) renderFiltered(); // désarchivage → re-render
   } catch (err) {
+    if (card) { card.style.opacity = '1'; card.style.transform = ''; card.style.maxHeight = ''; }
     alert('Erreur archivage : ' + err.message);
   }
 }
@@ -1434,12 +1828,20 @@ function renderList(calls) {
     return;
   }
 
+  // Afficher barre de fusion si assez de notes
+  const mergeBar = document.getElementById('merge-bar');
+  if (mergeBar) mergeBar.style.display = calls.length >= 5 ? 'flex' : 'none';
+
   // Stats calculées sur l'ensemble (pas juste la page)
   document.getElementById('stats').style.display = 'flex';
   document.getElementById('stat-total').textContent      = calls.length;
   document.getElementById('stat-done').textContent       = calls.filter(c => c.status === 'done').length;
   document.getElementById('stat-processing').textContent = calls.filter(c => c.status === 'processing').length;
   document.getElementById('stat-error').textContent      = calls.filter(c => c.status === 'error').length;
+  const btnRetryAll = document.getElementById('btn-retry-all');
+  if (btnRetryAll) btnRetryAll.style.display = (window._calls||[]).filter(c=>c.status==='error'&&c.has_audio).length > 0 ? '' : 'none';
+  const btnPDF = document.getElementById('btn-pdf');
+  if (btnPDF) btnPDF.style.display = calls.length > 0 ? '' : 'none';
 
   // Afficher la filter-row et peupler le dropdown projets
   document.getElementById('filter-row').style.display = 'flex';
@@ -1464,9 +1866,16 @@ function renderList(calls) {
 
   // Auto-refresh si des appels sont en cours
   clearTimeout(autoRefresh);
-  if (calls.some(c => c.status === 'processing')) {
+  const stillProcessing = calls.filter(c => c.status === 'processing');
+  if (stillProcessing.length) {
     autoRefresh = setTimeout(loadCalls, 5000);
   }
+
+  // Détecter les notes qui viennent de passer processing → done → déclencher regroupement
+  const nowDoneIds = new Set(calls.filter(c => c.status === 'done').map(c => c.id));
+  const justFinished = [...(window._prevProcessingIds || [])].filter(id => nowDoneIds.has(id));
+  window._prevProcessingIds = new Set(calls.filter(c => c.status === 'processing').map(c => c.id));
+  if (justFinished.length > 0) autoMergeSimilar();
 }
 
 // ── Quick Add ─────────────────────────────────────────────────────────────────
@@ -1482,11 +1891,79 @@ function handleQuickAddKey(e) {
   }
 }
 
+// ── Document Upload ───────────────────────────────────────────────────────────
+let _pendingDocFile = null;
+
+function handleDocDrop(e) {
+  e.preventDefault();
+  document.getElementById('doc-drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleDocFile(file);
+}
+
+function handleDocFile(file) {
+  if (!file) return;
+  const allowed = ['application/pdf', 'text/plain', 'text/markdown'];
+  const okExt   = ['.pdf', '.txt', '.md'];
+  const isOk    = allowed.includes(file.type) || okExt.some(ext => file.name.toLowerCase().endsWith(ext));
+  if (!isOk) { alert('Format non supporté. Utilisez PDF, TXT ou Markdown.'); return; }
+  if (file.size > 20 * 1024 * 1024) { alert('Fichier trop volumineux (max 20 Mo).'); return; }
+
+  // Afficher le champ contexte avant envoi
+  _pendingDocFile = file;
+  document.getElementById('doc-drop-zone').style.display = 'none';
+  document.getElementById('doc-context-wrap').style.display = 'block';
+  document.getElementById('doc-context-input').focus();
+}
+
+function cancelDocUpload() {
+  _pendingDocFile = null;
+  document.getElementById('doc-file-input').value = '';
+  document.getElementById('doc-context-input').value = '';
+  document.getElementById('doc-context-wrap').style.display = 'none';
+  document.getElementById('doc-drop-zone').style.display = 'flex';
+}
+
+async function confirmDocUpload() {
+  if (!_pendingDocFile) return;
+  const file    = _pendingDocFile;
+  const context = document.getElementById('doc-context-input').value.trim();
+  _pendingDocFile = null;
+
+  document.getElementById('doc-context-wrap').style.display = 'none';
+  document.getElementById('doc-drop-zone').style.display = 'flex';
+  const progress = document.getElementById('doc-upload-progress');
+  const msg      = document.getElementById('doc-upload-msg');
+  progress.style.display = 'flex';
+  msg.textContent = `📄 "${file.name}" — Extraction en cours…`;
+
+  try {
+    const category = document.getElementById('quick-add-category')?.value || 'inbox';
+    const fd = new FormData();
+    fd.append('document', file);
+    fd.append('category', category);
+    if (context) fd.append('context', context);
+
+    const res = await fetch('/api/ingest?action=upload-doc', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+    msg.textContent = `✓ "${file.name}" importé — analyse en cours…`;
+    document.getElementById('doc-file-input').value = '';
+    document.getElementById('doc-context-input').value = '';
+    setTimeout(() => { progress.style.display = 'none'; loadCalls(); }, 2000);
+  } catch (err) {
+    msg.textContent = `Erreur : ${err.message}`;
+    setTimeout(() => { progress.style.display = 'none'; }, 4000);
+  }
+}
+
 async function submitQuickAdd() {
   const text = document.getElementById('quick-add-text').value.trim();
   if (!text) { document.getElementById('quick-add-text').focus(); return; }
 
   const category = document.getElementById('quick-add-category').value;
+  const priority = parseInt(document.getElementById('quick-add-priority')?.value || '2', 10);
   const btn      = document.getElementById('quick-add-btn');
   const hint     = document.getElementById('quick-add-hint');
 
@@ -1506,11 +1983,23 @@ async function submitQuickAdd() {
       throw new Error(d.error || `HTTP ${res.status}`);
     }
 
+    const data = await res.json();
+
+    // Appliquer la priorité si non-défaut
+    if (data.callId && priority !== 2) {
+      fetch(`/api/calls?id=${data.callId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priority }),
+      }).catch(() => {});
+    }
+
     // Reset
     const textarea = document.getElementById('quick-add-text');
     textarea.value = '';
     textarea.style.height = 'auto';
     hint.textContent = '✓ Envoyé !';
+    document.getElementById('quick-add-priority').value = '2'; // reset priorité
     setTimeout(() => { hint.textContent = '⌘↵ pour envoyer'; }, 2000);
 
     // Refresh list after short delay (job takes time)
@@ -1543,6 +2032,84 @@ async function assignProject(entryId, projectId) {
   } catch (err) { alert(`Erreur assignation projet : ${err.message}`); }
 }
 
+// ── Édition inline d'un compte rendu ─────────────────────────────────────────
+function toggleEditEntry(id, e) {
+  if (e) e.stopPropagation();
+  const form = document.getElementById(`edit-form-${id}`);
+  if (!form) return;
+  const isOpen = form.classList.contains('open');
+  // Fermer les autres formulaires ouverts
+  document.querySelectorAll('.card-edit-form.open').forEach(f => f.classList.remove('open'));
+  if (!isOpen) {
+    form.classList.add('open');
+    setTimeout(() => document.getElementById(`edit-title-${id}`)?.focus(), 50);
+  }
+}
+
+async function saveEditEntry(id) {
+  const title    = document.getElementById(`edit-title-${id}`)?.value.trim();
+  const summary  = document.getElementById(`edit-summary-${id}`)?.value.trim();
+  const category = document.getElementById(`edit-category-${id}`)?.value;
+  const priority = parseInt(document.getElementById(`edit-priority-${id}`)?.value || '2', 10);
+  const tagsRaw  = document.getElementById(`edit-tags-${id}`)?.value || '';
+  const tags     = tagsRaw.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g, '-')).filter(Boolean);
+
+  const btn = document.querySelector(`#edit-form-${id} .btn-edit-save`);
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  try {
+    const res = await fetch(`/api/calls?id=${id}`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ title, summary, tags, category, priority }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Mise à jour locale sans re-render complet
+    const entry = (window._calls || []).find(c => c.id === id);
+    if (entry) {
+      if (title)    entry.title    = title;
+      if (summary)  entry.summary  = summary;
+      if (category) entry.category = category;
+      entry.tags = tags;
+
+      // Mettre à jour le DOM directement
+      const card = document.getElementById(`card-${id}`);
+      if (card) {
+        const titleEl = card.querySelector('.card-title');
+        if (titleEl) titleEl.textContent = title || entry.title;
+        const resumeEl = card.querySelector('.card-resume');
+        if (resumeEl) resumeEl.textContent = summary || entry.summary;
+        const badgeType = card.querySelector('.badge-type');
+        if (badgeType) badgeType.textContent = CATEGORY_LABEL[category] || category;
+      }
+    }
+
+    document.getElementById(`edit-form-${id}`)?.classList.remove('open');
+  } catch (err) {
+    alert('Erreur lors de la sauvegarde : ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sauvegarder'; }
+  }
+}
+
+async function retryAllErrors() {
+  const errors = (window._calls || []).filter(c => c.status === 'error' && c.has_audio);
+  if (!errors.length) { alert('Aucune entrée avec audio à relancer.'); return; }
+  const btn = document.getElementById('btn-retry-all');
+  if (btn) { btn.disabled = true; btn.textContent = `↺ ${errors.length} en cours…`; }
+  let ok = 0, fail = 0;
+  for (const entry of errors) {
+    try {
+      const res = await fetch(`/api/retry?id=${entry.id}`, { method: 'POST' });
+      if (res.ok) ok++; else fail++;
+    } catch { fail++; }
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '↺ Relancer erreurs'; }
+  alert(`${ok} relancée${ok>1?'s':''}, ${fail} échec${fail>1?'s':''}.`);
+  loadCalls();
+}
+
 async function retryCall(id, e) {
   e.stopPropagation();
   const btn = e.currentTarget;
@@ -1559,46 +2126,127 @@ async function retryCall(id, e) {
   }
 }
 
-// ── Actions cochables (V2) ────────────────────────────────────────────────────
-async function toggleAction(actionId, done, e) {
+// ── Statuts 3 états ──────────────────────────────────────────────────────────
+async function cycleStatus(itemId, currentStatus, e) {
   e.stopPropagation();
+  const nextStatus = NEXT_STATUS[currentStatus] || 'todo';
+  const stClass    = nextStatus === 'in_progress' ? 'in-progress' : nextStatus;
+
+  // Optimistic UI
+  const li  = e.target.closest('.action-item');
+  const btn = li?.querySelector('.status-btn');
+  if (btn) {
+    btn.className   = `status-btn status-${stClass}`;
+    btn.innerHTML   = STATUS_ICON[nextStatus] || STATUS_ICON.todo;
+    btn.dataset.status = nextStatus;
+  }
+  if (li) {
+    li.className = `action-item ${stClass}`;
+    // Le bouton déléguer se masque si done
+    const delBtn = li.querySelector('.btn-delegate');
+    if (delBtn) delBtn.style.display = nextStatus === 'done' ? 'none' : '';
+  }
+
   try {
-    const res = await fetch(`/api/actions?id=${actionId}`, {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ done }),
+    const res = await fetch(`/api/actions?id=${itemId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body:   JSON.stringify({ status: nextStatus }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    // Mise à jour de l'état local sans re-render complet
+    // Sync état local
     for (const call of (window._calls || [])) {
-      const action = (call.action_items || []).find(a => a.id === actionId);
+      const action = (call.action_items || []).find(a => a.id === itemId);
       if (action) {
-        action.done = done;
-        // Style de la ligne directement
-        const li = e.target.closest('.action-item');
-        if (li) li.classList.toggle('done', done);
-        // Mettre à jour compteur card-meta (ex: "2/3")
+        action.status = nextStatus;
+        action.done   = nextStatus === 'done';
+
+        // Compteur card-meta
         const card = e.target.closest('.call-card');
         if (card) {
-          const meta = card.querySelector('.card-meta');
-          if (meta) {
-            const items = call.action_items;
-            const span = [...meta.querySelectorAll('span')].find(s => s.title === 'Actions faites');
-            if (span) span.textContent = `☑ ${items.filter(a => a.done).length}/${items.length}`;
-          }
+          const items = call.action_items;
+          const span  = [...(card.querySelector('.card-meta')?.querySelectorAll('span') || [])]
+                          .find(s => s.title === 'Items faits');
+          if (span) span.textContent = `☑ ${items.filter(a => a.done).length}/${items.length}`;
         }
-        // Mettre à jour stat global
+        // Stat global
         const allItems = (window._calls || []).flatMap(c => c.action_items || []);
         const el = document.getElementById('stat-actions');
         if (el && allItems.length) el.textContent = `${allItems.filter(a => a.done).length}/${allItems.length}`;
+
+        // Auto-archiver si toutes les tasks sont done
+        const tasks = (call.action_items || []).filter(a => a.type === 'task');
+        if (tasks.length > 0 && tasks.every(a => a.done) && !call.archived) {
+          call.archived = true;
+          fetch(`/api/calls?id=${call.id}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ archived: true }),
+          }).catch(() => {});
+          const card = e.target.closest('.call-card');
+          if (card) {
+            card.style.transition = 'opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(60px)';
+            card.style.maxHeight = card.offsetHeight + 'px';
+            setTimeout(() => { card.style.maxHeight = '0'; card.style.padding = '0'; card.style.margin = '0'; card.style.overflow = 'hidden'; }, 200);
+            setTimeout(() => card.remove(), 500);
+          }
+        }
         break;
       }
     }
   } catch (err) {
-    // Annuler le changement visuel si erreur
-    e.target.checked = !done;
-    console.error('Erreur toggleAction:', err);
+    // Revert
+    const prevClass = currentStatus === 'in_progress' ? 'in-progress' : currentStatus;
+    if (btn) { btn.className = `status-btn status-${prevClass}`; btn.innerHTML = STATUS_ICON[currentStatus] || STATUS_ICON.todo; btn.dataset.status = currentStatus; }
+    if (li)  { li.className  = `action-item ${prevClass}`; }
+    console.error('cycleStatus error:', err);
+  }
+}
+
+// ── Déléguer une tâche à Claude ──────────────────────────────────────────────
+async function executeTask(itemId, e) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  btn.disabled    = true;
+  btn.textContent = '⌛…';
+  try {
+    const res = await fetch(`/api/actions?action=execute&id=${itemId}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // Afficher le résultat sous l'item
+    const li = btn.closest('.action-item');
+    if (li) {
+      const existing = li.querySelector('.agent-result');
+      if (existing) existing.remove();
+      const div = document.createElement('div');
+      div.className = 'agent-result';
+      div.textContent = data.result;
+      li.appendChild(div);
+
+      // Mettre à jour le statut local → in_progress
+      for (const call of (window._calls || [])) {
+        const action = (call.action_items || []).find(a => a.id === itemId);
+        if (action) { action.status = 'in_progress'; action.agent_result = data.result; break; }
+      }
+      // Mettre à jour le bouton status
+      const statusBtn = li.querySelector('.status-btn');
+      if (statusBtn && statusBtn.dataset.status === 'todo') {
+        statusBtn.className   = 'status-btn status-in-progress';
+        statusBtn.innerHTML   = STATUS_ICON.in_progress;
+        statusBtn.dataset.status = 'in_progress';
+        li.classList.add('in-progress');
+      }
+    }
+    btn.textContent = '✦ IA';
+    btn.disabled    = false;
+  } catch (err) {
+    btn.textContent = '✦ IA';
+    btn.disabled    = false;
+    console.error('executeTask error:', err);
   }
 }
 
@@ -1677,39 +2325,7 @@ function renderStatsPanel(calls) {
     </div>`;
 }
 
-function showLoginModal() {
-  const overlay = document.getElementById('login-overlay');
-  overlay.style.display = 'flex';
-  setTimeout(() => document.getElementById('login-password')?.focus(), 50);
-}
 
-function hideLoginModal() {
-  document.getElementById('login-overlay').style.display = 'none';
-}
-
-async function submitLogin() {
-  const password = document.getElementById('login-password').value;
-  const errEl    = document.getElementById('login-error');
-  errEl.style.display = 'none';
-  try {
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      errEl.textContent = data.error || 'Mot de passe incorrect.';
-      errEl.style.display = 'block';
-      return;
-    }
-    hideLoginModal();
-    loadCalls();
-  } catch {
-    errEl.textContent = 'Erreur réseau.';
-    errEl.style.display = 'block';
-  }
-}
 
 async function loadProjects() {
   try {
@@ -1721,9 +2337,8 @@ async function loadProjects() {
 async function loadCalls() {
   try {
     if (!projects.length) await loadProjects();
-    const url = showArchived ? '/api/calls?archived=1' : '/api/calls';
+    const url = showArchived ? '/api/calls?archived=1&limit=50' : '/api/calls?limit=50';
     const res = await fetch(url);
-    if (res.status === 401) { showLoginModal(); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const calls = await res.json();
     renderList(calls);
@@ -1749,7 +2364,7 @@ async function loadCalls() {
 </script>
 
 <!-- ── Bottom Nav (mobile only) ── -->
-<nav class="mobile-nav" style="view-transition-name: mobile-nav">
+<nav class="mobile-nav">
   <a href="/today">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Aujourd'hui
@@ -1758,18 +2373,141 @@ async function loadCalls() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
     Notes
   </a>
-  <a href="/record" class="nav-record">🎙</a>
-  <a href="/projects">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    Projets
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
   </a>
   <a href="/settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Réglages
   </a>
 </nav>
+<!-- nav mobile: Aujourd'hui | Notes | Actions | Dossiers | Gmail — Réglages via ⚙️ header -->
 
 <script src="/app.js"></script>
-<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) btn.classList.add('spinning');
+  try { await loadCalls(); } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+
+// Regroupement automatique silencieux (déclenché quand une note passe à "done")
+let _mergeDebounceTimer = null;
+function autoMergeSimilar() {
+  // Debounce : si plusieurs notes finissent en même temps, on attend un peu
+  clearTimeout(_mergeDebounceTimer);
+  _mergeDebounceTimer = setTimeout(async () => {
+    try {
+      const res  = await fetch('/api/calls?action=merge-similar', { method: 'POST' });
+      const data = await res.json();
+      if (data.merged > 0) {
+        // Rafraîchir la liste si des notes ont été fusionnées
+        await loadCalls();
+        // Notification discrète
+        const hint = document.getElementById('quick-add-hint');
+        if (hint) {
+          hint.textContent = `✓ ${data.merged} note${data.merged > 1 ? 's' : ''} regroupée${data.merged > 1 ? 's' : ''}`;
+          hint.style.color = 'var(--green)';
+          setTimeout(() => { hint.textContent = '⌘↵ pour envoyer'; hint.style.color = ''; }, 3000);
+        }
+      }
+    } catch {}
+  }, 2000);
+}
+
+async function mergeSimilar() {
+  const btn = document.getElementById('btn-merge');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = 'Analyse…';
+  try {
+    const res = await fetch('/api/calls?action=merge-similar', { method: 'POST' });
+    const data = await res.json();
+    if (data.merged > 0) {
+      btn.textContent = `✓ ${data.merged} notes fusionnées`;
+      setTimeout(() => { loadCalls(); btn.disabled = false; btn.textContent = 'Fusionner'; }, 1500);
+    } else {
+      btn.textContent = 'Aucun groupe détecté';
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Fusionner'; }, 2000);
+    }
+  } catch (e) {
+    btn.textContent = 'Erreur';
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Fusionner'; }, 2000);
+  }
+}
+// ── Dark mode ──────────────────────────────────────────────────────────────
+(function(){
+  const saved = localStorage.getItem('vox-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vox-theme', next);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+
+// ── Offline banner + SW sync ──────────────────────────────────────────────────
+function showOfflineBanner(msg) {
+  let banner = document.getElementById('offline-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'offline-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--yellow);color:#1a1714;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;';
+    document.body.prepend(banner);
+  }
+  banner.textContent = msg;
+  banner.style.display = '';
+}
+function hideOfflineBanner() {
+  const b = document.getElementById('offline-banner');
+  if (b) b.style.display = 'none';
+}
+window.addEventListener('offline', () => showOfflineBanner('📡 Hors ligne — les notes seront synchronisées à la reconnexion'));
+window.addEventListener('online',  () => {
+  hideOfflineBanner();
+  // Demander sync au service worker
+  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+    navigator.serviceWorker.ready.then(reg => reg.sync.register('sync-queue').catch(()=>{}));
+  }
+  loadCalls();
+});
+if (!navigator.onLine) showOfflineBanner('📡 Hors ligne — les notes seront synchronisées à la reconnexion');
+// Écouter les messages SW
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'QUEUED_OFFLINE') showOfflineBanner(`📡 Note sauvegardée hors ligne : "${(e.data.text||'').slice(0,40)}…"`);
+    if (e.data?.type === 'SYNC_DONE') { hideOfflineBanner(); loadCalls(); }
+  });
+}
+
+// ── Export PDF ────────────────────────────────────────────────────────────────
+function exportPDF() {
+  window.print();
+}
+</script>
+
+<style media="print">
+  header, .mobile-nav, .record-fab, .quick-add-wrap, .doc-upload-wrap,
+  .filter-row, .search-bar, .stats, .bulk-bar, .stats-panel,
+  .merge-bar, #merge-bar, .btn-refresh, .btn-theme-toggle,
+  .card-actions, .status-btn, .btn-delegate { display: none !important; }
+  body { background: white !important; color: black !important; }
+  .card { break-inside: avoid; border: 1px solid #ccc !important; margin-bottom: 12px !important; }
+  .card-title { font-size: 14px !important; color: black !important; }
+  .calls-list { padding: 0 !important; }
+  main { padding: 0 !important; max-width: 100% !important; }
+</style>
 </body>
 </html>

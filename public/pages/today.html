@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/app.css">
 <title>Vox — Aujourd'hui</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* ── Native PWA feel ── */
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -40,12 +40,27 @@
     --radius: 12px;
   }
 
+  :root[data-theme="dark"] {
+  --bg: #151210;
+  --surface: #1e1b18;
+  --surface2: #252220;
+  --border: #35302a;
+  --ink: #f0ece5;
+  --ink-muted: #a09890;
+  --ink-dim: #6a6460;
+  --accent-light: #3a1a0a;
+  --green-light: #0d2e1a;
+  --yellow-light: #2a2000;
+  --red-light: #2a0d0d;
+  --blue-light: #0d1a3a;
+}
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     background: var(--bg);
     color: var(--ink);
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
   }
 
@@ -53,8 +68,8 @@
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
+    padding: env(safe-area-inset-top, 0px) 24px 0;
+    height: calc(56px + env(safe-area-inset-top, 0px));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -70,7 +85,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
+  .logo svg { flex-shrink: 0; display: block; }
 
   .logo-dot {
     width: 8px;
@@ -82,7 +100,7 @@
   .header-nav { display: flex; align-items: center; gap: 4px; }
 
   .btn-ghost {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 500;
     color: var(--ink-muted);
@@ -98,7 +116,7 @@
   .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
 
   .btn-primary {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
     color: #fff;
@@ -395,7 +413,7 @@
   }
   .retro-meta { font-size: 11px; opacity: 0.4; }
   .btn-retro-gen {
-    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
     padding: 5px 12px; border-radius: 7px;
     background: rgba(255,255,255,0.12); color: #f5f2ed;
     border: 1px solid rgba(255,255,255,0.2); cursor: pointer;
@@ -407,10 +425,10 @@
   .mobile-nav { display: none; }
 
   @media (max-width: 640px) {
-    header { padding: 0 16px; }
+    header { padding: env(safe-area-inset-top, 0px) 16px 0; }
     .header-nav { gap: 6px; }
     .header-nav .btn-ghost { display: none; }
-    main { padding: 16px 14px 90px; }
+    main { padding: 16px 14px calc(100px + env(safe-area-inset-bottom, 0px)); }
     .page-title { font-size: 20px; }
     .section-title { font-size: 13px; }
     .mobile-nav { display: flex; }
@@ -419,40 +437,55 @@
   .mobile-nav {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 64px;
+    height: calc(76px + env(safe-area-inset-bottom, 0px));
     background: var(--surface);
     border-top: 1px solid var(--border);
     align-items: stretch;
     justify-content: space-around;
     z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .mobile-nav a {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 3px; flex: 1;
-    font-size: 9px; font-weight: 600; letter-spacing: 0.3px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
     text-transform: uppercase; color: var(--ink-dim);
     text-decoration: none; transition: color 0.15s; padding: 6px 0;
   }
   .mobile-nav a.active { color: var(--accent); }
-  .mobile-nav a svg { width: 22px; height: 22px; }
+  .mobile-nav a svg { width: 24px; height: 24px; }
   .mobile-nav a.nav-record {
     color: #fff; background: var(--accent); border-radius: 14px;
     margin: 8px 4px; padding: 0 12px; font-size: 18px;
     line-height: 1; flex: 0 0 52px;
   }
+
+  /* ── Bouton refresh ── */
+  .btn-refresh {
+    width: 32px; height: 32px; border: none; background: none; cursor: pointer;
+    padding: 0; border-radius: 8px; color: var(--ink-dim); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-refresh:hover { background: var(--surface2); color: var(--ink); }
+  .btn-refresh.spinning svg { animation: spin-refresh 0.65s linear infinite; }
+  @keyframes spin-refresh { to { transform: rotate(360deg); } }
+
+  .btn-theme-toggle { font-size: 18px !important; padding: 4px 8px !important; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo"><div class="logo-dot"></div>Vox</div>
+  <div class="logo"><svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>Vox</div>
   <div class="header-nav">
-    <a href="/record"    class="btn-primary" style="font-size:13px">🎙 Enregistrer</a>
     <a href="/dashboard" class="btn-ghost">Dashboard</a>
     <a href="/actions"   class="btn-ghost">Items</a>
-    <a href="/projects"  class="btn-ghost">Projets</a>
     <a href="/today"     class="btn-ghost" style="color:var(--accent)">Aujourd'hui</a>
+      <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+    </button>
+    <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Thème sombre/clair" style="font-size:18px;padding:4px 8px">🌙</button>
   </div>
 </header>
 
@@ -606,33 +639,31 @@ function scoreColor(score) {
 }
 
 function renderRetro(r, meta) {
-  const score = r.mental_load_score ?? 5;
-  const pct   = Math.round((score / 10) * 100);
-  const themes = (r.dominant_themes || []).map(t => `<span class="retro-theme">${escHtml(t)}</span>`).join('');
-  const highlights = (r.highlights || []).map(h => `<li>${escHtml(h)}</li>`).join('');
-  const attention  = (r.attention_points || []).map(a => `<li>${escHtml(a)}</li>`).join('');
+  const score  = r.mental_load_score ?? 5;
+  const pct    = Math.round((score / 10) * 100);
+  const color  = scoreColor(score);
+  // Top 3 themes max
+  const themes = (r.dominant_themes || []).slice(0, 3).map(t => `<span class="retro-theme">${escHtml(t)}</span>`).join('');
+  // 1 highlight + 1 attention point max (concis)
+  const h1 = (r.highlights || [])[0];
+  const a1 = (r.attention_points || [])[0];
 
   return `
-    <div class="retro-card">
-      <div class="retro-header">
-        <span class="retro-title">Rétrospective hebdomadaire</span>
-        <div class="retro-score">
-          <span class="retro-score-num" style="color:${scoreColor(score)}">${score}</span>
-          <span class="retro-score-label">/10<br>charge</span>
+    <div class="retro-card" style="padding:14px 16px">
+      <div class="retro-header" style="margin-bottom:8px">
+        <span class="retro-title" style="font-size:12px">Semaine · ${meta.split('·')[1]?.trim() || ''}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${themes}
+          <span style="font-weight:700;font-size:15px;color:${color}">${score}/10</span>
+          <button class="btn-retro-gen" id="btn-retro-gen" onclick="generateRetro()" style="font-size:11px;padding:3px 8px">↺</button>
         </div>
       </div>
-      <div class="retro-bar">
-        <div class="retro-bar-fill" style="width:${pct}%;background:${scoreColor(score)}"></div>
+      <div class="retro-bar" style="margin-bottom:${(h1||a1||r.suggestion)?'10px':'0'}">
+        <div class="retro-bar-fill" style="width:${pct}%;background:${color}"></div>
       </div>
-      ${r.mood_trend ? `<div class="retro-mood">Humeur : ${escHtml(r.mood_trend)}</div>` : ''}
-      ${themes ? `<div class="retro-themes">${themes}</div>` : ''}
-      ${highlights ? `<div class="retro-section"><div class="retro-section-label">Points forts</div><ul class="retro-list">${highlights}</ul></div>` : ''}
-      ${attention  ? `<div class="retro-section"><div class="retro-section-label">Points d'attention</div><ul class="retro-list">${attention}</ul></div>` : ''}
-      ${r.suggestion ? `<div class="retro-suggestion">"${escHtml(r.suggestion)}"</div>` : ''}
-      <div class="retro-footer">
-        <span class="retro-meta">${meta}</span>
-        <button class="btn-retro-gen" id="btn-retro-gen" onclick="generateRetro()">Régénérer</button>
-      </div>
+      ${h1 ? `<div style="font-size:12px;color:var(--green);margin-bottom:4px">✓ ${escHtml(h1)}</div>` : ''}
+      ${a1 ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:4px">⚠ ${escHtml(a1)}</div>` : ''}
+      ${r.suggestion ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic">"${escHtml(r.suggestion)}"</div>` : ''}
     </div>`;
 }
 
@@ -762,9 +793,46 @@ async function loadData() {
 
 loadData();
 loadRetro();
+
+// ── Notifications push ────────────────────────────────────────────────────────
+async function setupNotifications() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  // Demander permission une seule fois
+  if (Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+  }
+  if (Notification.permission !== 'granted') return;
+  // Vérifier si on a déjà notifié aujourd'hui
+  const lastNotif = localStorage.getItem('vox-last-notif');
+  const today = new Date().toDateString();
+  if (lastNotif === today) return;
+  // Charger les tâches du jour
+  try {
+    const res = await fetch('/api/today');
+    if (!res.ok) return;
+    const data = await res.json();
+    const overdue = (data.overdueItems || []).length;
+    const todayItems = (data.todayItems || []).length;
+    if (overdue + todayItems === 0) return;
+    localStorage.setItem('vox-last-notif', today);
+    const reg = await navigator.serviceWorker.ready;
+    reg.showNotification('Vox · Ton agenda du jour', {
+      body: [
+        overdue   ? `🔴 ${overdue} tâche${overdue>1?'s':''} en retard`  : '',
+        todayItems ? `📅 ${todayItems} tâche${todayItems>1?'s':''} prévue${todayItems>1?'s':''} aujourd'hui` : '',
+      ].filter(Boolean).join('\n'),
+      icon:  '/icon-192.png',
+      badge: '/icon-192.png',
+      tag:   'vox-daily',
+      data:  { url: '/today' },
+    });
+  } catch {}
+}
+setupNotifications();
 </script>
 
-<nav class="mobile-nav" style="view-transition-name: mobile-nav">
+<nav class="mobile-nav">
   <a href="/today" class="active">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Aujourd'hui
@@ -773,18 +841,44 @@ loadRetro();
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
     Notes
   </a>
-  <a href="/record" class="nav-record">🎙</a>
-  <a href="/projects">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    Projets
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
   </a>
   <a href="/settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Réglages
   </a>
 </nav>
 
 <script src="/app.js"></script>
-<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) btn.classList.add('spinning');
+  try { await loadData(); } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+// ── Dark mode ──────────────────────────────────────────────────────────────
+(function(){
+  const saved = localStorage.getItem('vox-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vox-theme', next);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+</script>
 </body>
 </html>

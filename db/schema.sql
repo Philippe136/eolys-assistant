@@ -167,3 +167,46 @@ CREATE TABLE IF NOT EXISTS context_entities (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ctx_alias_idx ON context_entities(lower(alias));
+
+-- ── V3.5 : Priorité des entrées + type des entités contexte ─────────────────
+-- Exécuter dans Neon SQL Editor après V3.4
+
+-- Niveau d'importance : 1=Faible 2=Normale 3=Haute 4=Urgente
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS priority SMALLINT NOT NULL DEFAULT 2;
+CREATE INDEX IF NOT EXISTS entries_priority_idx ON entries(priority);
+
+-- Type d'entité contexte : personne | lieu | ambition | envie | entourage | reference
+ALTER TABLE context_entities ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'personne';
+
+-- ── V3.6 : Pièces jointes ────────────────────────────────────────────────────
+-- Exécuter dans Neon SQL Editor après V3.5
+
+CREATE TABLE IF NOT EXISTS attachments (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  entry_id    UUID        NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
+  blob_url    TEXT        NOT NULL,
+  filename    TEXT        NOT NULL,
+  mime_type   TEXT        NOT NULL DEFAULT 'application/octet-stream',
+  size_bytes  INT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS attachments_entry_id_idx ON attachments(entry_id);
+
+-- ── V3.7 : Finance 80/20 ──────────────────────────────────────────────────────
+-- Exécuter dans Neon SQL Editor après V3.6
+
+CREATE TABLE IF NOT EXISTS finance (
+  id         UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
+  date       DATE           NOT NULL,
+  label      TEXT           NOT NULL,
+  amount     NUMERIC(10,2)  NOT NULL,
+  cat        TEXT           NOT NULL DEFAULT 'other',
+  note       TEXT,
+  ext_id     TEXT           UNIQUE,
+  created_at TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS finance_date_idx ON finance(date DESC);
+
+-- ── V3.7b : contrainte d'unicité CSV (date + label + montant) ────────────────
+-- Permet ON CONFLICT (date, label, amount) DO NOTHING pour les imports CSV
+CREATE UNIQUE INDEX IF NOT EXISTS finance_dedup_idx ON finance(date, label, amount);

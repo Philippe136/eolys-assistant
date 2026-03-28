@@ -62,10 +62,11 @@ export default async function handler(req, res) {
           const validTypes = ['task', 'idea', 'decision', 'reminder'];
           for (let i = 0; i < result.items.length; i++) {
             const item = result.items[i];
+            if (!item.text || !item.text.trim()) continue; // skip items with no text
             const type = validTypes.includes(item.type) ? item.type : 'task';
             await sql`
               INSERT INTO items (entry_id, type, text, due_date, position)
-              VALUES (${row.id}, ${type}, ${item.text}, ${item.due ?? null}, ${i})
+              VALUES (${row.id}, ${type}, ${item.text.trim()}, ${item.due ?? null}, ${i})
             `;
           }
         }

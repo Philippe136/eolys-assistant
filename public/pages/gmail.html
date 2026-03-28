@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/app.css">
 <title>Vox — Gmail</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
   html { overscroll-behavior: none; }
@@ -40,7 +40,7 @@
   --blue-light: #0d1a3a;
 }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--ink); font-family: 'Syne', sans-serif; min-height: 100vh; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; min-height: 100vh; }
 
   header {
     background: var(--surface); border-bottom: 1px solid var(--border);
@@ -57,14 +57,14 @@
   .logo svg { flex-shrink: 0; display: block; }
   .header-actions { display: flex; align-items: center; gap: 8px; }
   .btn-ghost {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
     color: var(--ink-muted); background: none; border: none; cursor: pointer;
     padding: 6px 12px; border-radius: 8px; text-decoration: none;
     transition: background 0.15s, color 0.15s;
   }
   .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
   .btn-primary {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
     background: var(--accent); color: #fff; border: none; cursor: pointer;
     padding: 8px 16px; border-radius: 9px; text-decoration: none;
     transition: opacity 0.15s;
@@ -106,18 +106,18 @@
   }
   .connected-email { font-size: 13px; font-weight: 600; color: var(--green); }
   .btn-scan {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
     background: var(--accent); color: #fff; border: none; cursor: pointer;
     padding: 8px 18px; border-radius: 9px; transition: opacity 0.15s;
     display: flex; align-items: center; gap: 6px;
   }
   .btn-scan:hover { opacity: 0.88; }
   .btn-scan:disabled { opacity: 0.5; cursor: default; }
-  .btn-disconnect { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; color: var(--red); background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .btn-disconnect { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--red); background: none; border: none; cursor: pointer; text-decoration: underline; }
 
   /* ── Tabs ── */
   .tabs { display: flex; gap: 6px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
-  .tab { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 7px; border: none; background: none; color: var(--ink-muted); cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .tab { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 7px; border: none; background: none; color: var(--ink-muted); cursor: pointer; transition: background 0.15s, color 0.15s; }
   .tab:hover { color: var(--ink); }
   .tab.active { background: var(--accent); color: #fff; }
 
@@ -178,14 +178,14 @@
 
   .email-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .btn-approve {
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
     padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
     background: var(--green); color: #fff; transition: opacity 0.15s;
   }
   .btn-approve:hover { opacity: 0.85; }
   .btn-approve:disabled { opacity: 0.5; cursor: default; }
   .btn-dismiss {
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
     padding: 7px 14px; border-radius: 8px; border: 1.5px solid var(--border);
     background: none; color: var(--ink-muted); cursor: pointer; transition: background 0.15s;
   }
@@ -333,7 +333,7 @@ async function init() {
           <div class="connected-email">${esc(data.email || '')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <select id="gmail-label-select" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;background:var(--surface);color:var(--ink);cursor:pointer">
+          <select id="gmail-label-select" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;background:var(--surface);color:var(--ink);cursor:pointer">
             <option value="INBOX">📥 Inbox principale</option>
             <option value="CATEGORY_PERSONAL">👤 Personnel</option>
             <option value="CATEGORY_PROMOTIONS">🏷 Promotions</option>
