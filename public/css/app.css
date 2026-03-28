@@ -37,6 +37,11 @@
   padding-bottom: max(env(safe-area-inset-bottom), 8px);
 }
 
+/* ── Espace pour la bottom nav fixe sur mobile ── */
+@media (max-width: 640px) {
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+
 /* ── Bloquer rotation paysage ── */
 @media (orientation: landscape) and (max-height: 500px) {
   html::after {
