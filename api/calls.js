@@ -332,7 +332,10 @@ Réponds UNIQUEMENT avec un JSON valide, sans markdown :
       await sql`
         DELETE FROM finance WHERE id IN (
           SELECT id FROM (
-            SELECT id, ROW_NUMBER() OVER (PARTITION BY date, label, amount ORDER BY created_at) AS rn
+            SELECT id, ROW_NUMBER() OVER (
+              PARTITION BY date, REGEXP_REPLACE(TRIM(LOWER(label)), '\\s+', ' ', 'g'), ROUND(amount::numeric, 2)
+              ORDER BY created_at
+            ) AS rn
             FROM finance
           ) t WHERE rn > 1
         )
