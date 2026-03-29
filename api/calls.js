@@ -163,11 +163,10 @@ export default async function handler(req, res) {
     return res.status(200).json(entry);
   }
 
-  // ── POST : auto-groupement des notes similaires ───────────────────────────
-  if (req.method === 'POST' && req.query.action === 'merge-similar') {
+  // ── POST : prévisualisation des groupes (sans écriture en DB) ──────────────
+  if (req.method === 'POST' && req.query.action === 'merge-preview') {
     if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'ANTHROPIC_API_KEY manquante' });
 
-    // Récupérer les 100 dernières entrées non archivées (titre + résumé + tags)
     const entries = await sql`
       SELECT id, title, summary, category, tags, created_at
       FROM entries
@@ -175,7 +174,10 @@ export default async function handler(req, res) {
       ORDER BY created_at DESC
       LIMIT 100
     `;
-    if (entries.length < 2) return res.status(200).json({ merged: 0, message: 'Pas assez de notes à analyser.' });
+    if (entries.length < 2) return res.status(200).json({ groups: [], message: 'Pas assez de notes à analyser.' });
+
+    // Index titre par id pour l'affichage dans la bulle de préview
+    const titleById = Object.fromEntries(entries.map(e => [e.id, e.title || 'Sans titre']));
 
     const list = entries.map((e, i) => {
       const tags = (e.tags || []).join(', ');
@@ -229,7 +231,7 @@ Réponds UNIQUEMENT avec un JSON valide, sans markdown :
       const parsed = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());
       groups = (parsed.groups || []).filter(g => g.ids && g.ids.length >= 2);
     } catch (e) {
-      return res.status(200).json({ merged: 0, message: 'Erreur de parsing : ' + e.message });
+      return res.status(200).json({ groups: [], message: 'Erreur de parsing : ' + e.message });
     }
 
     // Déduplique : une note ne peut être dans qu'un seul groupe
@@ -239,12 +241,37 @@ Réponds UNIQUEMENT avec un JSON valide, sans markdown :
       const validIds = group.ids.filter(id => UUID.test(id) && !usedIds.has(id));
       if (validIds.length < 2) continue;
       validIds.forEach(id => usedIds.add(id));
+      // Enrichir avec les titres des notes pour l'affichage
+      safeGroups.push({
+        ...group,
+        ids: validIds,
+        note_titles: validIds.map(id => titleById[id] || id),
+      });
+    }
+
+    return res.status(200).json({ groups: safeGroups });
+  }
+
+  // ── POST : confirmer la fusion (applique les groupes fournis) ──────────────
+  if (req.method === 'POST' && req.query.action === 'merge-confirm') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+    const groups = Array.isArray(body?.groups) ? body.groups : [];
+    if (!groups.length) return res.status(400).json({ error: 'Aucun groupe fourni.' });
+
+    // Valider et dédupliquer
+    const usedIds = new Set();
+    const safeGroups = [];
+    for (const group of groups) {
+      if (!Array.isArray(group.ids)) continue;
+      const validIds = group.ids.filter(id => UUID.test(id) && !usedIds.has(id));
+      if (validIds.length < 2) continue;
+      validIds.forEach(id => usedIds.add(id));
       safeGroups.push({ ...group, ids: validIds });
     }
 
     let mergedCount = 0;
     for (const group of safeGroups) {
-      // Garder la première (plus récente), archiver les autres
       const [keepId, ...removeIds] = group.ids;
       await sql`
         UPDATE entries

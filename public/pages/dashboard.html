@@ -1201,10 +1201,21 @@
     </div>
   </div>
 
-  <!-- Fusion auto des notes similaires -->
-  <div id="merge-bar" style="display:none;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
-    <span style="font-size:13px;color:var(--ink-muted);flex:1">🧠 Regrouper automatiquement les notes similaires</span>
-    <button id="btn-merge" onclick="mergeSimilar()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer">Fusionner</button>
+  <!-- Fusion manuelle des notes similaires -->
+  <div id="merge-bar" style="display:none;flex-direction:column;gap:0;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+      <span style="font-size:13px;color:var(--ink-muted);flex:1">🧠 Regrouper les notes similaires</span>
+      <button id="btn-merge" onclick="mergeSimilar()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer">Fusionner</button>
+    </div>
+    <!-- Bulle de prévisualisation (cachée par défaut) -->
+    <div id="merge-preview" style="display:none;position:relative;margin-top:8px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif">
+      <button onclick="closeMergePreview()" style="position:absolute;top:10px;right:12px;background:none;border:none;font-size:18px;line-height:1;cursor:pointer;color:var(--ink-muted);padding:0">×</button>
+      <div id="merge-preview-content" style="font-size:13px;color:var(--ink);padding-right:20px"></div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button onclick="confirmMerge()" id="btn-confirm-merge" style="padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer">Confirmer la fusion</button>
+        <button onclick="closeMergePreview()" style="padding:7px 14px;background:none;border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-muted);cursor:pointer">Annuler</button>
+      </div>
+    </div>
   </div>
 
   <!-- Panel Statistiques détaillées (toggle) -->
@@ -1871,11 +1882,7 @@ function renderList(calls) {
     autoRefresh = setTimeout(loadCalls, 5000);
   }
 
-  // Détecter les notes qui viennent de passer processing → done → déclencher regroupement
-  const nowDoneIds = new Set(calls.filter(c => c.status === 'done').map(c => c.id));
-  const justFinished = [...(window._prevProcessingIds || [])].filter(id => nowDoneIds.has(id));
   window._prevProcessingIds = new Set(calls.filter(c => c.status === 'processing').map(c => c.id));
-  if (justFinished.length > 0) autoMergeSimilar();
 }
 
 // ── Quick Add ─────────────────────────────────────────────────────────────────
@@ -2398,29 +2405,8 @@ async function doRefresh() {
   }
 }
 
-// Regroupement automatique silencieux (déclenché quand une note passe à "done")
-let _mergeDebounceTimer = null;
-function autoMergeSimilar() {
-  // Debounce : si plusieurs notes finissent en même temps, on attend un peu
-  clearTimeout(_mergeDebounceTimer);
-  _mergeDebounceTimer = setTimeout(async () => {
-    try {
-      const res  = await fetch('/api/calls?action=merge-similar', { method: 'POST' });
-      const data = await res.json();
-      if (data.merged > 0) {
-        // Rafraîchir la liste si des notes ont été fusionnées
-        await loadCalls();
-        // Notification discrète
-        const hint = document.getElementById('quick-add-hint');
-        if (hint) {
-          hint.textContent = `✓ ${data.merged} note${data.merged > 1 ? 's' : ''} regroupée${data.merged > 1 ? 's' : ''}`;
-          hint.style.color = 'var(--green)';
-          setTimeout(() => { hint.textContent = '⌘↵ pour envoyer'; hint.style.color = ''; }, 3000);
-        }
-      }
-    } catch {}
-  }, 2000);
-}
+// Prévisualisation manuelle des groupes — appelée au clic sur "Fusionner"
+let _mergePreviewGroups = null;
 
 async function mergeSimilar() {
   const btn = document.getElementById('btn-merge');
@@ -2428,18 +2414,56 @@ async function mergeSimilar() {
   btn.disabled = true;
   btn.textContent = 'Analyse…';
   try {
-    const res = await fetch('/api/calls?action=merge-similar', { method: 'POST' });
+    const res = await fetch('/api/calls?action=merge-preview', { method: 'POST' });
     const data = await res.json();
-    if (data.merged > 0) {
-      btn.textContent = `✓ ${data.merged} notes fusionnées`;
-      setTimeout(() => { loadCalls(); btn.disabled = false; btn.textContent = 'Fusionner'; }, 1500);
-    } else {
+    _mergePreviewGroups = data.groups || [];
+    if (!_mergePreviewGroups.length) {
       btn.textContent = 'Aucun groupe détecté';
       setTimeout(() => { btn.disabled = false; btn.textContent = 'Fusionner'; }, 2000);
+      return;
     }
+    // Afficher la bulle de prévisualisation
+    const preview = document.getElementById('merge-preview');
+    const content = document.getElementById('merge-preview-content');
+    content.innerHTML = `
+      <div style="font-weight:600;margin-bottom:10px">${_mergePreviewGroups.length} groupe${_mergePreviewGroups.length > 1 ? 's' : ''} proposé${_mergePreviewGroups.length > 1 ? 's' : ''}</div>
+      ${_mergePreviewGroups.map((g, i) => `
+        <div style="margin-bottom:10px;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px">→ ${g.merged_title || 'Sans titre'}</div>
+          <div style="font-size:11px;color:var(--ink-muted)">${(g.note_titles || g.ids).map(t => `• ${t}`).join('<br>')}</div>
+        </div>
+      `).join('')}
+    `;
+    preview.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Fusionner';
   } catch (e) {
     btn.textContent = 'Erreur';
     setTimeout(() => { btn.disabled = false; btn.textContent = 'Fusionner'; }, 2000);
+  }
+}
+
+function closeMergePreview() {
+  const preview = document.getElementById('merge-preview');
+  if (preview) preview.style.display = 'none';
+  _mergePreviewGroups = null;
+}
+
+async function confirmMerge() {
+  if (!_mergePreviewGroups || !_mergePreviewGroups.length) return;
+  const btn = document.getElementById('btn-confirm-merge');
+  if (btn) { btn.disabled = true; btn.textContent = 'Fusion…'; }
+  try {
+    const res = await fetch('/api/calls?action=merge-confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groups: _mergePreviewGroups }),
+    });
+    const data = await res.json();
+    closeMergePreview();
+    await loadCalls();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmer la fusion'; }
   }
 }
 // ── Dark mode ──────────────────────────────────────────────────────────────
