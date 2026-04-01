@@ -210,3 +210,17 @@ CREATE INDEX IF NOT EXISTS finance_date_idx ON finance(date DESC);
 -- ── V3.7b : contrainte d'unicité CSV (date + label + montant) ────────────────
 -- Permet ON CONFLICT (date, label, amount) DO NOTHING pour les imports CSV
 CREATE UNIQUE INDEX IF NOT EXISTS finance_dedup_idx ON finance(date, label, amount);
+
+-- ── V3.8 : Dossiers thématiques ──────────────────────────────────────────────
+-- Remplace les catégories hardcodées par des dossiers dynamiques
+CREATE TABLE IF NOT EXISTS folders (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT        NOT NULL,
+  emoji       TEXT        NOT NULL DEFAULT '📁',
+  sort_order  SMALLINT    NOT NULL DEFAULT 0,
+  importance  SMALLINT    NOT NULL DEFAULT 2,  -- 1=faible, 2=normal, 3=haute, 4=critique
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE entries ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS entries_folder_id_idx ON entries(folder_id);

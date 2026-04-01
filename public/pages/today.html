@@ -11,7 +11,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/app.css">
-<title>Vox — Aujourd'hui</title>
+<title>Vox — Priorités</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* ── Native PWA feel ── */
@@ -481,7 +481,7 @@
   <div class="header-nav">
     <a href="/dashboard" class="btn-ghost">Dashboard</a>
     <a href="/actions"   class="btn-ghost">Items</a>
-    <a href="/today"     class="btn-ghost" style="color:var(--accent)">Aujourd'hui</a>
+    <a href="/today"     class="btn-ghost" style="color:var(--accent)">Priorités</a>
       <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
     </button>
@@ -491,12 +491,9 @@
 
 <main>
   <div class="page-header">
-    <h1 class="page-title">☀️ Aujourd'hui</h1>
+    <h1 class="page-title">🎯 Priorités</h1>
     <span class="page-date" id="page-date"></span>
   </div>
-
-  <!-- Rétrospective hebdomadaire -->
-  <div id="retro-wrap" style="display:none;margin-bottom:24px"></div>
 
   <div id="content">
     <div class="item-list">
@@ -510,332 +507,110 @@
 <script>
 const $ = id => document.getElementById(id);
 
-// Date affichée
 const now = new Date();
-const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-$('page-date').textContent = now.toLocaleDateString('fr-FR', opts);
+$('page-date').textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const IMPORTANCE_COLORS = { 4: 'var(--red)', 3: 'var(--yellow)', 2: 'var(--ink-dim)', 1: 'var(--blue)' };
+const PRIORITY_DOTS = { 4: 'var(--red)', 3: '#d97706' };
 
-function fmtDue(dateStr) {
-  const d = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const diff = Math.round((d - today) / 86400000);
-  if (diff < 0) return `retard ${Math.abs(diff)}j`;
-  if (diff === 0) return 'aujourd\'hui';
-  if (diff === 1) return 'demain';
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 }
 
-function fmtRelTime(dateStr) {
-  const d = new Date(dateStr);
-  const diffMs = Date.now() - d;
-  const diffMin = Math.round(diffMs / 60000);
-  if (diffMin < 2)  return 'à l\'instant';
-  if (diffMin < 60) return `il y a ${diffMin} min`;
-  const diffH = Math.round(diffMin / 60);
-  if (diffH < 24)   return `il y a ${diffH}h`;
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+function renderSummary(text) {
+  if (!text) return '';
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const bullets = lines.map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+  if (bullets.length <= 1) return `<div class="entry-summary">${esc(text)}</div>`;
+  return `<div class="entry-summary"><ul style="padding-left:16px;margin:0">${bullets.map(b => `<li style="margin-bottom:2px">${esc(b)}</li>`).join('')}</ul></div>`;
 }
-
-function projectBadge(item) {
-  if (!item.project_name) return '';
-  const color = item.project_color || '#7a7268';
-  return `<span class="project-badge" style="border-color:${color}">◉ ${escHtml(item.project_name)}</span>`;
-}
-
-function escHtml(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── Toggle item done ──────────────────────────────────────────────────────────
-
-async function toggleItem(id, entryId, done) {
-  try {
-    const res = await fetch(`/api/items?id=${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ done: !done }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    loadData(); // refresh
-  } catch (e) {
-    console.error('Erreur toggle item:', e);
-  }
-}
-
-// ── Render item card ──────────────────────────────────────────────────────────
-
-function renderItem(item, context) {
-  const isOverdue = context === 'overdue';
-  const isToday   = context === 'today';
-  const dueBadge  = item.due_date
-    ? `<span class="item-due ${isOverdue ? 'overdue' : isToday ? 'today' : ''}">${fmtDue(item.due_date)}</span>`
-    : '';
-  const typeIcons = { task: '☐', idea: '💡', decision: '⚡', reminder: '🔔' };
-  const typeIcon = typeIcons[item.type] || '•';
-
-  const entryLink = item.entry_title
-    ? `<a href="/dashboard" class="item-source" title="Voir dans le dashboard">↗ ${escHtml(item.entry_title)}</a>`
-    : '';
-
-  return `
-    <div class="item-card${item.done ? ' done' : ''}" id="item-${item.id}">
-      <div class="item-check ${item.done ? 'checked' : ''}"
-           onclick="toggleItem('${item.id}', '${item.entry_id}', ${item.done})"
-           role="checkbox" aria-checked="${item.done}">
-        ${item.done ? '✓' : ''}
-      </div>
-      <div class="item-body">
-        <div class="item-text">${escHtml(item.text)}</div>
-        <div class="item-meta">
-          ${dueBadge}
-          ${projectBadge(item)}
-          ${entryLink}
-        </div>
-      </div>
-    </div>`;
-}
-
-// ── Render entry card ─────────────────────────────────────────────────────────
-
-function renderEntry(entry) {
-  const tags = (entry.tags || []).map(t => `<span class="type-badge">${escHtml(t)}</span>`).join('');
-  return `
-    <a class="entry-card" href="/dashboard">
-      <div class="entry-title">${escHtml(entry.title || 'Sans titre')}</div>
-      ${entry.summary ? `<div class="entry-summary">${escHtml(entry.summary)}</div>` : ''}
-      <div class="entry-meta">
-        <span class="entry-time">${fmtRelTime(entry.created_at)}</span>
-        ${projectBadge(entry)}
-        ${tags}
-      </div>
-    </a>`;
-}
-
-// ── Render section ────────────────────────────────────────────────────────────
-
-function renderSection({ title, badge, badgeClass, items, renderFn, context, listClass }) {
-  if (!items.length) return '';
-  const listTag = listClass || 'item-list';
-  const cards = items.map(i => renderFn(i, context)).join('');
-  return `
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title">${title}</span>
-        <span class="section-badge ${badgeClass || ''}">${items.length}</span>
-      </div>
-      <div class="${listTag}">${cards}</div>
-    </div>`;
-}
-
-// ── Rétrospective ─────────────────────────────────────────────────────────────
-
-function scoreColor(score) {
-  if (score >= 7) return '#4ade80';
-  if (score >= 4) return '#facc15';
-  return '#f87171';
-}
-
-function renderRetro(r, meta) {
-  const score  = r.mental_load_score ?? 5;
-  const pct    = Math.round((score / 10) * 100);
-  const color  = scoreColor(score);
-  // Top 3 themes max
-  const themes = (r.dominant_themes || []).slice(0, 3).map(t => `<span class="retro-theme">${escHtml(t)}</span>`).join('');
-  // 1 highlight + 1 attention point max (concis)
-  const h1 = (r.highlights || [])[0];
-  const a1 = (r.attention_points || [])[0];
-
-  return `
-    <div class="retro-card" style="padding:14px 16px">
-      <div class="retro-header" style="margin-bottom:8px">
-        <span class="retro-title" style="font-size:12px">Semaine · ${meta.split('·')[1]?.trim() || ''}</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          ${themes}
-          <span style="font-weight:700;font-size:15px;color:${color}">${score}/10</span>
-          <button class="btn-retro-gen" id="btn-retro-gen" onclick="generateRetro()" style="font-size:11px;padding:3px 8px">↺</button>
-        </div>
-      </div>
-      <div class="retro-bar" style="margin-bottom:${(h1||a1||r.suggestion)?'10px':'0'}">
-        <div class="retro-bar-fill" style="width:${pct}%;background:${color}"></div>
-      </div>
-      ${h1 ? `<div style="font-size:12px;color:var(--green);margin-bottom:4px">✓ ${escHtml(h1)}</div>` : ''}
-      ${a1 ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:4px">⚠ ${escHtml(a1)}</div>` : ''}
-      ${r.suggestion ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic">"${escHtml(r.suggestion)}"</div>` : ''}
-    </div>`;
-}
-
-async function loadRetro() {
-  try {
-    const res = await fetch('/api/weekly-review');
-    if (!res.ok) return;
-    const rows = await res.json();
-    if (!rows.length) {
-      // No retro yet — show a generate button
-      const wrap = document.getElementById('retro-wrap');
-      wrap.style.display = '';
-      wrap.innerHTML = `
-        <div class="retro-card" style="text-align:center;padding:20px">
-          <div style="font-size:13px;opacity:0.6;margin-bottom:12px">Aucune rétrospective cette semaine</div>
-          <button class="btn-retro-gen" id="btn-retro-gen" onclick="generateRetro()">Générer maintenant</button>
-        </div>`;
-      return;
-    }
-    const latest = rows[0];
-    const weekDate = new Date(latest.week_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-    const meta = `Semaine du ${weekDate} · ${latest.entry_count} note${latest.entry_count > 1 ? 's' : ''}`;
-    const wrap = document.getElementById('retro-wrap');
-    wrap.style.display = '';
-    wrap.innerHTML = renderRetro(latest.data, meta);
-  } catch (e) {
-    console.warn('Retro load error:', e);
-  }
-}
-
-async function generateRetro() {
-  const btn = document.getElementById('btn-retro-gen');
-  if (btn) { btn.disabled = true; btn.textContent = 'Génération…'; }
-  try {
-    const res = await fetch('/api/weekly-review', { method: 'POST' });
-    const json = await res.json();
-    if (json.skipped) {
-      alert(json.reason || 'Pas assez de notes cette semaine.');
-      if (btn) { btn.disabled = false; btn.textContent = 'Générer maintenant'; }
-      return;
-    }
-    await loadRetro();
-  } catch (e) {
-    console.error('Retro gen error:', e);
-    if (btn) { btn.disabled = false; btn.textContent = 'Réessayer'; }
-  }
-}
-
-// ── Main load ─────────────────────────────────────────────────────────────────
 
 async function loadData() {
   try {
-    const res = await fetch('/api/today');
+    const res = await fetch('/api/calls?action=priorities');
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (!res.ok) throw new Error(await res.text());
+    const entries = await res.json();
 
-    const data = await res.json();
-    const { overdueItems, todayItems, recentTasks, recentIdeas, newEntries } = data;
+    if (!entries.length) {
+      $('content').innerHTML = `
+        <div class="all-done">
+          <div class="all-done-emoji">📭</div>
+          <div class="all-done-title">Aucune note</div>
+          <div class="all-done-sub">Commencez par enregistrer vos premières notes sur le dashboard.</div>
+        </div>`;
+      return;
+    }
 
-    const totalActionable = overdueItems.length + todayItems.length + recentTasks.length;
+    // Grouper par dossier
+    const groups = [];
+    const groupMap = new Map();
+    for (const e of entries) {
+      const key = e.folder_id || '__none__';
+      if (!groupMap.has(key)) {
+        const g = {
+          folder_id: e.folder_id,
+          folder_name: e.folder_name || 'Non classées',
+          folder_emoji: e.folder_emoji || '📥',
+          folder_importance: e.folder_importance || 0,
+          entries: [],
+        };
+        groupMap.set(key, g);
+        groups.push(g);
+      }
+      groupMap.get(key).entries.push(e);
+    }
 
     let html = '';
-
-    html += renderSection({
-      title: '🔴 En retard',
-      badge: overdueItems.length,
-      badgeClass: 'red',
-      items: overdueItems,
-      renderFn: renderItem,
-      context: 'overdue',
-    });
-
-    html += renderSection({
-      title: '📅 Aujourd\'hui',
-      badge: todayItems.length,
-      badgeClass: 'yellow',
-      items: todayItems,
-      renderFn: renderItem,
-      context: 'today',
-    });
-
-    html += renderSection({
-      title: '📋 Tâches récentes',
-      badge: recentTasks.length,
-      badgeClass: '',
-      items: recentTasks,
-      renderFn: renderItem,
-      context: 'recent',
-    });
-
-    html += renderSection({
-      title: '💡 Idées (48h)',
-      badge: recentIdeas.length,
-      badgeClass: 'blue',
-      items: recentIdeas,
-      renderFn: renderItem,
-      context: 'idea',
-      listClass: 'item-list',
-    });
-
-    html += renderSection({
-      title: '✨ Nouvelles entrées (48h)',
-      badge: newEntries.length,
-      badgeClass: 'green',
-      items: newEntries,
-      renderFn: renderEntry,
-      context: 'entry',
-      listClass: 'entry-list',
-    });
-
-    if (!html.trim()) {
-      html = `
-        <div class="all-done">
-          <div class="all-done-emoji">🎉</div>
-          <div class="all-done-title">Tout est à jour !</div>
-          <div class="all-done-sub">Aucune tâche en retard, rien de prévu aujourd'hui.<br>Profitez-en pour capturer de nouvelles idées.</div>
+    for (const group of groups) {
+      const impColor = IMPORTANCE_COLORS[group.folder_importance] || 'var(--ink-dim)';
+      html += `
+        <div class="section" style="margin-bottom:28px">
+          <div class="section-header" style="margin-bottom:10px">
+            <span style="font-size:22px">${esc(group.folder_emoji)}</span>
+            <span class="section-title" style="font-size:15px;text-transform:none;letter-spacing:-0.2px;font-weight:700;color:var(--ink)">${esc(group.folder_name)}</span>
+            <span class="section-badge" style="background:transparent;color:${impColor};font-weight:700">${group.entries.length}</span>
+          </div>
+          <div class="entry-list">
+            ${group.entries.map(e => {
+              const dot = PRIORITY_DOTS[e.priority]
+                ? `<div style="width:8px;height:8px;border-radius:50%;background:${PRIORITY_DOTS[e.priority]};flex-shrink:0;margin-top:5px"></div>`
+                : '';
+              const tags = (e.tags||[]).map(t => `<span class="type-badge">${esc(t)}</span>`).join('');
+              return `
+                <a class="entry-card" href="/dashboard?entry=${e.id}" style="text-decoration:none;color:inherit">
+                  <div style="display:flex;align-items:flex-start;gap:8px">
+                    ${dot}
+                    <div style="flex:1;min-width:0">
+                      <div class="entry-title">${esc(e.title || 'Sans titre')}</div>
+                      ${renderSummary(e.summary)}
+                    </div>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);white-space:nowrap;flex-shrink:0">${fmtDate(e.created_at)}</span>
+                  </div>
+                  ${tags ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${tags}</div>` : ''}
+                </a>`;
+            }).join('')}
+          </div>
         </div>`;
     }
 
     $('content').innerHTML = html;
-
   } catch (err) {
-    $('content').innerHTML = `<div class="empty">Erreur de chargement : ${escHtml(err.message)}</div>`;
-    console.error('Erreur loadData:', err);
+    $('content').innerHTML = `<div class="empty">Erreur : ${esc(err.message)}</div>`;
   }
 }
 
 loadData();
-loadRetro();
-
-// ── Notifications push ────────────────────────────────────────────────────────
-async function setupNotifications() {
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-  // Demander permission une seule fois
-  if (Notification.permission === 'default') {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return;
-  }
-  if (Notification.permission !== 'granted') return;
-  // Vérifier si on a déjà notifié aujourd'hui
-  const lastNotif = localStorage.getItem('vox-last-notif');
-  const today = new Date().toDateString();
-  if (lastNotif === today) return;
-  // Charger les tâches du jour
-  try {
-    const res = await fetch('/api/today');
-    if (!res.ok) return;
-    const data = await res.json();
-    const overdue = (data.overdueItems || []).length;
-    const todayItems = (data.todayItems || []).length;
-    if (overdue + todayItems === 0) return;
-    localStorage.setItem('vox-last-notif', today);
-    const reg = await navigator.serviceWorker.ready;
-    reg.showNotification('Vox · Ton agenda du jour', {
-      body: [
-        overdue   ? `🔴 ${overdue} tâche${overdue>1?'s':''} en retard`  : '',
-        todayItems ? `📅 ${todayItems} tâche${todayItems>1?'s':''} prévue${todayItems>1?'s':''} aujourd'hui` : '',
-      ].filter(Boolean).join('\n'),
-      icon:  '/icon-192.png',
-      badge: '/icon-192.png',
-      tag:   'vox-daily',
-      data:  { url: '/today' },
-    });
-  } catch {}
-}
-setupNotifications();
 </script>
 
 <nav class="mobile-nav">
   <a href="/today" class="active">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    Aujourd'hui
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Priorités
   </a>
   <a href="/dashboard">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>

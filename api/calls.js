@@ -43,6 +43,112 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!requireSession(req, res)) return;
 
+  // ── Migration V3.8 : Dossiers thématiques ──────────────────────────────────
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS folders (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        name        TEXT        NOT NULL,
+        emoji       TEXT        NOT NULL DEFAULT '📁',
+        sort_order  SMALLINT    NOT NULL DEFAULT 0,
+        importance  SMALLINT    NOT NULL DEFAULT 2,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+    await sql`ALTER TABLE entries ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL`;
+    await sql`CREATE INDEX IF NOT EXISTS entries_folder_id_idx ON entries(folder_id)`;
+  } catch {}
+
+  // ── GET : liste des dossiers ───────────────────────────────────────────────
+  if (req.method === 'GET' && req.query.action === 'folders') {
+    const folders = await sql`
+      SELECT f.id, f.name, f.emoji, f.sort_order, f.importance, f.created_at,
+             COUNT(e.id) FILTER (WHERE e.archived = false AND e.status = 'done') AS note_count
+      FROM folders f
+      LEFT JOIN entries e ON e.folder_id = f.id
+      GROUP BY f.id
+      ORDER BY f.sort_order ASC, f.importance DESC
+    `;
+    return res.status(200).json(folders);
+  }
+
+  // ── POST : créer un dossier ────────────────────────────────────────────────
+  if (req.method === 'POST' && req.query.action === 'folders') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+    const { name, emoji, sort_order, importance } = body || {};
+    if (!name) return res.status(400).json({ error: 'Nom requis.' });
+    const [folder] = await sql`
+      INSERT INTO folders (name, emoji, sort_order, importance)
+      VALUES (${name}, ${emoji || '📁'}, ${sort_order || 0}, ${importance || 2})
+      RETURNING *
+    `;
+    return res.status(201).json(folder);
+  }
+
+  // ── PATCH : modifier un dossier ────────────────────────────────────────────
+  if (req.method === 'PATCH' && req.query.action === 'folders') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+    const { id, name, emoji, sort_order, importance } = body || {};
+    if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
+    const [folder] = await sql`
+      UPDATE folders SET
+        name       = COALESCE(${name || null}, name),
+        emoji      = COALESCE(${emoji || null}, emoji),
+        sort_order = COALESCE(${sort_order != null ? sort_order : null}, sort_order),
+        importance = COALESCE(${importance != null ? importance : null}, importance)
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    if (!folder) return res.status(404).json({ error: 'Dossier introuvable.' });
+    return res.status(200).json(folder);
+  }
+
+  // ── DELETE : supprimer un dossier (notes → folder_id NULL) ─────────────────
+  if (req.method === 'DELETE' && req.query.action === 'folders') {
+    const { id } = req.query;
+    if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
+    await sql`UPDATE entries SET folder_id = NULL WHERE folder_id = ${id}`;
+    await sql`DELETE FROM folders WHERE id = ${id}`;
+    return res.status(200).json({ deleted: 1 });
+  }
+
+  // ── GET : vue priorités (notes triées par importance dossier > priorité note) ─
+  if (req.method === 'GET' && req.query.action === 'priorities') {
+    const entries = await sql`
+      SELECT e.id, e.title, e.summary, e.tags, e.created_at,
+             COALESCE(e.priority, 2) AS priority,
+             e.folder_id,
+             f.name AS folder_name, f.emoji AS folder_emoji,
+             f.importance AS folder_importance, f.sort_order AS folder_sort_order
+      FROM entries e
+      LEFT JOIN folders f ON f.id = e.folder_id
+      WHERE e.archived = false AND e.status = 'done'
+      ORDER BY COALESCE(f.importance, 0) DESC,
+               COALESCE(f.sort_order, 999) ASC,
+               COALESCE(e.priority, 2) DESC,
+               e.created_at DESC
+    `;
+    return res.status(200).json(entries);
+  }
+
+  // ── POST : assigner des notes à des dossiers (bulk) ────────────────────────
+  if (req.method === 'POST' && req.query.action === 'assign-folders') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+    const assignments = Array.isArray(body?.assignments) ? body.assignments : [];
+    if (!assignments.length) return res.status(400).json({ error: 'Aucune assignation.' });
+    let count = 0;
+    for (const { entry_id, folder_id } of assignments) {
+      if (!entry_id || !UUID.test(entry_id)) continue;
+      if (folder_id && !UUID.test(folder_id)) continue;
+      await sql`UPDATE entries SET folder_id = ${folder_id || null} WHERE id = ${entry_id}`;
+      count++;
+    }
+    return res.status(200).json({ assigned: count });
+  }
+
   // ── GET : entrée unique par callId (ex-status.js) ────────────────────────
   if (req.method === 'GET' && req.query.callId) {
     const { callId } = req.query;
@@ -68,10 +174,14 @@ export default async function handler(req, res) {
                e.calendar_event, e.calendar_event_status,
                COALESCE(e.priority, 2) AS priority,
                (e.audio_url IS NOT NULL) AS has_audio,
+               e.folder_id,
                p.name  AS project_name,
-               p.color AS project_color
+               p.color AS project_color,
+               fl.name AS folder_name,
+               fl.emoji AS folder_emoji
         FROM entries e
         LEFT JOIN projects p ON p.id = e.project_id
+        LEFT JOIN folders fl ON fl.id = e.folder_id
         WHERE e.archived = ${viewArchived}
         ORDER BY e.created_at DESC
         LIMIT ${limit}
