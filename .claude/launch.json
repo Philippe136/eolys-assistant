@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "vox-dev",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["vercel", "dev"],
-      "port": 3000
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/dev-server.cjs"],
+      "port": 3002
     }
   ]
 }
