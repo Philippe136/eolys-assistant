@@ -18,7 +18,7 @@
     }
   ],
   "redirects": [
-    { "source": "/", "destination": "/dashboard", "permanent": false }
+    { "source": "/", "destination": "/today", "permanent": false }
   ],
   "rewrites": [
     { "source": "/dashboard", "destination": "/pages/dashboard.html" },
@@ -33,6 +33,7 @@
     { "source": "/gmail",     "destination": "/pages/gmail.html"     },
     { "source": "/insights",  "destination": "/pages/insights.html"  },
     { "source": "/folders",   "destination": "/pages/folders.html"   },
+    { "source": "/habits",    "destination": "/pages/habits.html"    },
     { "source": "/finance",   "destination": "/pages/finance.html"   },
 
     { "source": "/app.css",            "destination": "/css/app.css"              },

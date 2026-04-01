@@ -2,7 +2,7 @@
   "name": "Vox",
   "short_name": "Vox",
   "description": "Enregistrez et analysez vos idées en un tap",
-  "start_url": "/dashboard",
+  "start_url": "/today",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -1,4 +1,4 @@
-const CACHE      = 'vox-v22';
+const CACHE      = 'vox-v23';
 const FONT_CACHE = 'vox-fonts-v1';
 const QUEUE_DB   = 'vox-offline-queue';
 

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vox">
+<meta name="theme-color" content="#f5f2ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1714" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+<title>Vox — Habitudes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html { overscroll-behavior: none; }
+  body { overscroll-behavior: none; -webkit-overflow-scrolling: touch; margin: 0; padding: 0; }
+  button, a, [role="button"] { touch-action: manipulation; }
+  :root {
+    --bg: #f5f2ed; --surface: #ffffff; --surface2: #f0ece5;
+    --border: #e0d9cf; --ink: #1a1714; --ink-muted: #7a7268;
+    --ink-dim: #b5afa6; --accent: #c8410a; --accent-light: #f5ede8;
+    --green: #1a6b3c; --green-light: #e8f3ec;
+    --yellow: #d4a017; --yellow-light: #fdf6e3;
+    --red: #b91c1c; --red-light: #fef2f2;
+    --blue: #1d4ed8; --blue-light: #eff6ff;
+    --radius: 12px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #151210; --surface: #1e1b18; --surface2: #252220;
+    --border: #35302a; --ink: #f0ece5; --ink-muted: #a09890;
+    --ink-dim: #6a6460; --accent-light: #3a1a0a;
+    --green-light: #0d2e1a; --yellow-light: #2a2000;
+    --red-light: #2a0d0d; --blue-light: #0d1a3a;
+  }
+  body { background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: env(safe-area-inset-top, 0px) 24px 0;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+  .logo svg { flex-shrink: 0; display: block; }
+  .header-nav { display: flex; align-items: center; gap: 4px; }
+  .btn-ghost { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink-muted); background: none; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; text-decoration: none; transition: background .15s, color .15s; }
+  .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
+  .btn-refresh { width: 32px; height: 32px; border: none; background: none; cursor: pointer; padding: 0; border-radius: 8px; color: var(--ink-dim); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; }
+  .btn-refresh:hover { background: var(--surface2); color: var(--ink); }
+  .btn-refresh.spinning svg { animation: spin-r 0.65s linear infinite; }
+  @keyframes spin-r { to { transform: rotate(360deg); } }
+  .btn-theme-toggle { font-size: 18px !important; padding: 4px 8px !important; }
+
+  main { max-width: 820px; margin: 0 auto; padding: 32px 24px 80px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+
+  /* Habit cards */
+  .habit-list { display: flex; flex-direction: column; gap: 8px; }
+  .habit-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+    transition: border-color .15s;
+  }
+  .habit-card:hover { border-color: var(--accent); }
+  .habit-emoji { font-size: 28px; flex-shrink: 0; width: 40px; text-align: center; }
+  .habit-info { flex: 1; min-width: 0; }
+  .habit-name { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+  .habit-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .streak-badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .streak-badge.hot { background: #fef2f2; color: #dc2626; }
+  .streak-badge.warm { background: var(--yellow-light); color: var(--yellow); }
+  .streak-badge.cold { background: var(--surface2); color: var(--ink-dim); }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; flex: 1; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .week-label { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+
+  .check-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid var(--border);
+    background: none; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; transition: all .15s;
+  }
+  .check-btn.done { background: var(--green); border-color: var(--green); color: #fff; }
+
+  /* Add form */
+  .add-form {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 16px; display: none;
+  }
+  .add-form.open { display: block; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .form-input {
+    font-family: 'Inter', sans-serif; font-size: 14px; padding: 8px 12px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+    color: var(--ink); flex: 1; outline: none;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-select { font-family: 'Inter', sans-serif; font-size: 13px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--ink); }
+  .btn-primary { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+  .btn-secondary { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; background: none; color: var(--ink-muted); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  .btn-add { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--ink-dim); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-muted); margin-bottom: 8px; margin-top: 20px; }
+
+  .delete-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--ink-dim); padding: 4px; opacity: 0; transition: opacity .15s; }
+  .habit-card:hover .delete-btn { opacity: 1; }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    header { padding: env(safe-area-inset-top, 0px) 16px 0; }
+    .header-nav .btn-ghost { display: none; }
+    main { padding: 16px 14px calc(100px + env(safe-area-inset-bottom, 0px)); }
+    .page-title { font-size: 22px; }
+    .delete-btn { opacity: 1; }
+  }
+
+  .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: calc(76px + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--border); align-items: stretch; justify-content: space-around; z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  @media (max-width: 640px) { .mobile-nav { display: flex; } }
+  .mobile-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; transition: color 0.15s; padding: 6px 0; }
+  .mobile-nav a.active { color: var(--accent); }
+  .mobile-nav a svg { width: 24px; height: 24px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>
+    Vox
+  </div>
+  <div class="header-nav">
+    <a href="/dashboard" class="btn-ghost">Notes</a>
+    <a href="/folders" class="btn-ghost">Dossiers</a>
+    <a href="/settings" class="btn-ghost">⚙️</a>
+    <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+    </button>
+    <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme">🌙</button>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <h1 class="page-title">🔥 Habitudes</h1>
+    <button class="btn-add" onclick="toggleForm()">+ Ajouter</button>
+  </div>
+
+  <div class="add-form" id="add-form">
+    <div class="form-row">
+      <input class="form-input" id="f-emoji" placeholder="Emoji" style="flex:0 0 60px;text-align:center" maxlength="4" value="🧘">
+      <input class="form-input" id="f-name" placeholder="Nom de l'habitude" autofocus>
+    </div>
+    <div class="form-row">
+      <select class="form-select" id="f-freq">
+        <option value="daily">Quotidienne</option>
+        <option value="weekly">Hebdomadaire</option>
+      </select>
+      <select class="form-select" id="f-target">
+        <option value="7">7j / semaine</option>
+        <option value="5">5j / semaine</option>
+        <option value="3">3j / semaine</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <button class="btn-primary" onclick="submitHabit()">Créer</button>
+      <button class="btn-secondary" onclick="toggleForm()">Annuler</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="habit-list">
+      <div style="background:var(--surface2);border-radius:8px;height:60px;animation:shimmer 1.2s infinite;background-size:200% 100%;background-image:linear-gradient(90deg,var(--surface2) 25%,var(--border) 50%,var(--surface2) 75%)"></div>
+    </div>
+  </div>
+</main>
+
+<nav class="mobile-nav">
+  <a href="/today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Priorités
+  </a>
+  <a href="/actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Actions
+  </a>
+  <a href="/habits" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Habitudes
+  </a>
+  <a href="/finance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finance
+  </a>
+</nav>
+
+<script>
+let allHabits = [];
+
+function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+function streakClass(s) { return s >= 7 ? 'hot' : s >= 3 ? 'warm' : 'cold'; }
+function streakLabel(s) { return s > 0 ? `🔥 ${s} jour${s > 1 ? 's' : ''}` : 'Pas encore'; }
+function progressColor(ratio) {
+  if (ratio >= 0.8) return 'var(--green)';
+  if (ratio >= 0.5) return 'var(--yellow)';
+  return 'var(--ink-dim)';
+}
+
+async function loadHabits() {
+  try {
+    const res = await fetch('/api/calls?action=habits');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    allHabits = await res.json();
+    render();
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div style="color:var(--red);padding:16px;font-size:13px">Erreur : ${e.message}</div>`;
+  }
+}
+
+function render() {
+  if (!allHabits.length) {
+    document.getElementById('content').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔥</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Aucune habitude</div>
+        <div style="font-size:13px">Cliquez sur "+ Ajouter" pour créer votre première habitude.</div>
+      </div>`;
+    return;
+  }
+
+  const html = allHabits.map(h => {
+    const ratio = h.target_days > 0 ? Math.min(h.week_count / h.target_days, 1) : 0;
+    return `
+      <div class="habit-card" id="habit-${h.id}">
+        <div class="habit-emoji">${esc(h.emoji)}</div>
+        <div class="habit-info">
+          <div class="habit-name">${esc(h.name)}</div>
+          <div class="habit-meta">
+            <span class="streak-badge ${streakClass(h.streak)}">${streakLabel(h.streak)}</span>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.round(ratio*100)}%;background:${progressColor(ratio)}"></div></div>
+            <span class="week-label">${h.week_count}/${h.target_days}</span>
+          </div>
+        </div>
+        <button class="check-btn ${h.done_today ? 'done' : ''}" onclick="toggleHabit('${h.id}', ${h.done_today})">
+          ${h.done_today ? '✓' : ''}
+        </button>
+        <button class="delete-btn" onclick="deleteHabit('${h.id}')" title="Supprimer">×</button>
+      </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `<div class="habit-list">${html}</div>`;
+}
+
+async function toggleHabit(id, currentDone) {
+  // Optimistic UI
+  const btn = document.querySelector(`#habit-${id} .check-btn`);
+  const newDone = !currentDone;
+  if (btn) {
+    btn.classList.toggle('done', newDone);
+    btn.innerHTML = newDone ? '✓' : '';
+  }
+
+  try {
+    await fetch('/api/calls?action=habit-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ habit_id: id, date: todayISO(), done: newDone }),
+    });
+    await loadHabits(); // refresh streaks
+  } catch {}
+}
+
+function toggleForm() {
+  document.getElementById('add-form').classList.toggle('open');
+  const nameInput = document.getElementById('f-name');
+  if (document.getElementById('add-form').classList.contains('open')) nameInput.focus();
+}
+
+async function submitHabit() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) return;
+  const emoji = document.getElementById('f-emoji').value.trim() || '🔄';
+  const frequency = document.getElementById('f-freq').value;
+  const target_days = Number(document.getElementById('f-target').value);
+
+  try {
+    await fetch('/api/calls?action=habits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, emoji, frequency, target_days }),
+    });
+    document.getElementById('f-name').value = '';
+    document.getElementById('add-form').classList.remove('open');
+    await loadHabits();
+  } catch {}
+}
+
+async function deleteHabit(id) {
+  if (!confirm('Supprimer cette habitude ?')) return;
+  try {
+    await fetch(`/api/calls?action=habits&id=${id}`, { method: 'DELETE' });
+    await loadHabits();
+  } catch {}
+}
+
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  if (btn) btn.classList.add('spinning');
+  try { await loadHabits(); } finally {
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+
+loadHabits();
+</script>
+<script src="/app.js"></script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");
+(function(){
+  const saved = localStorage.getItem('vox-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vox-theme', next);
+  const btn = document.getElementById('btn-theme');
+  if(btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+</script>
+</body>
+</html>

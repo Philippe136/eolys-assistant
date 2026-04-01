@@ -224,3 +224,25 @@ CREATE TABLE IF NOT EXISTS folders (
 
 ALTER TABLE entries ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS entries_folder_id_idx ON entries(folder_id);
+
+-- ── V3.9 : Habitudes (tracker de streaks) ────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS habits (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT        NOT NULL,
+  emoji       TEXT        NOT NULL DEFAULT '🔄',
+  frequency   TEXT        NOT NULL DEFAULT 'daily',  -- daily | weekly
+  target_days SMALLINT    NOT NULL DEFAULT 7,         -- 5=semaine, 7=tous les jours
+  folder_id   UUID        REFERENCES folders(id) ON DELETE SET NULL,
+  active      BOOLEAN     NOT NULL DEFAULT true,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS habit_logs (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  habit_id    UUID        NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+  date        DATE        NOT NULL,
+  done        BOOLEAN     NOT NULL DEFAULT true,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS habit_logs_uniq ON habit_logs(habit_id, date);

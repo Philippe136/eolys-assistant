@@ -149,6 +149,138 @@ export default async function handler(req, res) {
     return res.status(200).json({ assigned: count });
   }
 
+  // ── Migration V3.9 : Habitudes ──────────────────────────────────────────────
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS habits (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        name        TEXT        NOT NULL,
+        emoji       TEXT        NOT NULL DEFAULT '🔄',
+        frequency   TEXT        NOT NULL DEFAULT 'daily',
+        target_days SMALLINT    NOT NULL DEFAULT 7,
+        folder_id   UUID        REFERENCES folders(id) ON DELETE SET NULL,
+        active      BOOLEAN     NOT NULL DEFAULT true,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS habit_logs (
+        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        habit_id    UUID        NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+        date        DATE        NOT NULL,
+        done        BOOLEAN     NOT NULL DEFAULT true,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS habit_logs_uniq ON habit_logs(habit_id, date)`;
+  } catch {}
+
+  // ── GET : liste des habitudes avec streaks ─────────────────────────────────
+  if (req.method === 'GET' && req.query.action === 'habits') {
+    const showAll = req.query.all === '1';
+    const habits = showAll
+      ? await sql`SELECT * FROM habits ORDER BY created_at`
+      : await sql`SELECT * FROM habits WHERE active = true ORDER BY created_at`;
+    if (!habits.length) return res.status(200).json([]);
+
+    const ids = habits.map(h => h.id);
+    const logs = await sql`
+      SELECT habit_id, date, done FROM habit_logs
+      WHERE habit_id = ANY(${ids}::uuid[]) AND date >= CURRENT_DATE - 60
+      ORDER BY date DESC
+    `;
+    const logsByHabit = {};
+    for (const l of logs) {
+      if (!logsByHabit[l.habit_id]) logsByHabit[l.habit_id] = [];
+      logsByHabit[l.habit_id].push(l);
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const monday = new Date();
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const mondayStr = monday.toISOString().slice(0, 10);
+
+    const result = habits.map(h => {
+      const hLogs = logsByHabit[h.id] || [];
+      const doneToday = hLogs.some(l => l.date.toISOString().slice(0, 10) === todayStr && l.done);
+      const weekCount = hLogs.filter(l => l.date.toISOString().slice(0, 10) >= mondayStr && l.done).length;
+
+      // Streak : jours consecutifs done en remontant depuis hier (ou aujourd'hui si done)
+      let streak = 0;
+      const d = new Date();
+      if (!doneToday) d.setDate(d.getDate() - 1);
+      const doneSet = new Set(hLogs.filter(l => l.done).map(l => l.date.toISOString().slice(0, 10)));
+      for (let i = 0; i < 60; i++) {
+        const ds = d.toISOString().slice(0, 10);
+        if (doneSet.has(ds)) { streak++; d.setDate(d.getDate() - 1); }
+        else break;
+      }
+
+      return { ...h, streak, done_today: doneToday, week_count: weekCount };
+    });
+
+    return res.status(200).json(result);
+  }
+
+  // ── POST : créer une habitude ──────────────────────────────────────────────
+  if (req.method === 'POST' && req.query.action === 'habits') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+    const { name, emoji, frequency, target_days, folder_id } = body || {};
+    if (!name) return res.status(400).json({ error: 'Nom requis.' });
+    const [habit] = await sql`
+      INSERT INTO habits (name, emoji, frequency, target_days, folder_id)
+      VALUES (${name}, ${emoji || '🔄'}, ${frequency || 'daily'}, ${target_days || 7}, ${folder_id || null})
+      RETURNING *
+    `;
+    return res.status(201).json(habit);
+  }
+
+  // ── PATCH : modifier une habitude ──────────────────────────────────────────
+  if (req.method === 'PATCH' && req.query.action === 'habits') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+    const { id, name, emoji, frequency, target_days, active, folder_id } = body || {};
+    if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
+    const [habit] = await sql`
+      UPDATE habits SET
+        name        = COALESCE(${name || null}, name),
+        emoji       = COALESCE(${emoji || null}, emoji),
+        frequency   = COALESCE(${frequency || null}, frequency),
+        target_days = COALESCE(${target_days != null ? target_days : null}, target_days),
+        active      = COALESCE(${active != null ? active : null}, active),
+        folder_id   = COALESCE(${folder_id || null}, folder_id)
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    if (!habit) return res.status(404).json({ error: 'Habitude introuvable.' });
+    return res.status(200).json(habit);
+  }
+
+  // ── DELETE : supprimer une habitude ─────────────────────────────────────────
+  if (req.method === 'DELETE' && req.query.action === 'habits') {
+    const { id } = req.query;
+    if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });
+    await sql`DELETE FROM habits WHERE id = ${id}`;
+    return res.status(200).json({ deleted: 1 });
+  }
+
+  // ── POST : toggle log d'habitude (upsert) ─────────────────────────────────
+  if (req.method === 'POST' && req.query.action === 'habit-log') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+    const { habit_id, date, done } = body || {};
+    if (!habit_id || !UUID.test(habit_id)) return res.status(400).json({ error: 'habit_id invalide.' });
+    if (!date) return res.status(400).json({ error: 'date requise (YYYY-MM-DD).' });
+    const doneVal = done !== false;
+    await sql`
+      INSERT INTO habit_logs (habit_id, date, done)
+      VALUES (${habit_id}, ${date}, ${doneVal})
+      ON CONFLICT (habit_id, date) DO UPDATE SET done = ${doneVal}
+    `;
+    return res.status(200).json({ habit_id, date, done: doneVal });
+  }
+
   // ── GET : entrée unique par callId (ex-status.js) ────────────────────────
   if (req.method === 'GET' && req.query.callId) {
     const { callId } = req.query;
