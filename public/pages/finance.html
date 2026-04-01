@@ -256,20 +256,35 @@
 <body>
 
 <header>
-  <span class="header-title">Finance</span>
-  <div style="display:flex;gap:8px;align-items:center">
-    <button class="btn-sync" style="background:var(--ink-muted);padding:7px 10px" id="btn-recat" onclick="recategorize()" title="Recatégoriser">✦</button>
-    <button class="btn-sync" style="background:var(--ink-muted);padding:7px 10px" id="btn-clear" onclick="clearFinance()" title="Vider">🗑</button>
-    <button class="btn-sync" id="btn-csv" onclick="document.getElementById('csv-input').click()">
-      <span id="csv-icon">↑</span> Importer CSV
+  <div class="logo">
+    <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>
+    Vox
+  </div>
+  <div class="header-nav">
+    <a href="/dashboard" class="btn-ghost">Notes</a>
+    <a href="/folders" class="btn-ghost">Dossiers</a>
+    <a href="/settings" class="btn-ghost" title="Paramètres">⚙️</a>
+    <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
     </button>
-    <input type="file" id="csv-input" accept=".csv,text/csv" style="display:none" onchange="uploadCSV(this)">
+    <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme">🌙</button>
   </div>
 </header>
 
 <main>
   <!-- Statut import -->
   <div id="status-banner" style="display:none;background:var(--yellow-light);border:1px solid var(--yellow);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink)"></div>
+
+  <!-- Loading skeleton -->
+  <div id="finance-loading" style="padding:20px 0">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;animation:shimmer 1.2s infinite;background-size:200% 100%;background-image:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%)">
+      <div style="height:16px;width:40%;background:var(--surface2);border-radius:4px;margin-bottom:12px"></div>
+      <div style="height:12px;width:70%;background:var(--surface2);border-radius:4px;margin-bottom:20px"></div>
+      <div style="height:52px;background:var(--surface2);border-radius:8px;margin-bottom:8px"></div>
+      <div style="height:52px;background:var(--surface2);border-radius:8px;margin-bottom:8px"></div>
+      <div style="height:52px;background:var(--surface2);border-radius:8px"></div>
+    </div>
+  </div>
 
   <!-- Pareto -->
   <div class="pareto-box" id="pareto-box" style="display:none">
@@ -480,6 +495,8 @@ function renderBalance({ balance = 0, transactions = [] }) {
 }
 
 function renderPareto({ transactions = [], totalSpend = 0 }) {
+  const loading = document.getElementById('finance-loading');
+  if (loading) loading.style.display = 'none';
   const box = document.getElementById('pareto-box');
   const expenses = transactions.filter(t => Number(t.amount) < 0 && !CAT_EXCLUDE_PARETO.has(t.cat));
   if (!expenses.length || totalSpend <= 0) { box.style.display = 'none'; return; }

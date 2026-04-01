@@ -148,17 +148,18 @@
 <body>
 
 <header>
-  <a href="/dashboard" class="logo" style="text-decoration:none;color:inherit">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+  <div class="logo">
+    <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="0" y="6" width="4" height="6" rx="2" fill="#c8410a"/><rect x="6" y="0" width="4" height="18" rx="2" fill="#c8410a"/><rect x="12" y="3" width="4" height="12" rx="2" fill="#c8410a"/><rect x="18" y="5" width="4" height="8" rx="2" fill="#c8410a"/></svg>
     Vox
-    <span class="logo-dot"></span>
-  </a>
-  <div class="header-right">
-    <div class="period-picker">
-      <button class="period-btn" onclick="analyze(30)" data-days="30">30j</button>
-      <button class="period-btn active" onclick="analyze(60)" data-days="60">60j</button>
-      <button class="period-btn" onclick="analyze(90)" data-days="90">90j</button>
-    </div>
+  </div>
+  <div class="header-nav">
+    <a href="/dashboard" class="btn-ghost">Notes</a>
+    <a href="/folders" class="btn-ghost">Dossiers</a>
+    <a href="/settings" class="btn-ghost" title="Paramètres">⚙️</a>
+    <button class="btn-refresh" id="btn-refresh" onclick="doRefresh()" title="Rafraîchir">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+    </button>
+    <button class="btn-ghost btn-theme-toggle" onclick="toggleTheme()" id="btn-theme">🌙</button>
   </div>
 </header>
 
