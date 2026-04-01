@@ -20,6 +20,7 @@ const rewrites = {
   '/gmail': '/public/pages/gmail.html',
   '/insights': '/public/pages/insights.html',
   '/folders': '/public/pages/folders.html',
+  '/habits': '/public/pages/habits.html',
   '/finance': '/public/pages/finance.html',
   '/app.css': '/public/css/app.css',
   '/app.js': '/public/js/app.js',
@@ -66,7 +67,7 @@ const server = http.createServer((req, res) => {
 
   // Redirect / -> /dashboard
   if (pathname === '/') {
-    res.writeHead(302, { Location: '/dashboard' });
+    res.writeHead(302, { Location: '/today' });
     res.end();
     return;
   }
