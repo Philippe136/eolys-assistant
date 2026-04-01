@@ -43,21 +43,18 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!requireSession(req, res)) return;
 
-  // ── Migration V3.8 : Dossiers thématiques ──────────────────────────────────
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS folders (
-        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-        name        TEXT        NOT NULL,
-        emoji       TEXT        NOT NULL DEFAULT '📁',
-        sort_order  SMALLINT    NOT NULL DEFAULT 0,
-        importance  SMALLINT    NOT NULL DEFAULT 2,
-        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
-    await sql`ALTER TABLE entries ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL`;
-    await sql`CREATE INDEX IF NOT EXISTS entries_folder_id_idx ON entries(folder_id)`;
-  } catch {}
+  // ── Migrations (une seule fois par instance serverless) ──────────────────────
+  if (!global.__vox_migrated) {
+    try {
+      await sql`CREATE TABLE IF NOT EXISTS folders (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name TEXT NOT NULL, emoji TEXT NOT NULL DEFAULT '📁', sort_order SMALLINT NOT NULL DEFAULT 0, importance SMALLINT NOT NULL DEFAULT 2, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+      await sql`ALTER TABLE entries ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL`;
+      await sql`CREATE INDEX IF NOT EXISTS entries_folder_id_idx ON entries(folder_id)`;
+      await sql`CREATE TABLE IF NOT EXISTS habits (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), name TEXT NOT NULL, emoji TEXT NOT NULL DEFAULT '🔄', frequency TEXT NOT NULL DEFAULT 'daily', target_days SMALLINT NOT NULL DEFAULT 7, folder_id UUID REFERENCES folders(id) ON DELETE SET NULL, active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+      await sql`CREATE TABLE IF NOT EXISTS habit_logs (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE, date DATE NOT NULL, done BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+      await sql`CREATE UNIQUE INDEX IF NOT EXISTS habit_logs_uniq ON habit_logs(habit_id, date)`;
+      global.__vox_migrated = true;
+    } catch {}
+  }
 
   // ── GET : liste des dossiers ───────────────────────────────────────────────
   if (req.method === 'GET' && req.query.action === 'folders') {
@@ -148,32 +145,6 @@ export default async function handler(req, res) {
     }
     return res.status(200).json({ assigned: count });
   }
-
-  // ── Migration V3.9 : Habitudes ──────────────────────────────────────────────
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS habits (
-        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-        name        TEXT        NOT NULL,
-        emoji       TEXT        NOT NULL DEFAULT '🔄',
-        frequency   TEXT        NOT NULL DEFAULT 'daily',
-        target_days SMALLINT    NOT NULL DEFAULT 7,
-        folder_id   UUID        REFERENCES folders(id) ON DELETE SET NULL,
-        active      BOOLEAN     NOT NULL DEFAULT true,
-        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
-    await sql`
-      CREATE TABLE IF NOT EXISTS habit_logs (
-        id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-        habit_id    UUID        NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
-        date        DATE        NOT NULL,
-        done        BOOLEAN     NOT NULL DEFAULT true,
-        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
-    await sql`CREATE UNIQUE INDEX IF NOT EXISTS habit_logs_uniq ON habit_logs(habit_id, date)`;
-  } catch {}
 
   // ── GET : liste des habitudes avec streaks ─────────────────────────────────
   if (req.method === 'GET' && req.query.action === 'habits') {
