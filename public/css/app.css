@@ -82,6 +82,8 @@ header {
 
 @media (max-width: 640px) {
   .btn-ghost { font-size: 11px; padding: 4px 8px; }
+  /* Cacher "Notes" du header sur mobile — il est dans la nav bottom */
+  .header-nav a[href="/dashboard"], .header-actions a[href="/dashboard"] { display: none; }
 }
 
 /* ── Bloquer rotation paysage ── */
