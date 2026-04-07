@@ -162,6 +162,18 @@
     font-size: 15px; font-weight: 700; padding: 8px 0 0;
     margin-top: 6px; border-top: 1px solid var(--border);
   }
+  .projection-block { margin-bottom: 6px; }
+  .projection-block:last-child { margin-bottom: 0; }
+  .projection-daily-row {
+    display: flex; justify-content: center; align-items: center;
+    gap: 6px; margin-top: 10px; padding: 8px;
+    background: var(--surface2); border-radius: 8px;
+  }
+  .projection-daily-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .projection-daily-label { font-size: 11px; color: var(--ink-muted); }
+  .projection-separator {
+    height: 1px; background: var(--border); margin: 14px 0;
+  }
 
   /* ── Config charges ── */
   .budget-config {
@@ -393,32 +405,7 @@
         <div class="budget-stat-label">budget / semaine</div>
       </div>
     </div>
-    <div class="budget-projection" id="budget-projection" style="display:none">
-      <div class="projection-title">Projection 1er du mois prochain</div>
-      <div class="projection-row">
-        <span class="projection-row-label">Solde estimé fin de mois</span>
-        <span class="projection-row-value" id="proj-eom">—</span>
-      </div>
-      <div class="projection-row">
-        <span class="projection-row-label">+ Salaire</span>
-        <span class="projection-row-value income" id="proj-salary">—</span>
-      </div>
-      <div class="projection-row">
-        <span class="projection-row-label">- Loyer</span>
-        <span class="projection-row-value expense" id="proj-rent">—</span>
-      </div>
-      <div id="proj-extras"></div>
-      <div class="projection-result">
-        <span>Disponible après charges</span>
-        <span id="proj-available">—</span>
-      </div>
-      <div class="budget-stats" id="proj-stats" style="margin-top:10px">
-        <div class="budget-stat">
-          <div class="budget-stat-value" id="proj-daily">—</div>
-          <div class="budget-stat-label">budget / jour (mois prochain)</div>
-        </div>
-      </div>
-    </div>
+    <div id="budget-projections" style="display:none"></div>
     <div class="budget-config" id="budget-config-section" style="display:none">
       <div class="budget-config-toggle" onclick="toggleConfig()">Modifier salaire & loyer</div>
       <div class="budget-config-fields" id="budget-config-fields">
@@ -868,50 +855,86 @@ function renderBudget(data) {
     updated.style.display = 'block';
   }
 
-  // Projection mois prochain
-  const projSection = document.getElementById('budget-projection');
+  // Projections multi-mois
+  const projContainer = document.getElementById('budget-projections');
   const configSection = document.getElementById('budget-config-section');
   const salary = data.salary;
   const rent = data.rent;
+  const extras = data.extras || [];
 
   if (salary && rent) {
-    const dailySpend = Math.abs(daily < 0 ? daily : -daily);
-    const eomBalance = bal - (dailySpend * days);
-    let totalExtras = 0;
-    const extrasEl = document.getElementById('proj-extras');
-    const extras = data.extras || [];
-
-    // Filtrer les extras actifs pour le mois prochain
     const now = new Date();
-    const nextMonth = `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}`;
+    const dailySpend = Math.abs(bal / days * 0) || Math.abs(daily); // budget/jour actuel
+    const MONTH_NAMES = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+    // Mois courant : fin de mois
+    const currentMonthDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const eomBalance = bal - (Math.abs(daily) * days);
+
+    // Générer 2 mois de projection (mois courant + mois suivant)
+    let html = '';
+    let runningBalance = bal;
+
+    // === MOIS COURANT (fin de mois) ===
+    const curMonthName = MONTH_NAMES[now.getMonth()];
+    html += `<div class="projection-block">`;
+    html += `<div class="projection-title">Fin ${curMonthName}</div>`;
+    html += `<div class="projection-row"><span class="projection-row-label">Solde actuel</span><span class="projection-row-value">${fmt(bal)}</span></div>`;
+    html += `<div class="projection-row"><span class="projection-row-label">Dépenses courantes (${days}j × ${fmt(Math.abs(daily))})</span><span class="projection-row-value expense">-${fmt(Math.abs(daily) * days)}</span></div>`;
+    html += `<div class="projection-result"><span>Solde estimé fin ${curMonthName}</span><span style="color:${eomBalance >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(eomBalance)}</span></div>`;
+    html += `</div>`;
+
+    runningBalance = eomBalance;
+
+    // === MOIS SUIVANT ===
+    const nextMonthIdx = (now.getMonth() + 1) % 12;
+    const nextMonthYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const nextMonthDays = new Date(nextMonthYear, nextMonthIdx + 1, 0).getDate();
+    const nextMonthKey = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2, '0')}`;
+    const nextMonthName = MONTH_NAMES[nextMonthIdx];
+
+    // Extras actifs pour ce mois
     const activeExtras = extras.filter(e => {
       if (!e.start) return e.months_remaining > 0;
-      return nextMonth >= e.start && e.months_remaining > 0;
+      return nextMonthKey >= e.start && e.months_remaining > 0;
+    });
+    let totalExtras = 0;
+
+    html += `<div class="projection-separator"></div>`;
+    html += `<div class="projection-block">`;
+    html += `<div class="projection-title">Projection ${nextMonthName}</div>`;
+    html += `<div class="projection-row"><span class="projection-row-label">Report fin ${curMonthName}</span><span class="projection-row-value" style="color:${runningBalance >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(runningBalance)}</span></div>`;
+    html += `<div class="projection-row"><span class="projection-row-label">+ Salaire</span><span class="projection-row-value income">+${fmt(salary)}</span></div>`;
+    html += `<div class="projection-row"><span class="projection-row-label">- Loyer</span><span class="projection-row-value expense">-${fmt(rent)}</span></div>`;
+
+    activeExtras.forEach(e => {
+      totalExtras += e.amount;
+      html += `<div class="projection-row"><span class="projection-row-label">- ${escHtml(e.label)}</span><span class="projection-row-value expense">-${fmt(e.amount)}</span></div>`;
     });
 
-    extrasEl.innerHTML = activeExtras.map(e => {
-      totalExtras += e.amount;
-      return `<div class="projection-row">
-        <span class="projection-row-label">- ${escHtml(e.label)}</span>
-        <span class="projection-row-value expense">-${fmt(e.amount)}</span>
-      </div>`;
-    }).join('');
+    // Abonnements récurrents connus (Claude AI)
+    html += `<div class="projection-row"><span class="projection-row-label">- Abonnement Claude AI</span><span class="projection-row-value expense">-${fmt(102)}</span></div>`;
 
-    const available = eomBalance + salary - rent - totalExtras;
-    const nextMonthDays = new Date(now.getFullYear(), now.getMonth() + 2, 0).getDate();
-    const projDaily = available / nextMonthDays;
+    const chargesTotal = rent + totalExtras + 102;
+    const availableForLiving = runningBalance + salary - chargesTotal;
 
-    document.getElementById('proj-eom').textContent = fmt(eomBalance);
-    document.getElementById('proj-eom').style.color = eomBalance >= 0 ? 'var(--green)' : 'var(--red)';
-    document.getElementById('proj-salary').textContent = '+' + fmt(salary);
-    document.getElementById('proj-rent').textContent = '-' + fmt(rent);
-    document.getElementById('proj-available').textContent = fmt(available);
-    document.getElementById('proj-available').style.color = available >= 0 ? 'var(--green)' : 'var(--red)';
-    document.getElementById('proj-daily').textContent = fmt(projDaily);
-    document.getElementById('proj-daily').className = 'budget-stat-value ' + (projDaily < 25 ? 'warn' : 'ok');
-    projSection.style.display = 'block';
+    html += `<div class="projection-result"><span>Disponible pour vivre</span><span style="color:${availableForLiving >= 0 ? 'var(--green)' : 'var(--red)'}">${fmt(availableForLiving)}</span></div>`;
+
+    const projDaily = availableForLiving / nextMonthDays;
+    const dailyColor = projDaily < 20 ? 'var(--red)' : projDaily < 30 ? 'var(--yellow)' : 'var(--green)';
+    html += `<div class="projection-daily-row">`;
+    html += `<span class="projection-daily-value" style="color:${dailyColor}">${fmt(projDaily)}</span>`;
+    html += `<span class="projection-daily-label">/ jour sur ${nextMonthDays} jours</span>`;
+    html += `</div>`;
+    html += `</div>`;
+
+    projContainer.innerHTML = html;
+    projContainer.style.display = 'block';
+    projContainer.style.marginTop = '14px';
+    projContainer.style.paddingTop = '14px';
+    projContainer.style.borderTop = '1px solid var(--border)';
   } else {
-    projSection.style.display = 'none';
+    projContainer.style.display = 'none';
   }
 
   configSection.style.display = 'block';
