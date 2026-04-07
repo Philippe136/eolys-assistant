@@ -936,12 +936,24 @@ Réponds UNIQUEMENT avec un objet JSON {"index": "categorie"} pour TOUTES les li
       }
     }
     if (req.method === 'PUT') {
-      const { balance } = req.body || {};
-      if (balance === undefined || isNaN(Number(balance))) return res.status(400).json({ error: 'Montant invalide.' });
-      const data = JSON.stringify({ balance: Number(balance), updated_at: new Date().toISOString() });
+      const { balance, salary, rent } = req.body || {};
+      // Lire les données existantes pour merger
+      let existing = {};
+      try {
+        const [row] = await sql`SELECT value FROM config WHERE key = 'finance_balance' LIMIT 1`;
+        if (row) existing = JSON.parse(row.value);
+      } catch { /* ignore */ }
+      const merged = {
+        balance: balance !== undefined ? Number(balance) : existing.balance ?? null,
+        salary: salary !== undefined ? Number(salary) : existing.salary ?? null,
+        rent: rent !== undefined ? Number(rent) : existing.rent ?? null,
+        updated_at: new Date().toISOString(),
+      };
+      if (merged.balance !== null && isNaN(merged.balance)) return res.status(400).json({ error: 'Montant invalide.' });
+      const data = JSON.stringify(merged);
       try {
         await sql`INSERT INTO config (key, value) VALUES ('finance_balance', ${data}) ON CONFLICT (key) DO UPDATE SET value = ${data}`;
-        return res.status(200).json(JSON.parse(data));
+        return res.status(200).json(merged);
       } catch {
         return res.status(503).json({ error: 'Table config introuvable.' });
       }

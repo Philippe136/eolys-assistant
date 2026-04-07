@@ -142,6 +142,49 @@
   .budget-stat-value.ok { color: var(--green); }
   .budget-updated { font-size: 10px; color: var(--ink-dim); margin-top: 8px; text-align: right; }
 
+  /* ── Projection ── */
+  .budget-projection {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .projection-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-muted); margin-bottom: 10px;
+  }
+  .projection-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; padding: 4px 0;
+  }
+  .projection-row-label { color: var(--ink-muted); }
+  .projection-row-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .projection-result {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 15px; font-weight: 700; padding: 8px 0 0;
+    margin-top: 6px; border-top: 1px solid var(--border);
+  }
+
+  /* ── Config charges ── */
+  .budget-config {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .budget-config-toggle {
+    font-size: 11px; color: var(--ink-dim); cursor: pointer;
+    text-align: center; padding: 4px;
+  }
+  .budget-config-toggle:hover { color: var(--ink-muted); }
+  .budget-config-fields { display: none; margin-top: 10px; }
+  .budget-config-fields.open { display: flex; flex-direction: column; gap: 8px; }
+  .config-field { display: flex; align-items: center; gap: 8px; }
+  .config-field label { font-size: 12px; color: var(--ink-muted); min-width: 60px; }
+  .config-field input {
+    flex: 1; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2);
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    color: var(--ink); outline: none;
+  }
+  .config-field input:focus { border-color: var(--accent); }
+
   /* ── Pareto section ── */
   .pareto-box {
     background: var(--surface);
@@ -348,6 +391,45 @@
       <div class="budget-stat">
         <div class="budget-stat-value" id="budget-weekly">—</div>
         <div class="budget-stat-label">budget / semaine</div>
+      </div>
+    </div>
+    <div class="budget-projection" id="budget-projection" style="display:none">
+      <div class="projection-title">Projection 1er du mois prochain</div>
+      <div class="projection-row">
+        <span class="projection-row-label">Solde estimé fin de mois</span>
+        <span class="projection-row-value" id="proj-eom">—</span>
+      </div>
+      <div class="projection-row">
+        <span class="projection-row-label">+ Salaire</span>
+        <span class="projection-row-value income" id="proj-salary">—</span>
+      </div>
+      <div class="projection-row">
+        <span class="projection-row-label">- Loyer</span>
+        <span class="projection-row-value expense" id="proj-rent">—</span>
+      </div>
+      <div class="projection-result">
+        <span>Disponible après loyer</span>
+        <span id="proj-available">—</span>
+      </div>
+      <div class="budget-stats" id="proj-stats" style="margin-top:10px">
+        <div class="budget-stat">
+          <div class="budget-stat-value" id="proj-daily">—</div>
+          <div class="budget-stat-label">budget / jour (mois prochain)</div>
+        </div>
+      </div>
+    </div>
+    <div class="budget-config" id="budget-config-section" style="display:none">
+      <div class="budget-config-toggle" onclick="toggleConfig()">Modifier salaire & loyer</div>
+      <div class="budget-config-fields" id="budget-config-fields">
+        <div class="config-field">
+          <label>Salaire</label>
+          <input type="number" id="config-salary" step="0.01" placeholder="1540" inputmode="decimal">
+        </div>
+        <div class="config-field">
+          <label>Loyer</label>
+          <input type="number" id="config-rent" step="0.01" placeholder="500" inputmode="decimal">
+        </div>
+        <button class="budget-btn-save" onclick="saveConfig()" style="margin-top:4px;align-self:flex-end;font-size:12px;padding:8px 14px">Enregistrer</button>
       </div>
     </div>
     <div class="budget-updated" id="budget-updated" style="display:none"></div>
@@ -784,6 +866,37 @@ function renderBudget(data) {
     updated.textContent = 'Mis à jour le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     updated.style.display = 'block';
   }
+
+  // Projection mois prochain
+  const projSection = document.getElementById('budget-projection');
+  const configSection = document.getElementById('budget-config-section');
+  const salary = data.salary;
+  const rent = data.rent;
+
+  if (salary && rent) {
+    const dailySpend = Math.abs(daily < 0 ? daily : -daily);
+    const eomBalance = bal - (dailySpend * days);
+    const available = eomBalance + salary - rent;
+    const now = new Date();
+    const nextMonthDays = new Date(now.getFullYear(), now.getMonth() + 2, 0).getDate();
+    const projDaily = available / nextMonthDays;
+
+    document.getElementById('proj-eom').textContent = fmt(eomBalance);
+    document.getElementById('proj-eom').style.color = eomBalance >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('proj-salary').textContent = '+' + fmt(salary);
+    document.getElementById('proj-rent').textContent = '-' + fmt(rent);
+    document.getElementById('proj-available').textContent = fmt(available);
+    document.getElementById('proj-available').style.color = available >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('proj-daily').textContent = fmt(projDaily);
+    document.getElementById('proj-daily').className = 'budget-stat-value ' + (projDaily < 25 ? 'warn' : 'ok');
+    projSection.style.display = 'block';
+  } else {
+    projSection.style.display = 'none';
+  }
+
+  configSection.style.display = 'block';
+  if (salary) document.getElementById('config-salary').placeholder = salary;
+  if (rent) document.getElementById('config-rent').placeholder = rent;
 }
 
 function editBalance() {
@@ -816,6 +929,36 @@ async function saveBalance() {
     input.value = '';
     renderBudget(data);
     showToast('Solde mis à jour');
+  } catch {
+    showToast('Erreur réseau');
+  }
+}
+
+function toggleConfig() {
+  document.getElementById('budget-config-fields').classList.toggle('open');
+}
+
+async function saveConfig() {
+  const salaryInput = document.getElementById('config-salary');
+  const rentInput = document.getElementById('config-rent');
+  const body = {};
+  if (salaryInput.value) body.salary = parseFloat(salaryInput.value);
+  if (rentInput.value) body.rent = parseFloat(rentInput.value);
+  if (!Object.keys(body).length) { showToast('Rien à enregistrer'); return; }
+
+  try {
+    const res = await fetch('/api/calls?action=finance_balance', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Erreur'); return; }
+    salaryInput.value = '';
+    rentInput.value = '';
+    document.getElementById('budget-config-fields').classList.remove('open');
+    renderBudget(data);
+    showToast('Config enregistrée');
   } catch {
     showToast('Erreur réseau');
   }
