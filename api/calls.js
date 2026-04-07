@@ -923,6 +923,31 @@ Réponds UNIQUEMENT avec un objet JSON {"index": "categorie"} pour TOUTES les li
   }
 
   // ── PATCH : note sur transaction finance ─────────────────────────────────
+  // ── GET/PUT : solde actuel ────────────────────────────────────────────────
+  if (req.query.action === 'finance_balance') {
+    if (req.method === 'GET') {
+      try {
+        const [row] = await sql`SELECT value FROM config WHERE key = 'finance_balance' LIMIT 1`;
+        if (!row) return res.status(200).json({ balance: null, updated_at: null });
+        const data = JSON.parse(row.value);
+        return res.status(200).json(data);
+      } catch {
+        return res.status(200).json({ balance: null, updated_at: null });
+      }
+    }
+    if (req.method === 'PUT') {
+      const { balance } = req.body || {};
+      if (balance === undefined || isNaN(Number(balance))) return res.status(400).json({ error: 'Montant invalide.' });
+      const data = JSON.stringify({ balance: Number(balance), updated_at: new Date().toISOString() });
+      try {
+        await sql`INSERT INTO config (key, value) VALUES ('finance_balance', ${data}) ON CONFLICT (key) DO UPDATE SET value = ${data}`;
+        return res.status(200).json(JSON.parse(data));
+      } catch {
+        return res.status(503).json({ error: 'Table config introuvable.' });
+      }
+    }
+  }
+
   if (req.method === 'PATCH' && req.query.action === 'finance_update') {
     const { id } = req.query;
     if (!id || !UUID.test(id)) return res.status(400).json({ error: 'ID invalide.' });

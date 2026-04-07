@@ -92,6 +92,56 @@
   .income { color: var(--green); }
   .expense { color: var(--red); }
 
+  /* ── Budget card ── */
+  .budget-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 16px 18px; margin-bottom: 16px;
+  }
+  .budget-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .budget-label { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .budget-edit-hint { font-size: 11px; color: var(--ink-dim); }
+  .budget-balance {
+    font-size: 32px; font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .budget-balance:hover { opacity: 0.7; }
+  .budget-balance.positive { color: var(--green); }
+  .budget-balance.negative { color: var(--red); }
+  .budget-balance.empty { color: var(--ink-dim); font-size: 16px; font-weight: 600; }
+  .budget-input-wrap {
+    display: none; align-items: center; gap: 8px;
+  }
+  .budget-input-wrap.open { display: flex; }
+  .budget-input {
+    flex: 1; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2);
+    font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 700;
+    color: var(--ink); outline: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .budget-input:focus { border-color: var(--accent); }
+  .budget-btn-save {
+    padding: 10px 16px; border-radius: 8px;
+    background: var(--accent); color: #fff; border: none;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+  }
+  .budget-stats {
+    display: flex; gap: 12px; margin-top: 14px;
+    padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .budget-stat { flex: 1; text-align: center; }
+  .budget-stat-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .budget-stat-label { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+  .budget-stat-value.warn { color: var(--red); }
+  .budget-stat-value.ok { color: var(--green); }
+  .budget-updated { font-size: 10px; color: var(--ink-dim); margin-top: 8px; text-align: right; }
+
   /* ── Pareto section ── */
   .pareto-box {
     background: var(--surface);
@@ -274,6 +324,34 @@
 <main>
   <!-- Statut import -->
   <div id="status-banner" style="display:none;background:var(--yellow-light);border:1px solid var(--yellow);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--ink)"></div>
+
+  <!-- Budget card -->
+  <div class="budget-card" id="budget-card">
+    <div class="budget-header">
+      <span class="budget-label">Solde actuel</span>
+      <span class="budget-edit-hint" id="budget-hint">Appuyer pour modifier</span>
+    </div>
+    <div class="budget-balance empty" id="budget-display" onclick="editBalance()">Définir mon solde</div>
+    <div class="budget-input-wrap" id="budget-form">
+      <input class="budget-input" id="budget-input" type="number" step="0.01" placeholder="755.19" inputmode="decimal" onkeydown="if(event.key==='Enter')saveBalance()">
+      <button class="budget-btn-save" onclick="saveBalance()">OK</button>
+    </div>
+    <div class="budget-stats" id="budget-stats" style="display:none">
+      <div class="budget-stat">
+        <div class="budget-stat-value" id="budget-days">—</div>
+        <div class="budget-stat-label">jours restants</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-stat-value" id="budget-daily">—</div>
+        <div class="budget-stat-label">budget / jour</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-stat-value" id="budget-weekly">—</div>
+        <div class="budget-stat-label">budget / semaine</div>
+      </div>
+    </div>
+    <div class="budget-updated" id="budget-updated" style="display:none"></div>
+  </div>
 
   <!-- Loading skeleton -->
   <div id="finance-loading" style="padding:20px 0">
@@ -663,7 +741,96 @@ function escHtml(s) {
   }
 })();
 
+// ── Balance ──────────────────────────────────────────────────────────────
+function daysUntilEndOfMonth() {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return Math.max(1, end.getDate() - now.getDate());
+}
+
+function renderBudget(data) {
+  const display = document.getElementById('budget-display');
+  const stats = document.getElementById('budget-stats');
+  const hint = document.getElementById('budget-hint');
+  const updated = document.getElementById('budget-updated');
+
+  if (!data || data.balance === null) {
+    display.textContent = 'Définir mon solde';
+    display.className = 'budget-balance empty';
+    stats.style.display = 'none';
+    updated.style.display = 'none';
+    hint.textContent = 'Appuyer pour modifier';
+    return;
+  }
+
+  const bal = Number(data.balance);
+  display.textContent = fmt(bal);
+  display.className = 'budget-balance ' + (bal >= 0 ? 'positive' : 'negative');
+  hint.textContent = 'Modifier';
+
+  const days = daysUntilEndOfMonth();
+  const daily = bal / days;
+  const weekly = daily * 7;
+
+  document.getElementById('budget-days').textContent = days;
+  document.getElementById('budget-daily').textContent = fmt(daily);
+  document.getElementById('budget-daily').className = 'budget-stat-value ' + (daily < 25 ? 'warn' : 'ok');
+  document.getElementById('budget-weekly').textContent = fmt(weekly);
+  document.getElementById('budget-weekly').className = 'budget-stat-value ' + (weekly < 175 ? 'warn' : 'ok');
+  stats.style.display = 'flex';
+
+  if (data.updated_at) {
+    const d = new Date(data.updated_at);
+    updated.textContent = 'Mis à jour le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    updated.style.display = 'block';
+  }
+}
+
+function editBalance() {
+  const form = document.getElementById('budget-form');
+  const display = document.getElementById('budget-display');
+  form.classList.add('open');
+  display.style.display = 'none';
+  document.getElementById('budget-hint').style.display = 'none';
+  const input = document.getElementById('budget-input');
+  input.focus();
+}
+
+async function saveBalance() {
+  const input = document.getElementById('budget-input');
+  const val = parseFloat(input.value);
+  if (isNaN(val)) { showToast('Montant invalide'); return; }
+
+  try {
+    const res = await fetch('/api/calls?action=finance_balance', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ balance: val }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Erreur'); return; }
+
+    document.getElementById('budget-form').classList.remove('open');
+    document.getElementById('budget-display').style.display = '';
+    document.getElementById('budget-hint').style.display = '';
+    input.value = '';
+    renderBudget(data);
+    showToast('Solde mis à jour');
+  } catch {
+    showToast('Erreur réseau');
+  }
+}
+
+async function loadBalance() {
+  try {
+    const res = await fetch('/api/calls?action=finance_balance');
+    const data = await res.json();
+    renderBudget(data);
+  } catch { /* silently fail */ }
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
+loadBalance();
 loadFinance();
 </script>
 </body>
