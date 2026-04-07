@@ -407,8 +407,9 @@
         <span class="projection-row-label">- Loyer</span>
         <span class="projection-row-value expense" id="proj-rent">—</span>
       </div>
+      <div id="proj-extras"></div>
       <div class="projection-result">
-        <span>Disponible après loyer</span>
+        <span>Disponible après charges</span>
         <span id="proj-available">—</span>
       </div>
       <div class="budget-stats" id="proj-stats" style="margin-top:10px">
@@ -876,8 +877,27 @@ function renderBudget(data) {
   if (salary && rent) {
     const dailySpend = Math.abs(daily < 0 ? daily : -daily);
     const eomBalance = bal - (dailySpend * days);
-    const available = eomBalance + salary - rent;
+    let totalExtras = 0;
+    const extrasEl = document.getElementById('proj-extras');
+    const extras = data.extras || [];
+
+    // Filtrer les extras actifs pour le mois prochain
     const now = new Date();
+    const nextMonth = `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}`;
+    const activeExtras = extras.filter(e => {
+      if (!e.start) return e.months_remaining > 0;
+      return nextMonth >= e.start && e.months_remaining > 0;
+    });
+
+    extrasEl.innerHTML = activeExtras.map(e => {
+      totalExtras += e.amount;
+      return `<div class="projection-row">
+        <span class="projection-row-label">- ${escHtml(e.label)}</span>
+        <span class="projection-row-value expense">-${fmt(e.amount)}</span>
+      </div>`;
+    }).join('');
+
+    const available = eomBalance + salary - rent - totalExtras;
     const nextMonthDays = new Date(now.getFullYear(), now.getMonth() + 2, 0).getDate();
     const projDaily = available / nextMonthDays;
 
